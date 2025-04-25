@@ -586,17 +586,57 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update status UI
     function updateStatus(status, phoneNumber) {
+        console.log("Updating UI status to:", status, phoneNumber);
+        
         // Instead of reloading the page, just update the UI elements
         
         // Make sure elements exist before updating them
         const connectionStatusEl = document.getElementById('connection-status');
         const phoneNumberEl = document.getElementById('phone-number');
         const statusContainer = document.getElementById('status-container');
+        const messagingSection = document.getElementById('messaging-section');
+        const sendForm = document.getElementById('send-form');
         
         // Only proceed if elements exist
         if (!connectionStatusEl || !phoneNumberEl || !statusContainer) {
             console.log('Cannot update status: UI elements not found');
             return;
+        }
+        
+        // If status is connected, make sure messaging form is enabled
+        if (status === 'connected') {
+            console.log("Status is CONNECTED - enabling messaging form");
+            
+            // Show messaging section
+            if (messagingSection) {
+                messagingSection.classList.remove('d-none');
+            }
+            
+            // Enable send form
+            if (sendForm) {
+                sendForm.classList.remove('disabled');
+                const fieldset = sendForm.querySelector('fieldset');
+                if (fieldset) {
+                    fieldset.disabled = false;
+                }
+                
+                // Add a visual indicator that the form is enabled
+                if (!sendForm.classList.contains('border-success')) {
+                    sendForm.classList.add('border', 'border-success');
+                    
+                    // Add a notification that form is ready
+                    const formNotice = document.createElement('div');
+                    formNotice.className = 'alert alert-success mt-2';
+                    formNotice.innerHTML = '<i class="fas fa-check-circle me-2"></i> Message form is ready to use!';
+                    sendForm.parentNode.insertBefore(formNotice, sendForm.nextSibling);
+                    
+                    // Remove the notification after 5 seconds
+                    setTimeout(() => {
+                        formNotice.remove();
+                        sendForm.classList.remove('border', 'border-success');
+                    }, 5000);
+                }
+            }
         }
         
         // Update connection status badge
@@ -672,9 +712,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Scroll to the messaging section
                 document.getElementById('messaging-section').scrollIntoView({ behavior: 'smooth' });
                 
-                // Trigger a page refresh after 1 second to ensure all elements load properly
+                // Instead of refreshing, double check that the messaging section is enabled
                 setTimeout(() => {
-                    window.location.reload();
+                    // Focus on enabling all messaging-related UI elements
+                    ensureMessagingSectionEnabled();
                 }, 1000);
                 
                 // Attach refresh status button event listener
@@ -927,6 +968,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+    }
+    
+    // Function to ensure that the messaging section is enabled and visible
+    function ensureMessagingSectionEnabled() {
+        console.log("Ensuring messaging section is enabled");
+        
+        // Check WhatsApp status first
+        fetch('/whatsapp/status')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Status check result:", data);
+            
+            if (data.success && data.status === 'connected') {
+                // Show messaging section
+                const messagingSection = document.getElementById('messaging-section');
+                if (messagingSection) {
+                    messagingSection.classList.remove('d-none');
+                    console.log("Messaging section made visible");
+                }
+                
+                // Enable send form
+                const sendForm = document.getElementById('send-form');
+                if (sendForm) {
+                    sendForm.classList.remove('disabled');
+                    
+                    const fieldset = sendForm.querySelector('fieldset');
+                    if (fieldset) {
+                        fieldset.disabled = false;
+                        console.log("Send form fieldset enabled");
+                    }
+                    
+                    // Add a highlight to the form to indicate it's ready
+                    sendForm.classList.add('border', 'border-success');
+                    setTimeout(() => {
+                        sendForm.classList.remove('border', 'border-success');
+                    }, 3000);
+                }
+                
+                // Update any warning messages
+                const warningMessage = document.querySelector('.alert-warning');
+                if (warningMessage) {
+                    warningMessage.classList.add('d-none');
+                }
+                
+                // Add a notice to inform user
+                const statusContainer = document.getElementById('status-container');
+                if (statusContainer) {
+                    const noticeDiv = document.createElement('div');
+                    noticeDiv.className = 'alert alert-success mt-3';
+                    noticeDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i> WhatsApp connection confirmed! You can send messages now.';
+                    
+                    // Only add if not already present
+                    if (!document.querySelector('.mt-3.alert-success')) {
+                        statusContainer.appendChild(noticeDiv);
+                        
+                        // Remove after 5 seconds
+                        setTimeout(() => {
+                            noticeDiv.remove();
+                        }, 5000);
+                    }
+                }
+            } else {
+                console.log("WhatsApp not connected, cannot enable messaging", data);
+            }
+        })
+        .catch(err => {
+            console.error("Error checking status:", err);
+        });
     }
 });
 </script>
