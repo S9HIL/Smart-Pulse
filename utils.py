@@ -9,6 +9,42 @@ import platform
 
 logger = logging.getLogger(__name__)
 
+def get_time_based_greeting():
+    """
+    Generate a time-based greeting message.
+    Returns a string greeting based on the current time of day.
+    """
+    import datetime
+    
+    current_hour = datetime.datetime.now().hour
+    
+    if 5 <= current_hour < 12:
+        return "Good Morning"
+    elif 12 <= current_hour < 17:
+        return "Good Afternoon"
+    elif 17 <= current_hour < 21:
+        return "Good Evening"
+    else:
+        return "Good Night"
+
+def get_personalized_greeting(username=None):
+    """
+    Generate a personalized greeting with time of day.
+    
+    Args:
+        username (str, optional): User's name for personalization.
+        
+    Returns:
+        str: A personalized greeting string
+    """
+    greeting = get_time_based_greeting()
+    
+    if username:
+        return f"{greeting}, {username}!"
+    else:
+        return f"{greeting}!"
+
+
 class WhatsAppService:
     """WhatsApp service manager that handles communication with Node.js WhatsApp service"""
     

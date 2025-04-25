@@ -4,7 +4,43 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Social Media Automation Hub</h1>
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">{{ greeting }}</h1>
+            <p class="lead text-muted">Welcome to the Social Media Automation Hub</p>
+        </div>
+        <div class="col-md-4">
+            {% if not username %}
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ url_for('main.set_username') }}" method="post">
+                        <div class="input-group">
+                            <input type="text" name="username" class="form-control" placeholder="Your Name" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-check me-1"></i> Set Name
+                            </button>
+                        </div>
+                        <small class="form-text text-muted">We'll use this to personalize your experience.</small>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-end">
+                <span class="badge bg-info px-3 py-2 fs-6">
+                    <i class="fas fa-user me-1"></i> {{ username }}
+                </span>
+                <form action="{{ url_for('main.set_username') }}" method="post" class="d-inline-block ms-2">
+                    <input type="hidden" name="username" value="">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-user-edit"></i> Change
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <h2 class="mb-4">Automation Services</h2>
     
     <div class="row">
         <div class="col-md-4 mb-4">
