@@ -299,6 +299,9 @@ async function requestPairingCode(phoneNumber) {
         
         logger.info(`Requesting pairing code for phone: ${formattedPhone}`);
 
+        // Store phone number immediately to enable faster UI updates
+        connectedPhoneNumber = formattedPhone;
+        
         // Generate a session ID for this phone number
         const sessionId = generateSessionId(formattedPhone);
         
@@ -307,7 +310,7 @@ async function requestPairingCode(phoneNumber) {
         await connectToWhatsApp(sessionId, formattedPhone, true);
         
         // Wait for the connection to be ready - increased wait time
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Add retry mechanism for improved reliability
         let retries = 5; // Increased retries
