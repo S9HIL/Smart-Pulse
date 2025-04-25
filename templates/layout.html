@@ -90,9 +90,16 @@
     </footer>
     
     <script>
-    // Update current time
+    // Update current time based on Indian Standard Time (IST)
     function updateCurrentTime() {
+        // Create a date object in UTC
         const now = new Date();
+        
+        // Convert to Indian Standard Time (IST, UTC+5:30)
+        const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const istTime = new Date(utcTime + istOffset);
+        
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
             const options = { 
@@ -101,7 +108,10 @@
                 second: '2-digit',
                 hour12: true 
             };
-            timeElement.textContent = now.toLocaleTimeString(undefined, options);
+            
+            // Format the time including IST label
+            const timeString = istTime.toLocaleTimeString(undefined, options);
+            timeElement.innerHTML = ` | <strong>IST:</strong> ${timeString}`;
         }
     }
     

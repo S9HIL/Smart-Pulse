@@ -10,7 +10,8 @@ import time
 import threading
 import json
 from datetime import datetime
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session
+from utils import get_personalized_greeting
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired, ClientError, ClientLoginRequired
 
@@ -30,7 +31,13 @@ active_batches = {}  # Track active batches
 @instagram_bp.route('/')
 def index():
     """Instagram automation main page"""
-    return render_template('instagram/index.html')
+    # Get personalized greeting
+    username = session.get('username', None)
+    greeting = get_personalized_greeting(username)
+    
+    return render_template('instagram/index.html', 
+                          greeting=greeting,
+                          username=username)
 
 @instagram_bp.route('/api/batches')
 def get_batches():

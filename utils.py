@@ -11,21 +11,28 @@ logger = logging.getLogger(__name__)
 
 def get_time_based_greeting():
     """
-    Generate a time-based greeting message.
-    Returns a string greeting based on the current time of day.
+    Generate a time-based greeting message using Indian Standard Time (IST).
+    Returns a string greeting based on the current time of day in India.
     """
     import datetime
+    import pytz
     
-    current_hour = datetime.datetime.now().hour
+    # Get current time in UTC
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    
+    # Convert to Indian Standard Time (IST)
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    ist_time = utc_now.astimezone(ist_timezone)
+    current_hour = ist_time.hour
     
     if 5 <= current_hour < 12:
-        return "Good Morning"
+        return f"Good Morning (IST: {ist_time.strftime('%H:%M')})"
     elif 12 <= current_hour < 17:
-        return "Good Afternoon"
+        return f"Good Afternoon (IST: {ist_time.strftime('%H:%M')})"
     elif 17 <= current_hour < 21:
-        return "Good Evening"
+        return f"Good Evening (IST: {ist_time.strftime('%H:%M')})"
     else:
-        return "Good Night"
+        return f"Good Night (IST: {ist_time.strftime('%H:%M')})"
 
 def get_personalized_greeting(username=None):
     """
