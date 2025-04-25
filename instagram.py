@@ -180,18 +180,21 @@ def stop_sending(batch_id):
         })
 
 @instagram_bp.route('/batch/<batch_id>')
+@instagram_bp.route('/messages/<batch_id>')  # Adding a second route for compatibility
 def messages_page(batch_id):
     """View messages for a specific batch"""
     try:
         # Get batch from database
         batch = InstagramBatch.query.get(batch_id)
         if not batch:
-            return redirect(url_for('instagram.dashboard'))
+            logger.warning(f"Batch not found: {batch_id}")
+            return render_template('instagram/messages.html', error=f"Batch ID {batch_id} not found")
         
+        logger.info(f"Viewing batch: {batch_id}")
         return render_template('instagram/messages.html', batch=batch)
     except Exception as e:
         logger.error(f"Error viewing batch {batch_id}: {str(e)}")
-        return redirect(url_for('instagram.dashboard'))
+        return render_template('instagram/messages.html', error=f"Error loading batch: {str(e)}")
 
 @instagram_bp.route('/api/messages/<batch_id>')
 def get_logs(batch_id):
