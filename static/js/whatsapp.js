@@ -45,7 +45,7 @@ function initializeWhatsApp() {
 /**
  * Check WhatsApp connection status
  */
-function checkWhatsAppStatus() {
+function checkWhatsAppStatus(callback) {
     fetch('/whatsapp/status')
         .then(response => response.json())
         .then(data => {
@@ -53,13 +53,22 @@ function checkWhatsAppStatus() {
                 updateWhatsAppStatus(data);
                 
                 // If we have QR and it's not already visible, fetch and display it
-                if (data.hasQR && !document.getElementById('qr-display').src) {
+                if (data.hasQR && document.getElementById('qr-display') && !document.getElementById('qr-display').src) {
                     fetchAndDisplayQR();
+                }
+                
+                // If a callback was provided, call it with the status
+                if (typeof callback === 'function') {
+                    callback(data.status);
                 }
             }
         })
         .catch(error => {
             console.error('Error checking WhatsApp status:', error);
+            // Call callback with error if provided
+            if (typeof callback === 'function') {
+                callback('error');
+            }
         });
 }
 
@@ -158,19 +167,69 @@ function getStatusClass(status) {
  * Connect to WhatsApp
  */
 function connectWhatsApp() {
+    const phoneNumber = document.getElementById('phone-number').value;
+    
+    if (!phoneNumber) {
+        showToast('Please enter a phone number', 'warning');
+        return;
+    }
+    
+    // Check if we have a pairing code
+    const pairingCodeEl = document.getElementById('pairing-code-display');
+    const pairingCode = pairingCodeEl ? pairingCodeEl.textContent.trim() : '';
+    const usePairingCode = pairingCode !== '';
+    
     showSpinner('Connecting to WhatsApp...');
     
+    const formData = new FormData();
+    formData.append('phone_number', phoneNumber);
+    formData.append('use_pairing_code', usePairingCode ? 'true' : 'false');
+    if (usePairingCode) {
+        formData.append('pairing_code', pairingCode);
+    }
+    
     fetch('/whatsapp/connect', {
-        method: 'POST'
+        method: 'POST',
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
         hideSpinner();
         
         if (data.success) {
-            showToast('WhatsApp service started', 'success');
-            // Start checking for QR code
-            checkForQRCode();
+            showToast('WhatsApp connection initiated', 'success');
+            
+            // If we're using a pairing code, it's a direct connection attempt
+            if (usePairingCode) {
+                showToast('Attempting to authenticate with pairing code. Please wait...', 'info');
+                
+                // Hide pairing code after use
+                if (document.getElementById('pairing-code-container')) {
+                    document.getElementById('pairing-code-container').classList.add('d-none');
+                }
+                
+                // Start frequent status checks to detect connection
+                let connectionAttempts = 0;
+                const maxAttempts = 30;
+                const connectionCheckInterval = setInterval(() => {
+                    connectionAttempts++;
+                    
+                    // Check connection status more frequently
+                    checkWhatsAppStatus((status) => {
+                        if (status === 'connected') {
+                            clearInterval(connectionCheckInterval);
+                            showToast('Successfully connected to WhatsApp!', 'success');
+                        } else if (connectionAttempts >= maxAttempts) {
+                            clearInterval(connectionCheckInterval);
+                            showToast('Connection attempt timed out. Please try again.', 'warning');
+                        }
+                    });
+                }, 2000);
+                
+            } else {
+                // Start checking for QR code for non-pairing code flow
+                checkForQRCode();
+            }
         } else {
             showToast(`Failed to connect: ${data.message}`, 'danger');
         }
