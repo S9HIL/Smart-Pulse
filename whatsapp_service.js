@@ -903,6 +903,18 @@ async function processStdin() {
                     const messages = command.messages || [];
                     const delay = command.delay || 10;
                     
+                    // First check connection status
+                    if (!sock || connectionStatus !== 'connected') {
+                        logger.error(`Cannot send messages: WhatsApp is not connected. Status: ${connectionStatus}`);
+                        sendToParent({
+                            type: 'message_log',
+                            batchId: batchId,
+                            status: 'error',
+                            message: `WhatsApp is not connected (status: ${connectionStatus}). Please reconnect.`
+                        });
+                        continue;
+                    }
+                    
                     if (!recipients.length || !messages.length) {
                         sendToParent({
                             type: 'message_log',
