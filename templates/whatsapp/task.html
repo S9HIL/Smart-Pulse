@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}Task Details{% endblock %}
+{% block title %}Target: {{ task.phone_number }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -8,16 +8,18 @@
     <div class="alert alert-danger" role="alert">
         <i class="fas fa-exclamation-triangle"></i> {{ error }}
     </div>
-    <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left"></i> Back to Tasks
+    <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Batch Manager
     </a>
     {% else %}
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Task: {{ task.id[:8] }}...</h1>
+        <h1>Target: {{ task.phone_number }}</h1>
         <div>
-            <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Tasks
+            <span id="current-time" class="badge bg-info fs-6 me-2"></span>
+            
+            <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-tasks"></i> Batch Manager
             </a>
             
             {% if task.status == 'running' %}
@@ -28,96 +30,61 @@
             <button id="restart-btn" class="btn btn-success">
                 <i class="fas fa-play"></i> Restart Task
             </button>
+            <button id="loop-btn" class="btn btn-primary">
+                <i class="fas fa-sync"></i> Loop Messages
+            </button>
             {% endif %}
         </div>
     </div>
     
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-header bg-dark text-white">
                     <i class="fas fa-info-circle"></i> Task Information
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4"><strong>Status:</strong></div>
-                        <div class="col-md-8">
+                        <div class="col-md-5"><strong>Status:</strong></div>
+                        <div class="col-md-7">
                             <span class="badge 
                                 {% if task.status == 'running' %}bg-primary
                                 {% elif task.status == 'completed' %}bg-success
                                 {% elif task.status == 'stopped' %}bg-warning
                                 {% elif task.status == 'failed' %}bg-danger
                                 {% else %}bg-secondary{% endif %}">
-                                {{ task.status }}
+                                {{ task.status.upper() }}
                             </span>
                         </div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-4"><strong>Created:</strong></div>
-                        <div class="col-md-8">{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                        <div class="col-md-5"><strong>Created:</strong></div>
+                        <div class="col-md-7">{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-4"><strong>Phone:</strong></div>
-                        <div class="col-md-8">{{ task.phone_number or 'N/A' }}</div>
+                        <div class="col-md-5"><strong>Recipients:</strong></div>
+                        <div class="col-md-7">{{ task.total_recipients }}</div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-4"><strong>Recipients:</strong></div>
-                        <div class="col-md-8">{{ task.total_recipients }}</div>
+                        <div class="col-md-5"><strong>Messages:</strong></div>
+                        <div class="col-md-7">{{ task.total_messages }}</div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-4"><strong>Messages:</strong></div>
-                        <div class="col-md-8">{{ task.total_messages }}</div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-md-4"><strong>Delay:</strong></div>
-                        <div class="col-md-8">{{ task.delay }} seconds</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
-                    <i class="fas fa-chart-pie"></i> Progress
-                </div>
-                <div class="card-body">
-                    <div class="progress mb-3">
-                        <div class="progress-bar 
-                            {% if task.status == 'running' %}bg-primary
-                            {% elif task.status == 'completed' %}bg-success
-                            {% elif task.status == 'stopped' %}bg-warning
-                            {% elif task.status == 'failed' %}bg-danger
-                            {% else %}bg-secondary{% endif %}"
-                            role="progressbar" 
-                            style="width: {{ task.progress }}%"
-                            aria-valuenow="{{ task.progress }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                            {{ task.progress }}%
-                        </div>
-                    </div>
-                    
-                    <div class="row text-center">
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body py-2">
-                                    <h5 class="card-title">{{ pending|length }}</h5>
-                                    <p class="card-text text-secondary">Pending</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body py-2">
-                                    <h5 class="card-title">{{ sent|length }}</h5>
-                                    <p class="card-text text-success">Sent</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body py-2">
-                                    <h5 class="card-title">{{ failed|length }}</h5>
-                                    <p class="card-text text-danger">Failed</p>
+                        <div class="col-md-5"><strong>Progress:</strong></div>
+                        <div class="col-md-7">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar 
+                                    {% if task.status == 'running' %}bg-primary progress-bar-striped progress-bar-animated
+                                    {% elif task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'stopped' %}bg-warning
+                                    {% elif task.status == 'failed' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ task.progress }}%;" 
+                                    aria-valuenow="{{ task.progress }}" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100">
+                                    {{ task.progress }}%
                                 </div>
                             </div>
                         </div>
@@ -126,53 +93,35 @@
             </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <i class="fas fa-list"></i> Message Details
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-envelope"></i> Message Activity</span>
                 </div>
-                <div class="card-body">
-                    <ul class="nav nav-tabs" id="messageTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
-                                All ({{ messages|length }})
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">
-                                Pending ({{ pending|length }})
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab" aria-controls="sent" aria-selected="false">
-                                Sent ({{ sent|length }})
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="failed-tab" data-bs-toggle="tab" data-bs-target="#failed" type="button" role="tab" aria-controls="failed" aria-selected="false">
-                                Failed ({{ failed|length }})
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="tab-content mt-3" id="messageTabsContent">
-                        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-                            {% include 'whatsapp/message_list.html' with context %}
-                        </div>
-                        <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
-                            {% with filtered_messages = pending %}
-                                {% include 'whatsapp/message_list.html' with context %}
-                            {% endwith %}
-                        </div>
-                        <div class="tab-pane fade" id="sent" role="tabpanel" aria-labelledby="sent-tab">
-                            {% with filtered_messages = sent %}
-                                {% include 'whatsapp/message_list.html' with context %}
-                            {% endwith %}
-                        </div>
-                        <div class="tab-pane fade" id="failed" role="tabpanel" aria-labelledby="failed-tab">
-                            {% with filtered_messages = failed %}
-                                {% include 'whatsapp/message_list.html' with context %}
-                            {% endwith %}
-                        </div>
+                <div class="card-body p-0">
+                    <div class="message-container p-2" style="height: 300px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Recipient</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for message in messages %}
+                                <tr class="{% if message.status == 'sent' %}table-success{% elif message.status == 'failed' %}table-danger{% endif %}">
+                                    <td>{% if message.sent_at %}{{ message.sent_at.strftime('%H:%M:%S') }}{% else %}-{% endif %}</td>
+                                    <td>{{ message.recipient }}</td>
+                                    <td>
+                                        <span class="badge {% if message.status == 'sent' %}bg-success{% elif message.status == 'failed' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ message.status.upper() }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -222,6 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
     {% endif %}
     
+    // Update current time with IST
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
     // Stop task button
     const stopBtn = document.getElementById('stop-btn');
     if (stopBtn) {
@@ -268,6 +221,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+    }
+    
+    // Loop messages button
+    const loopBtn = document.getElementById('loop-btn');
+    if (loopBtn) {
+        loopBtn.addEventListener('click', function() {
+            const loopCount = prompt('How many times do you want to loop the messages? (Enter 0 for infinite)', '1');
+            if (loopCount !== null) {
+                fetch('/whatsapp/loop_task/{{ task.id }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        loopCount: parseInt(loopCount) || 0
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Task set to loop ' + (parseInt(loopCount) === 0 ? 'infinitely' : loopCount + ' times'));
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                });
+            }
+        });
+    }
+    
+    function updateCurrentTime() {
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const istTime = new Date(utcTime + istOffset);
+        
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            const options = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            };
+            
+            const timeString = istTime.toLocaleTimeString(undefined, options);
+            timeElement.innerHTML = `<i class="far fa-clock me-1"></i> IST: ${timeString}`;
+        }
     }
 });
 </script>

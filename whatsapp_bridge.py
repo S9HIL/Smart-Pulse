@@ -310,6 +310,69 @@ def stop_task(task_id):
             "message": f"An error occurred: {str(e)}"
         })
 
+@whatsapp_bp.route('/loop_task/<task_id>', methods=['POST'])
+def loop_task(task_id):
+    """Set a task to loop messages multiple times"""
+    try:
+        # Get loop count from request data
+        data = request.json
+        loop_count = int(data.get('loopCount', 1))
+        
+        # Get task from database
+        task = WhatsAppTask.query.get(task_id)
+        if not task:
+            return jsonify({
+                "success": False,
+                "message": "Task ID not found"
+            })
+        
+        # Only stopped tasks can be looped
+        if task.status not in ['stopped', 'failed']:
+            return jsonify({
+                "success": False,
+                "message": "Only stopped or failed tasks can be looped"
+            })
+        
+        # Get messages that were not sent
+        all_messages = WhatsAppMessage.query.filter_by(task_id=task_id).all()
+        
+        if not all_messages:
+            return jsonify({
+                "success": False,
+                "message": "No messages found for this task"
+            })
+        
+        # For loop mode, we want to use all messages, not just pending ones
+        recipients = list(set([msg.recipient for msg in all_messages]))
+        messages = list(set([msg.message for msg in all_messages]))
+        
+        # Send command to restart task with loop mode
+        whatsapp_service.send_command('send_bulk_messages', {
+            'taskId': task_id,
+            'targets': recipients,
+            'messages': messages,
+            'delay': task.delay,
+            'loopMode': True,
+            'maxLoops': loop_count
+        })
+        
+        # Update task status
+        task.status = 'running'
+        db.session.commit()
+        
+        loop_message = "infinitely" if loop_count == 0 else f"{loop_count} times"
+        return jsonify({
+            "success": True,
+            "message": f"Task set to loop messages {loop_message}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error setting loop for task {task_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        })
+
 @whatsapp_bp.route('/restart_task/<task_id>', methods=['POST'])
 def restart_task(task_id):
     """Restart a stopped message sending task"""

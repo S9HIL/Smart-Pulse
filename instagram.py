@@ -556,6 +556,60 @@ def stop_message_sending(batch_id):
         "message": "Invalid Batch ID"
     }), 404
 
+@instagram_bp.route('/api/batch/<batch_id>/delete', methods=['POST'])
+def delete_batch(batch_id):
+    """Delete a batch and all its messages"""
+    if batch_id not in active_batches:
+        # Check if it's in the database even if not in memory
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": "Batch not found"
+            }), 404
+            
+        # It's in database but not in memory
+        db.session.delete(batch)
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Batch deleted from database"
+        })
+    
+    # First stop the batch if it's running
+    if active_batches[batch_id]['status'] == 'running':
+        active_batches[batch_id]['status'] = 'stopped'
+        stop_flags[batch_id] = True
+    
+    # Remove from memory
+    try:
+        # Remove from memory dictionaries
+        if batch_id in active_batches:
+            del active_batches[batch_id]
+        if batch_id in user_batches:
+            del user_batches[batch_id]
+        if batch_id in stop_flags:
+            del stop_flags[batch_id]
+        
+        # Remove from database
+        batch = InstagramBatch.query.get(batch_id)
+        if batch:
+            # Delete related messages first
+            InstagramMessage.query.filter_by(batch_id=batch_id).delete()
+            # Then delete the batch
+            db.session.delete(batch)
+            db.session.commit()
+            
+        return jsonify({
+            "success": True,
+            "message": "Batch deleted successfully"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Error deleting batch: {str(e)}"
+        }), 500
+
 @instagram_bp.route('/api/batch/<batch_id>/restart', methods=['POST'])
 def restart_message_sending(batch_id):
     """Restart message sending for a batch"""
