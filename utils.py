@@ -25,14 +25,17 @@ def get_time_based_greeting():
     ist_time = utc_now.astimezone(ist_timezone)
     current_hour = ist_time.hour
     
+    # Format time in 12-hour format with AM/PM
+    formatted_time = ist_time.strftime('%I:%M %p')
+    
     if 5 <= current_hour < 12:
-        return f"Good Morning (IST: {ist_time.strftime('%H:%M')})"
+        return f"Good Morning (IST: {formatted_time})"
     elif 12 <= current_hour < 17:
-        return f"Good Afternoon (IST: {ist_time.strftime('%H:%M')})"
+        return f"Good Afternoon (IST: {formatted_time})"
     elif 17 <= current_hour < 21:
-        return f"Good Evening (IST: {ist_time.strftime('%H:%M')})"
+        return f"Good Evening (IST: {formatted_time})"
     else:
-        return f"Good Night (IST: {ist_time.strftime('%H:%M')})"
+        return f"Good Night (IST: {formatted_time})"
 
 def get_personalized_greeting(username=None):
     """
