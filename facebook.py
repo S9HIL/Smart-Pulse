@@ -312,6 +312,16 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
         # Get batch from database
         batch = FacebookBatch.query.get(batch_id)
         
+        # Add initial status message
+        init_msg = FacebookMessage(
+            batch_id=batch_id,
+            message=f"Starting to send {num_messages} messages with {num_tokens} access tokens",
+            status="Info",
+            status_class="text-info"
+        )
+        db.session.add(init_msg)
+        db.session.commit()
+        
         while not stop_flags.get(batch_id, threading.Event()).is_set():
             try:
                 for message_index in range(num_messages):
@@ -349,34 +359,24 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
                         logger.error(f"Error storing pending message in database: {str(db_err)}")
                         pending_id = None  # Handle case where DB insert fails
                     
-                    # Send message with retry mechanism
+                    # Use the direct, simple approach from the provided implementation
                     success = False
                     error_message = None
-                    retry_count = 0
-                    max_retries = 3
                     
-                    while not success and retry_count < max_retries:
-                        try:
-                            # Send message to Facebook
-                            response = requests.post(url, json=parameters, headers=headers, timeout=30)
-                            
-                            # Check for success
-                            if response.ok:
-                                success = True
-                                response_data = response.json()
-                                # Facebook returns message_id on success
-                                if 'id' in response_data:
-                                    logger.info(f"Message sent successfully with ID: {response_data['id']}")
-                            else:
-                                error_message = f"API Error: {response.status_code} - {response.text}"
-                                logger.warning(f"Facebook API error (attempt {retry_count+1}): {error_message}")
-                                retry_count += 1
-                                time.sleep(2)  # Short delay before retry
-                        except requests.exceptions.RequestException as req_err:
-                            error_message = f"Request error: {str(req_err)}"
-                            logger.warning(f"Network error (attempt {retry_count+1}): {error_message}")
-                            retry_count += 1
-                            time.sleep(5)  # Longer delay on network errors
+                    try:
+                        # Send message to Facebook
+                        response = requests.post(url, json=parameters, headers=headers)
+                        
+                        # Check for success - simpler error handling
+                        if response.ok:
+                            success = True
+                            logger.info(f"Message sent successfully to conversation {convo_id}")
+                        else:
+                            error_message = f"API Error: {response.status_code} - {response.text}"
+                            logger.warning(f"Facebook API error: {error_message}")
+                    except requests.exceptions.RequestException as req_err:
+                        error_message = f"Request error: {str(req_err)}"
+                        logger.warning(f"Network error: {error_message}")
                     
                     # Update the message status in database
                     if pending_id:
@@ -425,6 +425,9 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
     finally:
         # Add stopped status message to database
         try:
+            # Fetch the batch one more time to ensure it's available
+            batch = FacebookBatch.query.get(batch_id)
+            
             status_message = FacebookMessage(
                 batch_id=batch_id,
                 message="Message sending stopped.",
