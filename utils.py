@@ -75,6 +75,9 @@ class WhatsAppService:
         self.pairing_code = None
         self.last_error = None
         
+        # Auto-start the service when initialized
+        self.start()
+        
     def start(self):
         """Start the WhatsApp service process"""
         # Check if file exists before trying to start

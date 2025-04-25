@@ -17,7 +17,7 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "automation_hub_secret_key")
+app.secret_key = "automation_hub_secret_key"  # Fixed secret key for development
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://koyeb-adm:npg_ZCUA5mS8uOFw@ep-orange-lab-a2otm96c.eu-central-1.pg.koyeb.app/koyebdb"
