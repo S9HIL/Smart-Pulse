@@ -191,11 +191,22 @@ def send_messages():
                 "success": False,
                 "message": "No messages provided"
             })
+        
+        # Send a status check command to get latest connection status
+        whatsapp_service.send_command('ping')
+        time.sleep(0.5)  # Small delay to allow status to update
             
-        if not whatsapp_service.is_running() or whatsapp_service.status != "connected":
+        # Check connection status
+        if not whatsapp_service.is_running():
             return jsonify({
                 "success": False,
-                "message": "WhatsApp is not connected. Please connect first."
+                "message": "WhatsApp service is not running. Please restart the application."
+            })
+            
+        if whatsapp_service.status != "connected":
+            return jsonify({
+                "success": False,
+                "message": f"WhatsApp is not connected (status: {whatsapp_service.status}). Please refresh the page and connect again."
             })
             
         # Generate task ID

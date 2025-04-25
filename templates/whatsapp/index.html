@@ -594,13 +594,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="alert alert-success" role="alert">
                         <i class="fas fa-check-circle me-2"></i> WhatsApp is connected and ready to send messages.
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mb-2">
                         <button id="disconnect-btn" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt me-1"></i> Disconnect
                         </button>
                         
-                        <button id="show-messaging-btn" class="btn btn-primary">
+                        <a href="#messaging-section" id="show-messaging-btn" class="btn btn-primary">
                             <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
+                        </a>
+                    </div>
+                    <div class="d-grid">
+                        <button id="refresh-page-btn" class="btn btn-success" onclick="window.location.reload()">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh Page to Show Messaging Form
                         </button>
                     </div>
                 `;
@@ -610,6 +615,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Scroll to the messaging section
                 document.getElementById('messaging-section').scrollIntoView({ behavior: 'smooth' });
+                
+                // Trigger a page refresh after 1 second to ensure all elements load properly
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
                 
                 // Reattach disconnect event listener
                 const disconnectBtn = document.getElementById('disconnect-btn');
