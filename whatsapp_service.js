@@ -2,8 +2,7 @@
  * Simple WhatsApp Service
  * This service handles WhatsApp connections and message sending
  * 
- * This service is designed to be run directly by Node.js and communicate via
- * stdin/stdout with the Python process that launches it.
+ * Non-server version: Communicates only through stdin/stdout
  */
 
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason } = require('@whiskeysockets/baileys');
@@ -880,7 +879,7 @@ process.on('SIGINT', async () => {
 });
 
 // Initialize
-logger.info('WhatsApp service starting in stdin/stdout mode');
+logger.info('WhatsApp service starting in stdin/stdout mode (non-server)');
 processStdin();
 
 // Initialize connection
