@@ -53,22 +53,10 @@
                 <div class="card-body">
                     <p class="card-text">Automate WhatsApp message sending to multiple recipients.</p>
                     
-                    {% if whatsapp_tasks %}
-                    <div class="active-tasks mb-3">
-                        <h6>Active Tasks:</h6>
-                        <ul class="list-group">
-                            {% for task in whatsapp_tasks %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>{{ task.id[:8] }}...</span>
-                                <div>
-                                    <span class="badge bg-primary rounded-pill">{{ task.total_recipients }} recipients</span>
-                                    <span class="badge bg-secondary rounded-pill">{{ task.progress }}%</span>
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ul>
+                    <!-- Active tasks section removed as per user request -->
+                    <div class="text-center mt-2 mb-3">
+                        <span class="badge bg-info">See Batch Manager for active tasks</span>
                     </div>
-                    {% endif %}
                     
                     <a href="{{ url_for('whatsapp.index') }}" class="btn btn-primary">Go to WhatsApp</a>
                 </div>

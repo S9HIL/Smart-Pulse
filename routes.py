@@ -17,17 +17,14 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Main dashboard page for the automation hub"""
-    # Get active WhatsApp tasks
-    whatsapp_tasks = WhatsAppTask.query.filter(
-        WhatsAppTask.status.in_(['created', 'running'])
-    ).order_by(WhatsAppTask.created_at.desc()).limit(5).all()
+    # No longer fetching active WhatsApp tasks as per user request
+    # Users should go to batch manager page for this information
     
     # Get personalized greeting
     username = session.get('username', None)
     greeting = get_personalized_greeting(username)
     
     return render_template('index.html',
-                          whatsapp_tasks=whatsapp_tasks,
                           greeting=greeting,
                           username=username)
 
