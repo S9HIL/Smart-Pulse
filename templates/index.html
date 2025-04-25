@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+
+{% block title %}Automation Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Social Media Automation Hub</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fab fa-whatsapp me-2"></i> WhatsApp Automation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Automate WhatsApp message sending to multiple recipients.</p>
+                    
+                    {% if whatsapp_tasks %}
+                    <div class="active-tasks mb-3">
+                        <h6>Active Tasks:</h6>
+                        <ul class="list-group">
+                            {% for task in whatsapp_tasks %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ task.id[:8] }}...</span>
+                                <div>
+                                    <span class="badge bg-primary rounded-pill">{{ task.total_recipients }} recipients</span>
+                                    <span class="badge bg-secondary rounded-pill">{{ task.progress }}%</span>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('whatsapp.index') }}" class="btn btn-primary">Go to WhatsApp</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fab fa-facebook me-2"></i> Facebook Automation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Automate Facebook message sending to multiple recipients.</p>
+                    <a href="{{ url_for('facebook.index') }}" class="btn btn-success">Go to Facebook</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fab fa-instagram me-2"></i> Instagram Automation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Automate Instagram message sending to followers and users.</p>
+                    <a href="{{ url_for('instagram.index') }}" class="btn btn-danger">Go to Instagram</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

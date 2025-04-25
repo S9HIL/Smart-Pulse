@@ -149,20 +149,9 @@ async function connectToWhatsApp(sessionId = null, phoneNumber = null, forceNewS
         
         // If this is the current active socket, update global status
         if (!sessionId || (sessionId && sessionId === currentSessionId)) {
+            // QR code functionality removed as per requirements
             if (qr) {
-                qrData = qr;
-                logger.info(`QR code received: ${qr.slice(0, 20)}...`);
-                
-                // Convert QR to image and send to parent
-                try {
-                    const qrImage = await QRCode.toDataURL(qr);
-                    sendToParent({
-                        type: 'qr_code',
-                        qrData: qrImage
-                    });
-                } catch (err) {
-                    logger.error(`Failed to generate QR code image: ${err.message}`);
-                }
+                logger.info(`QR code received but not used (functionality removed)`);
             }
 
             if (connection) {

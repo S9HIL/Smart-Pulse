@@ -12,6 +12,14 @@ logger = logging.getLogger(__name__)
 class WhatsAppService:
     """WhatsApp service manager that handles communication with Node.js WhatsApp service"""
     
+    # Status properties
+    status = "disconnected"
+    phone_number = None
+    pairing_code = None
+    qr_code = None
+    last_error = None
+    messages = []
+    
     def __init__(self, service_path):
         self.service_path = service_path
         self.process = None
@@ -149,6 +157,7 @@ class WhatsAppService:
                         elif data['type'] == 'connection_update':
                             self.status = data.get('status', 'unknown')
                             self.connected_phone = data.get('phoneNumber')
+                            self.phone_number = data.get('phoneNumber')
                             
                         elif data['type'] == 'message_log':
                             # Store message logs

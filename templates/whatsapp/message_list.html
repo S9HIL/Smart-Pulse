@@ -1,0 +1,47 @@
+{% set display_messages = filtered_messages if filtered_messages is defined else messages %}
+
+{% if display_messages %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Recipient</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for msg in display_messages %}
+            <tr>
+                <td>{{ msg.recipient }}</td>
+                <td>
+                    <div class="text-truncate" style="max-width: 200px;" title="{{ msg.message }}">
+                        {{ msg.message }}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge 
+                        {% if msg.status == 'sent' %}bg-success
+                        {% elif msg.status == 'failed' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ msg.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if msg.sent_at %}
+                    {{ msg.sent_at.strftime('%H:%M:%S') }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No messages found.
+</div>
+{% endif %}

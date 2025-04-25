@@ -1,63 +1,65 @@
-import os
+"""
+WhatsApp Automation Blueprint
+Handles WhatsApp messaging automation
+"""
 import logging
-import threading
 import time
 import uuid
-import json
-import base64
-import subprocess
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for
-from config import WHATSAPP_SERVICE_PATH
+from datetime import datetime
+
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for
+from app import db
+from models import WhatsAppTask, WhatsAppMessage
 from utils import WhatsAppService
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Create blueprint
 whatsapp_bp = Blueprint('whatsapp', __name__, template_folder='templates')
 
 # Initialize WhatsApp service
-whatsapp_service = WhatsAppService(WHATSAPP_SERVICE_PATH)
+whatsapp_service = WhatsAppService("whatsapp_service.js")
 
-# Global variables
-batch_tasks = {}
-service_status = "stopped"
+# Start the service when the blueprint is registered
+@whatsapp_bp.record_once
+def on_register(state):
+    if not whatsapp_service.is_running():
+        whatsapp_service.start()
 
 @whatsapp_bp.route('/')
 def index():
     """WhatsApp automation main page"""
-    return render_template('whatsapp/index.html')
+    # Get active tasks from database
+    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).limit(10).all()
+    
+    return render_template('whatsapp/index.html', 
+                          tasks=tasks, 
+                          service_running=whatsapp_service.is_running(),
+                          status=whatsapp_service.status,
+                          phone_number=whatsapp_service.phone_number)
+
+@whatsapp_bp.route('/dashboard')
+def dashboard():
+    """WhatsApp task dashboard"""
+    # Get active tasks from database
+    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
+    
+    return render_template('whatsapp/dashboard.html', tasks=tasks)
 
 @whatsapp_bp.route('/connect', methods=['POST'])
 def connect():
     """Connect to WhatsApp"""
     try:
-        # Start WhatsApp service if not already running
-        if not whatsapp_service.is_running():
-            started = whatsapp_service.start()
-            
-            # If service didn't start successfully
-            if not started:
-                return jsonify({
-                    "success": False,
-                    "message": f"Failed to start WhatsApp service: {whatsapp_service.last_error}"
-                })
-            
-        # Wait for service to initialize
-        time.sleep(1)
+        phone_number = request.form.get('phone_number')
         
-        # Check if service is still running
-        if not whatsapp_service.is_running():
-            return jsonify({
-                "success": False,
-                "message": f"WhatsApp service started but then stopped: {whatsapp_service.last_error}"
-            })
-            
+        # Send connect command
+        whatsapp_service.send_command('connect', {'phoneNumber': phone_number})
+        
         return jsonify({
             "success": True,
-            "status": whatsapp_service.status,
-            "phoneNumber": whatsapp_service.connected_phone
+            "message": "Connection initiated"
         })
         
     except Exception as e:
@@ -71,11 +73,14 @@ def connect():
 def disconnect():
     """Disconnect from WhatsApp"""
     try:
-        whatsapp_service.stop()
+        # Send disconnect command
+        whatsapp_service.send_command('logout')
+        
         return jsonify({
             "success": True,
-            "message": "Disconnected from WhatsApp"
+            "message": "Disconnection initiated"
         })
+        
     except Exception as e:
         logger.error(f"Error disconnecting from WhatsApp: {str(e)}")
         return jsonify({
@@ -86,35 +91,16 @@ def disconnect():
 @whatsapp_bp.route('/status')
 def status():
     """Get WhatsApp connection status"""
-    # Make sure there's a valid status even if service isn't running
-    if not whatsapp_service.is_running():
-        status_value = "disconnected"
-    else:
-        status_value = whatsapp_service.status or "disconnected"
-        
     return jsonify({
         "success": True,
-        "running": whatsapp_service.is_running(),
-        "status": status_value,
-        "phoneNumber": whatsapp_service.connected_phone,
-        "hasQR": whatsapp_service.qr_code is not None,
+        "isRunning": whatsapp_service.is_running(),
+        "status": whatsapp_service.status,
+        "phoneNumber": whatsapp_service.phone_number,
         "hasPairingCode": whatsapp_service.pairing_code is not None,
         "error": whatsapp_service.last_error
     })
 
-@whatsapp_bp.route('/qr_code')
-def get_qr_code():
-    """Get QR code for WhatsApp connection"""
-    if whatsapp_service.qr_code:
-        return jsonify({
-            "success": True,
-            "qrCode": whatsapp_service.qr_code
-        })
-    else:
-        return jsonify({
-            "success": False,
-            "message": "No QR code available"
-        })
+# QR code functionality removed as per requirements
 
 @whatsapp_bp.route('/pairing_code', methods=['POST'])
 def request_pairing_code():
@@ -161,6 +147,7 @@ def send_messages():
         message_text = request.form.get('message', '')
         message_file = request.files.get('message_file')
         delay = int(request.form.get('delay', 5))
+        message_prefix = request.form.get('message_prefix', '')
         
         # Process message file if provided
         messages = []
@@ -169,6 +156,10 @@ def send_messages():
             messages = [msg.strip() for msg in message_content.splitlines() if msg.strip()]
         elif message_text:
             messages = [msg.strip() for msg in message_text.split('\n') if msg.strip()]
+        
+        # Apply message prefix if provided
+        if message_prefix:
+            messages = [f"{message_prefix}{msg}" for msg in messages]
             
         # Process recipients
         recipient_list = [r.strip() for r in recipients.split(',') if r.strip()]
@@ -192,31 +183,49 @@ def send_messages():
                 "message": "WhatsApp is not connected. Please connect first."
             })
             
-        # Generate batch ID
-        batch_id = str(uuid.uuid4())
+        # Generate task ID
+        task_id = str(uuid.uuid4())
         
-        # Store batch task
-        batch_tasks[batch_id] = {
-            'id': batch_id,
-            'recipients': recipient_list,
-            'messages': messages,
-            'delay': delay,
-            'status': 'starting',
-            'created_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'logs': []
-        }
+        # Create database task entry
+        task = WhatsAppTask(
+            id=task_id,
+            phone_number=whatsapp_service.phone_number,
+            status='created',
+            total_recipients=len(recipient_list),
+            total_messages=len(messages),
+            delay=delay
+        )
+        db.session.add(task)
+        
+        # Create message entries
+        for recipient in recipient_list:
+            for message in messages:
+                msg = WhatsAppMessage(
+                    task_id=task_id,
+                    recipient=recipient,
+                    message=message,
+                    status='pending'
+                )
+                db.session.add(msg)
+        
+        # Commit to database
+        db.session.commit()
         
         # Send command to start messages
         whatsapp_service.send_command('send_messages', {
-            'batchId': batch_id,
+            'taskId': task_id,
             'recipients': recipient_list,
             'messages': messages,
             'delay': delay
         })
         
+        # Update task status
+        task.status = 'running'
+        db.session.commit()
+        
         return jsonify({
             "success": True,
-            "batch_id": batch_id,
+            "task_id": task_id,
             "message": "Message sending started"
         })
         
@@ -227,75 +236,150 @@ def send_messages():
             "message": f"An error occurred: {str(e)}"
         })
 
-@whatsapp_bp.route('/stop_batch/<batch_id>', methods=['POST'])
-def stop_batch(batch_id):
-    """Stop a batch of messages"""
+@whatsapp_bp.route('/stop_task/<task_id>', methods=['POST'])
+def stop_task(task_id):
+    """Stop a message sending task"""
     try:
-        if batch_id not in batch_tasks:
+        # Get task from database
+        task = WhatsAppTask.query.get(task_id)
+        if not task:
             return jsonify({
                 "success": False,
-                "message": "Batch ID not found"
+                "message": "Task ID not found"
             })
             
-        # Send command to stop batch
-        whatsapp_service.send_command('stop_batch', {'batchId': batch_id})
+        # Send command to stop task
+        whatsapp_service.send_command('stop_task', {'taskId': task_id})
         
-        # Update batch status
-        batch_tasks[batch_id]['status'] = 'stopped'
+        # Update task status
+        task.status = 'stopped'
+        db.session.commit()
         
         return jsonify({
             "success": True,
-            "message": "Batch stopped successfully"
+            "message": "Task stopped successfully"
         })
         
     except Exception as e:
-        logger.error(f"Error stopping batch {batch_id}: {str(e)}")
+        logger.error(f"Error stopping task {task_id}: {str(e)}")
         return jsonify({
             "success": False,
             "message": f"An error occurred: {str(e)}"
         })
 
-@whatsapp_bp.route('/batch_logs/<batch_id>')
-def batch_logs(batch_id):
-    """Get logs for a batch"""
-    if batch_id not in batch_tasks:
-        return jsonify({
-            "success": False,
-            "message": "Batch ID not found"
+@whatsapp_bp.route('/restart_task/<task_id>', methods=['POST'])
+def restart_task(task_id):
+    """Restart a stopped message sending task"""
+    try:
+        # Get task from database
+        task = WhatsAppTask.query.get(task_id)
+        if not task:
+            return jsonify({
+                "success": False,
+                "message": "Task ID not found"
+            })
+        
+        if task.status not in ['stopped', 'failed']:
+            return jsonify({
+                "success": False,
+                "message": "Only stopped or failed tasks can be restarted"
+            })
+        
+        # Get messages that were not sent
+        pending_messages = WhatsAppMessage.query.filter_by(
+            task_id=task_id, 
+            status='pending'
+        ).all()
+        
+        if not pending_messages:
+            return jsonify({
+                "success": False,
+                "message": "No pending messages to restart"
+            })
+        
+        # Get unique recipients and messages
+        recipients = list(set([msg.recipient for msg in pending_messages]))
+        messages = list(set([msg.message for msg in pending_messages]))
+        
+        # Send command to restart task
+        whatsapp_service.send_command('restart_task', {
+            'taskId': task_id,
+            'recipients': recipients,
+            'messages': messages,
+            'delay': task.delay
         })
         
-    batch = batch_tasks[batch_id]
+        # Update task status
+        task.status = 'running'
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Task restarted successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error restarting task {task_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        })
+
+@whatsapp_bp.route('/task/<task_id>')
+def view_task(task_id):
+    """View details for a specific task"""
+    # Get task from database
+    task = WhatsAppTask.query.get(task_id)
+    if not task:
+        return render_template('whatsapp/task.html', 
+                              error="Task not found", 
+                              task_id=task_id)
     
-    # Get relevant logs from WhatsApp service messages
-    logs = [msg for msg in whatsapp_service.messages if msg.get('batchId') == batch_id]
+    # Get messages for this task
+    messages = WhatsAppMessage.query.filter_by(task_id=task_id).all()
+    
+    # Group messages by status
+    pending = [m for m in messages if m.status == 'pending']
+    sent = [m for m in messages if m.status == 'sent']
+    failed = [m for m in messages if m.status == 'failed']
+    
+    return render_template('whatsapp/task.html', 
+                          task=task, 
+                          messages=messages,
+                          pending=pending,
+                          sent=sent,
+                          failed=failed)
+
+@whatsapp_bp.route('/tasks')
+def list_tasks():
+    """List all WhatsApp message tasks"""
+    # Get all tasks from database
+    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
+    
+    return render_template('whatsapp/tasks.html', tasks=tasks)
+
+@whatsapp_bp.route('/task_status/<task_id>')
+def task_status(task_id):
+    """Get status for a specific task"""
+    # Get task from database
+    task = WhatsAppTask.query.get(task_id)
+    if not task:
+        return jsonify({
+            "success": False,
+            "message": "Task not found"
+        })
+    
+    # Get message counts
+    pending_count = WhatsAppMessage.query.filter_by(task_id=task_id, status='pending').count()
+    sent_count = WhatsAppMessage.query.filter_by(task_id=task_id, status='sent').count()
+    failed_count = WhatsAppMessage.query.filter_by(task_id=task_id, status='failed').count()
     
     return jsonify({
         "success": True,
-        "batch": {
-            "id": batch_id,
-            "status": batch['status'],
-            "created_at": batch['created_at'],
-            "recipients": batch['recipients'],
-            "message_count": len(batch['messages'])
-        },
-        "logs": logs
+        "task": task.to_dict(),
+        "counts": {
+            "pending": pending_count,
+            "sent": sent_count,
+            "failed": failed_count
+        }
     })
-
-@whatsapp_bp.route('/messages/<batch_id>')
-def view_messages(batch_id):
-    """View messages for a specific batch"""
-    if batch_id not in batch_tasks:
-        return render_template('whatsapp/messages.html', 
-                              messages=[], 
-                              batch_id=batch_id, 
-                              error="Batch ID not found")
-    
-    batch = batch_tasks[batch_id]
-    
-    # Get relevant logs
-    logs = [msg for msg in whatsapp_service.messages if msg.get('batchId') == batch_id]
-    
-    return render_template('whatsapp/messages.html', 
-                          batch=batch, 
-                          logs=logs, 
-                          batch_id=batch_id)

@@ -1,159 +1,462 @@
-{% extends "layout.html" %}
+{% extends 'layout.html' %}
 
-{% block title %}WhatsApp Automation - Automation Hub{% endblock %}
+{% block title %}WhatsApp Automation{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h1 class="display-5 fw-bold mb-3">
-            <i class="fab fa-whatsapp me-2 text-primary"></i>
-            WhatsApp Automation
-        </h1>
-        <p class="lead">Connect to WhatsApp and send automated messages to contacts or groups.</p>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow mb-4">
-            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-plug me-2 text-primary"></i>
-                    Connection Status
-                </h5>
-                <div>
-                    <span class="status-indicator whatsapp-indicator status-disconnected"></span>
-                    <span class="badge bg-danger" id="whatsapp-status">Disconnected</span>
+<div class="container mt-4">
+    <h1 class="mb-4">WhatsApp Automation</h1>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plug me-2"></i> Connection Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="status-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6>Service Status:</h6>
+                                <span id="service-status">
+                                    {% if service_running %}
+                                    <span class="badge bg-success">Running</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Stopped</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <h6>Connection Status:</h6>
+                                <span id="connection-status">
+                                    {% if status == 'connected' %}
+                                    <span class="badge bg-success">Connected</span>
+                                    {% elif status == 'connecting' %}
+                                    <span class="badge bg-warning">Connecting</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Disconnected</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Connected Phone:</h6>
+                            <span id="phone-number">{{ phone_number or 'Not connected' }}</span>
+                        </div>
+                        
+                        {% if status == 'connected' %}
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i> WhatsApp is connected and ready to send messages.
+                        </div>
+                        <button id="disconnect-btn" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i> Disconnect
+                        </button>
+                        {% else %}
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i> Please connect to WhatsApp to start sending messages.
+                        </div>
+                        <form id="connect-form">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="phone-input" placeholder="Phone Number with Country Code" required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Connect
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Example: 919876543210 (91 is country code for India)</small>
+                        </form>
+                        
+                        <button id="code-btn" class="btn btn-outline-primary mt-2">
+                            <i class="fas fa-key me-1"></i> Request Pairing Code
+                        </button>
+                        <div id="pairing-code-container" class="d-none mt-3">
+                            <div class="alert alert-info">
+                                <strong>Pairing Code:</strong> <span id="pairing-code">Waiting...</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="d-none" id="phone-number-container">
-                    <p class="mb-3">Connected as: <span class="fw-bold text-primary" id="whatsapp-phone"></span></p>
+            
+            {% if tasks %}
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i> Active Tasks
+                    </h5>
                 </div>
-                
-                <div class="d-grid gap-2">
-                    <button id="connect-whatsapp" class="btn btn-primary">
-                        <i class="fas fa-link me-2"></i>
-                        Connect to WhatsApp
-                    </button>
-                    
-                    <button id="disconnect-whatsapp" class="btn btn-danger d-none">
-                        <i class="fas fa-unlink me-2"></i>
-                        Disconnect
-                    </button>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for task in tasks %}
+                        <a href="{{ url_for('whatsapp.view_task', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Task: {{ task.id[:8] }}...</h6>
+                                    <small>Created: {{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <div>
+                                    <span class="badge 
+                                        {% if task.status == 'running' %}bg-primary
+                                        {% elif task.status == 'completed' %}bg-success
+                                        {% elif task.status == 'stopped' %}bg-warning
+                                        {% elif task.status == 'failed' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ task.status }}
+                                    </span>
+                                    <div class="progress mt-1" style="width: 100px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%" 
+                                             aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ task.progress }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-list me-1"></i> View All Tasks
+                    </a>
                 </div>
             </div>
+            {% endif %}
         </div>
         
-        <div id="pairing-section" class="card border-0 shadow mb-4 d-none">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-mobile-alt me-2 text-primary"></i>
-                    Pairing Code
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="phone-number" class="form-label">Phone Number with Country Code</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="phone-number" placeholder="e.g., 911234567890">
-                        <button class="btn btn-primary" id="request-pairing-code">
-                            <i class="fas fa-key me-2"></i>
-                            Get Code
-                        </button>
-                    </div>
-                    <small class="text-muted">Enter your phone number with country code (e.g., 911234567890 for India)</small>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-paper-plane me-2"></i> Send Messages
+                    </h5>
                 </div>
-                
-                <div id="pairing-code-container" class="d-none mt-3">
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading">Your Pairing Code:</h5>
-                        <div class="d-flex justify-content-center">
-                            <h2 id="pairing-code-display" class="display-6 mb-0 text-monospace"></h2>
-                        </div>
-                        <hr>
-                        <p class="mb-0">Enter this code in your WhatsApp app to connect. (Settings → Linked Devices → Link a Device)</p>
+                <div class="card-body">
+                    <form id="send-form" {% if status != 'connected' %}class="disabled"{% endif %}>
+                        <fieldset {% if status != 'connected' %}disabled{% endif %}>
+                            <div class="mb-3">
+                                <label for="recipients" class="form-label">Recipients (comma separated)</label>
+                                <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="919876543210, 919876543211, 919876543212" required></textarea>
+                                <div class="form-text">Enter phone numbers with country code, separated by commas.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message-prefix" class="form-label">Message Prefix (optional)</label>
+                                <input type="text" class="form-control" id="message-prefix" name="message_prefix" placeholder="Hi there! ">
+                                <div class="form-text">Text to add before each message (e.g., greeting or personalization)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Messages (one per line)</label>
+                                <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message 1&#10;Message 2&#10;Message 3"></textarea>
+                                <div class="form-text">Enter one message per line or upload a text file.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message-file" class="form-label">Or upload a text file</label>
+                                <input class="form-control" type="file" id="message-file" name="message_file" accept=".txt">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="delay" class="form-label">Delay between messages (seconds)</label>
+                                <input type="number" class="form-control" id="delay" name="delay" min="1" max="60" value="5">
+                                <div class="form-text">Recommended: 5+ seconds to avoid being blocked.</div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i> Start Sending Messages
+                                </button>
+                            </div>
+                        </fieldset>
+                    </form>
+                    
+                    {% if status != 'connected' %}
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i> You need to connect to WhatsApp first.
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-6">
-        <div id="qr-section" class="card border-0 shadow d-none">
-            <div class="card-header bg-transparent">
+    <div id="result-container" class="d-none">
+        <div class="card">
+            <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-qrcode me-2 text-primary"></i>
-                    Scan QR Code
-                </h5>
-            </div>
-            <div class="card-body text-center">
-                <div id="qr-container" class="d-none qr-container mb-3">
-                    <img id="qr-display" src="" alt="WhatsApp QR Code">
-                </div>
-                
-                <div id="qr-instructions" class="d-none">
-                    <ol class="text-start">
-                        <li>Open WhatsApp on your phone</li>
-                        <li>Tap Menu <i class="fas fa-ellipsis-v"></i> or Settings <i class="fas fa-cog"></i></li>
-                        <li>Select "Linked Devices"</li>
-                        <li>Tap on "Link a Device"</li>
-                        <li>Point your phone camera to scan this QR code</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="message-form-section" class="row d-none">
-    <div class="col">
-        <div class="card border-0 shadow">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-paper-plane me-2 text-primary"></i>
-                    Send WhatsApp Messages
+                    <i class="fas fa-check-circle me-2"></i> Messages Started
                 </h5>
             </div>
             <div class="card-body">
-                <form id="send-message-form">
-                    <div class="mb-3">
-                        <label for="recipients" class="form-label required-field">Recipients</label>
-                        <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="Enter phone numbers with country code (one per line or comma-separated)" required></textarea>
-                        <small class="form-text text-muted">Format: country code + number (e.g., 911234567890), one per line or comma-separated.</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="message" class="form-label">Message</label>
-                        <textarea class="form-control" id="message" name="message" rows="5" placeholder="Enter your message here"></textarea>
-                        <small class="form-text text-muted">Enter your message or upload a file below with multiple messages (one per line).</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="message-file" class="form-label">Or Upload Message File</label>
-                        <input type="file" class="form-control" id="message-file" name="message_file">
-                        <small class="form-text text-muted">Upload a text file with messages (one per line). This will override the text area above.</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="delay" class="form-label required-field">Delay Between Messages (seconds)</label>
-                        <input type="number" class="form-control" id="delay" name="delay" min="1" value="5" required>
-                        <small class="form-text text-muted">Set the time delay between messages to avoid rate limiting (5+ seconds recommended).</small>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-play me-2"></i>
-                            Start Sending Messages
-                        </button>
-                    </div>
-                </form>
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> Message sending has been started successfully!
+                </div>
+                <div>
+                    <strong>Task ID:</strong> <span id="batch-id"></span>
+                </div>
+                <div class="mt-2">
+                    <a id="view-messages-link" href="#" class="btn btn-primary">
+                        <i class="fas fa-eye me-1"></i> View Messages
+                    </a>
+                    <button id="stop-batch-btn" class="btn btn-warning">
+                        <i class="fas fa-stop me-1"></i> Stop Messages
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/whatsapp.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check status periodically
+    setInterval(checkStatus, 5000);
+    
+    // Initial status check
+    checkStatus();
+    
+    // Connect form handler
+    const connectForm = document.getElementById('connect-form');
+    if (connectForm) {
+        connectForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const phoneNumber = document.getElementById('phone-input').value.trim();
+            if (!phoneNumber) {
+                alert('Please enter a phone number');
+                return;
+            }
+            
+            fetch('/whatsapp/connect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `phone_number=${encodeURIComponent(phoneNumber)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStatus('connecting', null);
+                    alert('Connection initiated. Please wait...');
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                alert(`Error: ${error}`);
+            });
+        });
+    }
+    
+    // Disconnect button handler
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to disconnect from WhatsApp?')) {
+                fetch('/whatsapp/disconnect', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateStatus('disconnected', null);
+                        alert('Disconnection initiated. Please wait...');
+                    } else {
+                        alert(`Error: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    alert(`Error: ${error}`);
+                });
+            }
+        });
+    }
+    
+    // Request pairing code button handler
+    const codeBtn = document.getElementById('code-btn');
+    if (codeBtn) {
+        codeBtn.addEventListener('click', function() {
+            const phoneNumber = document.getElementById('phone-input').value.trim();
+            if (!phoneNumber) {
+                alert('Please enter a phone number first');
+                return;
+            }
+            
+            // Show pairing code container
+            document.getElementById('pairing-code-container').classList.remove('d-none');
+            document.getElementById('pairing-code').textContent = 'Requesting...';
+            
+            fetch('/whatsapp/pairing_code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `phone_number=${encodeURIComponent(phoneNumber)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pairing-code').textContent = data.pairingCode;
+                    alert(`Pairing code received: ${data.pairingCode}\n\nEnter this code in WhatsApp on your phone.`);
+                } else {
+                    document.getElementById('pairing-code').textContent = 'Failed';
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                document.getElementById('pairing-code').textContent = 'Error';
+                alert(`Error: ${error}`);
+            });
+        });
+    }
+    
+    // Send messages form handler
+    const sendForm = document.getElementById('send-form');
+    if (sendForm) {
+        sendForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const recipients = document.getElementById('recipients').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const messageFile = document.getElementById('message-file').files[0];
+            const delay = document.getElementById('delay').value.trim();
+            const messagePrefix = document.getElementById('message-prefix').value;
+            
+            if (!recipients) {
+                alert('Please enter at least one recipient');
+                return;
+            }
+            
+            if (!message && !messageFile) {
+                alert('Please enter messages or upload a file');
+                return;
+            }
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('recipients', recipients);
+            formData.append('message', message);
+            formData.append('delay', delay);
+            formData.append('message_prefix', messagePrefix);
+            
+            if (messageFile) {
+                formData.append('message_file', messageFile);
+            }
+            
+            // Disable form
+            const submitBtn = sendForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+            
+            fetch('/whatsapp/send_messages', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable form
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Start Sending Messages';
+                
+                if (data.success) {
+                    // Show result container
+                    document.getElementById('result-container').classList.remove('d-none');
+                    document.getElementById('batch-id').textContent = data.task_id;
+                    document.getElementById('view-messages-link').href = `/whatsapp/task/${data.task_id}`;
+                    document.getElementById('stop-batch-btn').setAttribute('data-task-id', data.task_id);
+                    
+                    // Scroll to result container
+                    document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                // Enable form
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Start Sending Messages';
+                
+                alert(`Error: ${error}`);
+            });
+        });
+    }
+    
+    // Stop batch button handler
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'stop-batch-btn' || e.target.closest('#stop-batch-btn')) {
+            const button = e.target.id === 'stop-batch-btn' ? e.target : e.target.closest('#stop-batch-btn');
+            const taskId = button.getAttribute('data-task-id');
+            
+            if (confirm('Are you sure you want to stop sending messages?')) {
+                fetch(`/whatsapp/stop_task/${taskId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Messages stopped successfully');
+                        document.getElementById('result-container').classList.add('d-none');
+                    } else {
+                        alert(`Error: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    alert(`Error: ${error}`);
+                });
+            }
+        }
+    });
+    
+    // Function to check WhatsApp status
+    function checkStatus() {
+        fetch('/whatsapp/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Service status
+                    document.getElementById('service-status').innerHTML = data.isRunning 
+                        ? '<span class="badge bg-success">Running</span>' 
+                        : '<span class="badge bg-danger">Stopped</span>';
+                    
+                    // Connection status
+                    let statusClass = '';
+                    switch (data.status) {
+                        case 'connected':
+                            statusClass = 'bg-success';
+                            break;
+                        case 'connecting':
+                            statusClass = 'bg-warning';
+                            break;
+                        default:
+                            statusClass = 'bg-secondary';
+                    }
+                    
+                    document.getElementById('connection-status').innerHTML = 
+                        `<span class="badge ${statusClass}">${data.status || 'disconnected'}</span>`;
+                    
+                    // Phone number
+                    document.getElementById('phone-number').textContent = data.phoneNumber || 'Not connected';
+                    
+                    // Update status
+                    if (data.status !== '{{ status }}' || data.phoneNumber !== '{{ phone_number }}') {
+                        updateStatus(data.status, data.phoneNumber);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+            });
+    }
+    
+    // Update status UI
+    function updateStatus(status, phoneNumber) {
+        // Reload the page after status change
+        window.location.reload();
+    }
+});
+</script>
 {% endblock %}

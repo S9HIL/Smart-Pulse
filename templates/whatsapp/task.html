@@ -1,0 +1,274 @@
+{% extends 'layout.html' %}
+
+{% block title %}Task Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+    </div>
+    <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Tasks
+    </a>
+    {% else %}
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Task: {{ task.id[:8] }}...</h1>
+        <div>
+            <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Tasks
+            </a>
+            
+            {% if task.status == 'running' %}
+            <button id="stop-btn" class="btn btn-warning">
+                <i class="fas fa-stop"></i> Stop Task
+            </button>
+            {% elif task.status in ['stopped', 'failed'] %}
+            <button id="restart-btn" class="btn btn-success">
+                <i class="fas fa-play"></i> Restart Task
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <i class="fas fa-info-circle"></i> Task Information
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4"><strong>Status:</strong></div>
+                        <div class="col-md-8">
+                            <span class="badge 
+                                {% if task.status == 'running' %}bg-primary
+                                {% elif task.status == 'completed' %}bg-success
+                                {% elif task.status == 'stopped' %}bg-warning
+                                {% elif task.status == 'failed' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>Created:</strong></div>
+                        <div class="col-md-8">{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>Phone:</strong></div>
+                        <div class="col-md-8">{{ task.phone_number or 'N/A' }}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>Recipients:</strong></div>
+                        <div class="col-md-8">{{ task.total_recipients }}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>Messages:</strong></div>
+                        <div class="col-md-8">{{ task.total_messages }}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>Delay:</strong></div>
+                        <div class="col-md-8">{{ task.delay }} seconds</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <i class="fas fa-chart-pie"></i> Progress
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar 
+                            {% if task.status == 'running' %}bg-primary
+                            {% elif task.status == 'completed' %}bg-success
+                            {% elif task.status == 'stopped' %}bg-warning
+                            {% elif task.status == 'failed' %}bg-danger
+                            {% else %}bg-secondary{% endif %}"
+                            role="progressbar" 
+                            style="width: {{ task.progress }}%"
+                            aria-valuenow="{{ task.progress }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {{ task.progress }}%
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <h5 class="card-title">{{ pending|length }}</h5>
+                                    <p class="card-text text-secondary">Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <h5 class="card-title">{{ sent|length }}</h5>
+                                    <p class="card-text text-success">Sent</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <h5 class="card-title">{{ failed|length }}</h5>
+                                    <p class="card-text text-danger">Failed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <i class="fas fa-list"></i> Message Details
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="messageTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
+                                All ({{ messages|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">
+                                Pending ({{ pending|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab" aria-controls="sent" aria-selected="false">
+                                Sent ({{ sent|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="failed-tab" data-bs-toggle="tab" data-bs-target="#failed" type="button" role="tab" aria-controls="failed" aria-selected="false">
+                                Failed ({{ failed|length }})
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3" id="messageTabsContent">
+                        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            {% include 'whatsapp/message_list.html' with context %}
+                        </div>
+                        <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                            {% with filtered_messages = pending %}
+                                {% include 'whatsapp/message_list.html' with context %}
+                            {% endwith %}
+                        </div>
+                        <div class="tab-pane fade" id="sent" role="tabpanel" aria-labelledby="sent-tab">
+                            {% with filtered_messages = sent %}
+                                {% include 'whatsapp/message_list.html' with context %}
+                            {% endwith %}
+                        </div>
+                        <div class="tab-pane fade" id="failed" role="tabpanel" aria-labelledby="failed-tab">
+                            {% with filtered_messages = failed %}
+                                {% include 'whatsapp/message_list.html' with context %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update status every 5 seconds if task is running
+    {% if task and task.status == 'running' %}
+    const taskId = '{{ task.id }}';
+    const statusInterval = setInterval(function() {
+        fetch(`/whatsapp/task_status/${taskId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // If status has changed, reload the page
+                    if (data.task.status !== '{{ task.status }}') {
+                        location.reload();
+                    }
+                    
+                    // Update progress bar
+                    const progressBar = document.querySelector('.progress-bar');
+                    if (progressBar) {
+                        progressBar.style.width = `${data.task.progress}%`;
+                        progressBar.setAttribute('aria-valuenow', data.task.progress);
+                        progressBar.textContent = `${data.task.progress}%`;
+                    }
+                    
+                    // Update counts
+                    document.querySelectorAll('.card-title')[0].textContent = data.counts.pending;
+                    document.querySelectorAll('.card-title')[1].textContent = data.counts.sent;
+                    document.querySelectorAll('.card-title')[2].textContent = data.counts.failed;
+                    
+                    // Update tab counts
+                    document.querySelector('#all-tab').textContent = `All (${data.counts.pending + data.counts.sent + data.counts.failed})`;
+                    document.querySelector('#pending-tab').textContent = `Pending (${data.counts.pending})`;
+                    document.querySelector('#sent-tab').textContent = `Sent (${data.counts.sent})`;
+                    document.querySelector('#failed-tab').textContent = `Failed (${data.counts.failed})`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching task status:', error);
+            });
+    }, 5000);
+    {% endif %}
+    
+    // Stop task button
+    const stopBtn = document.getElementById('stop-btn');
+    if (stopBtn) {
+        stopBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to stop this task?')) {
+                fetch('/whatsapp/stop_task/{{ task.id }}', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Task stopped successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                });
+            }
+        });
+    }
+    
+    // Restart task button
+    const restartBtn = document.getElementById('restart-btn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to restart this task?')) {
+                fetch('/whatsapp/restart_task/{{ task.id }}', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Task restarted successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
