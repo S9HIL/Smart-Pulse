@@ -295,27 +295,78 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
                     url = f"https://graph.facebook.com/v17.0/t_{convo_id}/"
                     parameters = {'access_token': access_token, 'message': f'{haters_name} {message}'}
                     
-                    # Send message
-                    response = requests.post(url, json=parameters, headers=headers)
-                    success = response.ok
-                    
                     # Format the full message
                     full_message = f'{haters_name} {message}'
                     
-                    # Store message in database
-                    db_message = FacebookMessage(
+                    # Create pending message in database first
+                    pending_msg = FacebookMessage(
                         batch_id=batch_id,
                         message=full_message,
-                        status="Success" if success else "Failed",
-                        status_class="text-success" if success else "text-danger"
+                        status="Pending",
+                        status_class="text-secondary"
                     )
                     
-                    # In a separate try-block to ensure we store something even if DB fails
                     try:
-                        db.session.add(db_message)
+                        db.session.add(pending_msg)
                         db.session.commit()
+                        pending_id = pending_msg.id  # Store ID for later update
                     except Exception as db_err:
-                        logger.error(f"Error storing message in database: {str(db_err)}")
+                        logger.error(f"Error storing pending message in database: {str(db_err)}")
+                        pending_id = None  # Handle case where DB insert fails
+                    
+                    # Send message with retry mechanism
+                    success = False
+                    error_message = None
+                    retry_count = 0
+                    max_retries = 3
+                    
+                    while not success and retry_count < max_retries:
+                        try:
+                            # Send message to Facebook
+                            response = requests.post(url, json=parameters, headers=headers, timeout=30)
+                            
+                            # Check for success
+                            if response.ok:
+                                success = True
+                                response_data = response.json()
+                                # Facebook returns message_id on success
+                                if 'id' in response_data:
+                                    logger.info(f"Message sent successfully with ID: {response_data['id']}")
+                            else:
+                                error_message = f"API Error: {response.status_code} - {response.text}"
+                                logger.warning(f"Facebook API error (attempt {retry_count+1}): {error_message}")
+                                retry_count += 1
+                                time.sleep(2)  # Short delay before retry
+                        except requests.exceptions.RequestException as req_err:
+                            error_message = f"Request error: {str(req_err)}"
+                            logger.warning(f"Network error (attempt {retry_count+1}): {error_message}")
+                            retry_count += 1
+                            time.sleep(5)  # Longer delay on network errors
+                    
+                    # Update the message status in database
+                    if pending_id:
+                        try:
+                            # Find the pending message
+                            pending_msg = FacebookMessage.query.get(pending_id)
+                            if pending_msg:
+                                pending_msg.status = "Success" if success else "Failed"
+                                pending_msg.status_class = "text-success" if success else "text-danger"
+                                if not success and error_message:
+                                    pending_msg.error = error_message
+                                db.session.commit()
+                            else:
+                                # If message not found, create a new one
+                                db_message = FacebookMessage(
+                                    batch_id=batch_id,
+                                    message=full_message,
+                                    status="Success" if success else "Failed",
+                                    status_class="text-success" if success else "text-danger",
+                                    error=error_message if not success else None
+                                )
+                                db.session.add(db_message)
+                                db.session.commit()
+                        except Exception as db_err:
+                            logger.error(f"Error updating message status in database: {str(db_err)}")
                     
                     # Also store in memory for backward compatibility
                     log_message = {

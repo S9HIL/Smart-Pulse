@@ -496,21 +496,52 @@ def view_messages(batch_id):
 @instagram_bp.route('/api/batch/<batch_id>')
 def get_batch_info(batch_id):
     """Get information about a specific batch"""
-    if batch_id not in active_batches:
-        return jsonify({
-            "success": False,
-            "message": "Batch not found"
-        }), 404
+    # First check database
+    batch = InstagramBatch.query.get(batch_id)
     
-    batch_info = active_batches[batch_id]
-    messages = user_batches.get(batch_id, [])
-    is_stopped = stop_flags.get(batch_id, True)
+    if not batch:
+        # Check in-memory for backward compatibility
+        if batch_id not in active_batches:
+            return jsonify({
+                "success": False,
+                "message": "Batch not found in database or memory"
+            }), 404
+        
+        # Get from memory
+        batch_info = active_batches[batch_id]
+        messages = user_batches.get(batch_id, [])
+        is_stopped = stop_flags.get(batch_id, True)
+        
+        # Count successful messages
+        success_count = batch_info.get('sent_count', 0)
+        if success_count == 0:
+            # Count from messages as fallback
+            success_count = len([msg for msg in messages if msg.get('status_class') == 'message-success'])
+    else:
+        # Get from database
+        # Count successful messages from database
+        success_count = InstagramMessage.query.filter_by(
+            batch_id=batch_id, 
+            status='Sent'
+        ).count()
+        
+        # Get runtime status
+        is_stopped = stop_flags.get(batch_id, True)
+        
+        # If batch status doesn't match runtime status, update database
+        if (is_stopped and batch.status == 'running') or (not is_stopped and batch.status == 'stopped'):
+            batch.status = 'stopped' if is_stopped else 'running'
+            db.session.commit()
     
-    # Count successful messages
-    success_count = batch_info.get('sent_count', 0)
-    if success_count == 0:
-        # Count from messages as fallback
-        success_count = len([msg for msg in messages if msg.get('status_class') == 'message-success'])
+        batch_info = {
+            "target": batch.target,
+            "target_type": batch.target_type,
+            "status": batch.status,
+            "created_at": batch.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            "username": batch.username,
+            "message_prefix": batch.message_prefix,
+            "delay_time": batch.delay_time
+        }
     
     return jsonify({
         "success": True,
@@ -518,7 +549,7 @@ def get_batch_info(batch_id):
         "info": {
             "target": batch_info.get('target', 'Unknown'),
             "target_type": batch_info.get('target_type', 'Unknown'),
-            "status": "Stopped" if is_stopped else "Running",
+            "status": batch.status if batch else ("Stopped" if is_stopped else "Running"),
             "created_at": batch_info.get('created_at', 'Unknown'),
             "username": batch_info.get('username', 'Unknown'),
             "message_count": success_count,
@@ -530,20 +561,41 @@ def get_batch_info(batch_id):
 @instagram_bp.route('/api/batch/<batch_id>/messages')
 def get_batch_messages(batch_id):
     """Get messages for a specific batch"""
-    if batch_id not in user_batches:
-        return jsonify({
-            "success": False,
-            "message": "Batch not found"
-        }), 404
+    # First check database
+    batch = InstagramBatch.query.get(batch_id)
     
-    messages = user_batches.get(batch_id, [])
-    # Filter sensitive info like passwords
-    safe_messages = []
-    for msg in messages:
-        safe_msg = msg.copy()
-        if 'password' in safe_msg:
-            del safe_msg['password']
-        safe_messages.append(safe_msg)
+    if not batch:
+        # Check in-memory for backward compatibility
+        if batch_id not in user_batches:
+            return jsonify({
+                "success": False,
+                "message": "Batch not found in database or memory"
+            }), 404
+        
+        # Get from memory
+        memory_messages = user_batches.get(batch_id, [])
+        
+        # Filter sensitive info like passwords
+        safe_messages = []
+        for msg in memory_messages:
+            safe_msg = msg.copy()
+            if 'password' in safe_msg:
+                del safe_msg['password']
+            safe_messages.append(safe_msg)
+    else:
+        # Get from database
+        db_messages = InstagramMessage.query.filter_by(batch_id=batch_id).order_by(InstagramMessage.timestamp).all()
+        
+        # Convert to dict format consistent with memory format
+        safe_messages = []
+        for msg in db_messages:
+            safe_messages.append({
+                'time': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'message': msg.message,
+                'status': msg.status,
+                'status_class': msg.status_class,
+                'error': msg.error
+            })
     
     return jsonify({
         "success": True,
