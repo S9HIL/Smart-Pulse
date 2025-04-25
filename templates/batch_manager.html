@@ -45,14 +45,42 @@
                                         </tr>
                                     </thead>
                                     <tbody id="instagramBatchesList">
+                                        {% if instagram_batches %}
+                                            {% for batch in instagram_batches %}
+                                            <tr>
+                                                <td><span class="badge bg-secondary" title="{{ batch.id }}">{{ batch.id[:8] }}...</span></td>
+                                                <td>{{ batch.target or 'N/A' }}</td>
+                                                <td>{{ batch.username or 'Unknown' }}</td>
+                                                <td>{{ batch.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                <td><span class="badge {{ 'bg-success' if batch.status == 'running' else 'bg-warning' }}">{{ batch.status }}</span></td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="/instagram/messages/{{ batch.id }}" class="btn btn-sm btn-info" title="View Messages">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {% if batch.status == 'running' %}
+                                                        <button class="btn btn-sm btn-warning" onclick="stopInstagramBatch('{{ batch.id }}')" title="Stop Batch">
+                                                            <i class="fas fa-stop"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-sm btn-success" onclick="restartInstagramBatch('{{ batch.id }}')" title="Restart Batch">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteInstagramBatch('{{ batch.id }}')" title="Delete Batch">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
                                         <tr>
                                             <td colspan="6" class="text-center py-4">
-                                                <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </div>
-                                                <p class="mt-2">Loading Instagram batches...</p>
+                                                <p class="text-muted">No active Instagram batches found</p>
                                             </td>
                                         </tr>
+                                        {% endif %}
                                     </tbody>
                                 </table>
                             </div>
@@ -73,14 +101,38 @@
                                         </tr>
                                     </thead>
                                     <tbody id="facebookBatchesList">
+                                        {% if facebook_batches %}
+                                            {% for batch in facebook_batches %}
+                                            <tr>
+                                                <td><span class="badge bg-secondary" title="{{ batch.id }}">{{ batch.id[:8] }}...</span></td>
+                                                <td>{{ batch.conversation_id or 'N/A' }}</td>
+                                                <td>{{ batch.account_name or 'Unknown' }}</td>
+                                                <td>{{ batch.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                <td><span class="badge {{ 'bg-success' if batch.status == 'running' else 'bg-warning' }}">{{ batch.status }}</span></td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="/facebook/messages/{{ batch.id }}" class="btn btn-sm btn-info" title="View Messages">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {% if batch.status == 'running' %}
+                                                        <button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('{{ batch.id }}')" title="Stop Batch">
+                                                            <i class="fas fa-stop"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('{{ batch.id }}')" title="Delete Batch">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
                                         <tr>
                                             <td colspan="6" class="text-center py-4">
-                                                <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </div>
-                                                <p class="mt-2">Loading Facebook batches...</p>
+                                                <p class="text-muted">No active Facebook batches found</p>
                                             </td>
                                         </tr>
+                                        {% endif %}
                                     </tbody>
                                 </table>
                             </div>
@@ -101,14 +153,49 @@
                                         </tr>
                                     </thead>
                                     <tbody id="whatsappTasksList">
+                                        {% if whatsapp_tasks %}
+                                            {% for task in whatsapp_tasks %}
+                                            <tr>
+                                                <td><span class="badge bg-secondary" title="{{ task.id }}">{{ task.id[:8] }}...</span></td>
+                                                <td>{{ task.phone_number or 'N/A' }}</td>
+                                                <td>{{ task.total_recipients }}</td>
+                                                <td>{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                <td>
+                                                    <div class="progress">
+                                                        <div class="progress-bar {{ 'bg-success' if task.status == 'running' else 'bg-warning' }}" role="progressbar" 
+                                                             style="width: {{ task.progress() }}%">
+                                                            {{ task.progress() }}%
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="/whatsapp/task/{{ task.id }}" class="btn btn-sm btn-info" title="View Task">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {% if task.status == 'running' %}
+                                                        <button class="btn btn-sm btn-warning" onclick="stopWhatsAppTask('{{ task.id }}')" title="Stop Task">
+                                                            <i class="fas fa-stop"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-sm btn-success" onclick="restartWhatsAppTask('{{ task.id }}')" title="Restart Task">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteWhatsAppTask('{{ task.id }}')" title="Delete Task">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
                                         <tr>
                                             <td colspan="6" class="text-center py-4">
-                                                <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </div>
-                                                <p class="mt-2">Loading WhatsApp tasks...</p>
+                                                <p class="text-muted">No active WhatsApp tasks found</p>
                                             </td>
                                         </tr>
+                                        {% endif %}
                                     </tbody>
                                 </table>
                             </div>
@@ -271,16 +358,111 @@ function restartInstagramBatch(batchId) {
 
 // Facebook Batches
 function fetchFacebookBatches() {
-    // We need to create an API endpoint to list Facebook batches
-    // For now, we'll use a placeholder
+    fetch('/facebook/api/batches')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayFacebookBatches(data.batches);
+            } else {
+                showError('facebookBatchesList', 'Failed to load Facebook batches');
+            }
+        })
+        .catch(err => {
+            showError('facebookBatchesList', 'Error loading Facebook batches');
+            console.error('Error fetching Facebook batches:', err);
+        });
+}
+
+function displayFacebookBatches(batches) {
     const tableBody = document.getElementById('facebookBatchesList');
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center py-4">
-                <p class="text-muted">Facebook batch listing will be implemented soon</p>
-            </td>
-        </tr>
-    `;
+    
+    if (!batches || batches.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <p class="text-muted">No active Facebook batches found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    batches.forEach(batch => {
+        const statusClass = getStatusClass(batch.status);
+        const truncatedId = batch.id.substring(0, 8) + '...';
+        const shortDate = new Date(batch.created_at).toLocaleString();
+        
+        html += `
+            <tr>
+                <td><span class="badge bg-secondary" title="${batch.id}">${truncatedId}</span></td>
+                <td>${batch.conversation_id || 'N/A'}</td>
+                <td>${batch.account_name || 'Unknown'}</td>
+                <td>${shortDate}</td>
+                <td><span class="badge ${statusClass}">${batch.status}</span></td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="/facebook/messages/${batch.id}" class="btn btn-sm btn-info" title="View Messages">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        ${batch.status.toLowerCase() === 'running' ? 
+                            `<button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('${batch.id}')" title="Stop Batch">
+                                <i class="fas fa-stop"></i>
+                            </button>` : 
+                            ''
+                        }
+                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('${batch.id}')" title="Delete Batch">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+}
+
+function stopFacebookBatch(batchId) {
+    fetch(`/facebook/stop/${batchId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Batch stopped successfully', 'success');
+            setTimeout(() => fetchFacebookBatches(), 1000);
+        } else {
+            showToast('Failed to stop batch: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error stopping batch', 'danger');
+        console.error('Error stopping Facebook batch:', err);
+    });
+}
+
+function deleteFacebookBatch(batchId) {
+    if (confirm('Are you sure you want to delete this Facebook batch?')) {
+        // TO DO: Implement Facebook batch deletion API
+        fetch(`/facebook/delete/${batchId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Batch deleted successfully', 'success');
+                setTimeout(() => fetchFacebookBatches(), 1000);
+            } else {
+                showToast('Failed to delete batch: ' + (data.message || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(err => {
+            showToast('Error deleting batch', 'danger');
+            console.error('Error deleting Facebook batch:', err);
+        });
+    }
 }
 
 // WhatsApp Tasks

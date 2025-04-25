@@ -43,9 +43,21 @@ def batch_manager():
     username = session.get('username', None)
     greeting = get_personalized_greeting(username)
     
+    # Fetch WhatsApp tasks from database
+    whatsapp_tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
+    
+    # Fetch Instagram batches from database
+    instagram_batches = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).all()
+    
+    # Fetch Facebook batches from database
+    facebook_batches = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).all()
+    
     return render_template('batch_manager.html',
                          greeting=greeting,
-                         username=username)
+                         username=username,
+                         whatsapp_tasks=whatsapp_tasks,
+                         instagram_batches=instagram_batches,
+                         facebook_batches=facebook_batches)
 
 @main_bp.route('/status')
 def status():

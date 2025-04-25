@@ -237,6 +237,41 @@ def list_batches():
         "success": True,
         "batches": batch_list
     })
+    
+@facebook_bp.route('/delete/<batch_id>', methods=['POST'])
+def delete_batch(batch_id):
+    """Delete a batch and all its messages"""
+    try:
+        # Check if batch exists
+        batch = FacebookBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": "Batch not found"
+            }), 404
+        
+        # First stop the batch if it's running
+        if batch.status == 'running' and batch_id in stop_flags:
+            stop_flags[batch_id].set()
+        
+        # Delete messages associated with the batch
+        FacebookMessage.query.filter_by(batch_id=batch_id).delete()
+        
+        # Delete the batch
+        db.session.delete(batch)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Batch and all associated messages deleted successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting batch {batch_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error deleting batch: {str(e)}"
+        }), 500
 
 # Helper Functions
 def get_account_name(access_token):
