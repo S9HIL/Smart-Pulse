@@ -9,7 +9,7 @@
             <i class="fab fa-facebook me-2 text-primary"></i>
             Facebook Automation
         </h1>
-        <p class="lead">Send automated messages to Facebook conversations using multiple access tokens.</p>
+        <p class="lead">Send automated direct messages to Facebook users or conversation threads.</p>
     </div>
 </div>
 
@@ -23,49 +23,69 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form id="facebook-form" method="post" action="{{ url_for('facebook.send_messages') }}" enctype="multipart/form-data">
+                <form id="facebook-form" action="{{ url_for('facebook.send_messages') }}" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="accessToken" class="form-label required-field">Facebook Access Tokens</label>
-                        <input type="file" class="form-control" id="accessToken" name="accessToken" required>
-                        <small class="form-text text-muted">Upload a text file with Facebook access tokens (one per line).</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="threadId" class="form-label required-field">Thread/Conversation ID</label>
-                        <input type="text" class="form-control" id="threadId" name="threadId" placeholder="Enter conversation ID" required>
-                        <small class="form-text text-muted">The ID of the Facebook conversation you want to message.</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="txtFile" class="form-label required-field">Message File</label>
-                        <input type="file" class="form-control" id="txtFile" name="txtFile" required>
-                        <small class="form-text text-muted">Upload a text file with messages (one per line).</small>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="kidx" class="form-label">Message Prefix</label>
-                                <input type="text" class="form-control" id="kidx" name="kidx" placeholder="Optional message prefix">
-                                <small class="form-text text-muted">Text to add before each message (e.g., a name).</small>
-                            </div>
+                        <label for="access_token" class="form-label required-field">Facebook Access Token</label>
+                        <input type="text" class="form-control" id="access_token" name="access_token" placeholder="Enter your Facebook access token" required>
+                        <div class="form-text text-muted">
+                            Your access token is used to send messages through the Facebook API.
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="time" class="form-label required-field">Delay (seconds)</label>
-                                <input type="number" class="form-control" id="time" name="time" min="1" value="5" required>
-                                <small class="form-text text-muted">Time delay between messages in seconds.</small>
-                            </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="conversation_id" class="form-label required-field">Conversation ID</label>
+                        <input type="text" class="form-control" id="conversation_id" name="conversation_id" placeholder="Enter conversation thread ID" required>
+                        <div class="form-text text-muted">
+                            The ID of the conversation thread where messages will be sent.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="haters_name" class="form-label">Recipient's Name (Optional)</label>
+                        <input type="text" class="form-control" id="haters_name" name="haters_name" placeholder="Enter recipient's name for personalization">
+                        <div class="form-text text-muted">
+                            Use %name% in your messages to be replaced with this name.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="speed" class="form-label">Delay Between Messages (seconds)</label>
+                        <input type="number" class="form-control" id="speed" name="speed" min="1" max="60" value="5">
+                        <div class="form-text text-muted">
+                            Time to wait between sending messages (1-60 seconds).
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message_text" class="form-label">Messages</label>
+                        <textarea class="form-control" id="message_text" name="message_text" rows="5" placeholder="Enter messages (one per line)"></textarea>
+                        <div class="form-text text-muted">
+                            Enter one message per line. Use %name% to include the recipient's name.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message_file" class="form-label">Or Upload Message File</label>
+                        <input type="file" class="form-control" id="message_file" name="message_file">
+                        <div class="form-text text-muted">
+                            Upload a text file with one message per line.
                         </div>
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary" id="start-button">
-                            <i class="fas fa-play me-2"></i>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>
                             Start Sending Messages
                         </button>
                     </div>
                 </form>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('main.batch_manager') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        View All Batches
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -75,17 +95,16 @@
             <div class="card-header bg-transparent">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-info-circle me-2 text-primary"></i>
-                    Instructions
+                    How It Works
                 </h5>
             </div>
             <div class="card-body">
-                <ol class="ps-3">
-                    <li class="mb-2">Upload a text file containing Facebook access tokens (one per line).</li>
-                    <li class="mb-2">Enter the Facebook conversation/thread ID you want to message.</li>
-                    <li class="mb-2">Upload a text file with messages you want to send (one per line).</li>
-                    <li class="mb-2">Optionally, add a prefix to be added before each message.</li>
-                    <li class="mb-2">Set the delay between messages (in seconds).</li>
-                    <li class="mb-2">Click "Start Sending Messages" to begin the process.</li>
+                <ol class="mb-0">
+                    <li class="mb-2">Enter your Facebook access token</li>
+                    <li class="mb-2">Specify the conversation ID where you want to send messages</li>
+                    <li class="mb-2">Add messages in the text area or upload a file</li>
+                    <li class="mb-2">Set a delay between messages</li>
+                    <li>Click "Start Sending Messages" to begin</li>
                 </ol>
             </div>
         </div>
@@ -101,11 +120,11 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item bg-transparent">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Use multiple access tokens to distribute the message load
+                        Use %name% for personalized messages
                     </li>
                     <li class="list-group-item bg-transparent">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Set appropriate delays to avoid rate limits (5+ seconds recommended)
+                        Set longer delays for more natural conversations
                     </li>
                     <li class="list-group-item bg-transparent">
                         <i class="fas fa-check-circle text-success me-2"></i>

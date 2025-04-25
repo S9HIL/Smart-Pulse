@@ -275,6 +275,8 @@ def get_account_name(access_token):
 
 def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batch_id):
     """Send messages from file in background thread"""
+    from app import app
+    
     logger.info(f"Starting Facebook message sending for batch {batch_id}")
     
     # Get the stop event
@@ -285,13 +287,14 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
     
     try:
         # Update database status
-        batch = FacebookBatch.query.get(batch_id)
-        if not batch:
-            logger.error(f"Batch {batch_id} not found in database")
-            return
-        
-        # Log start
-        log_message(batch_id, "Starting message sending process", "info")
+        with app.app_context():
+            batch = FacebookBatch.query.get(batch_id)
+            if not batch:
+                logger.error(f"Batch {batch_id} not found in database")
+                return
+            
+            # Log start
+            log_message(batch_id, "Starting message sending process", "info")
         
         # Facebook API URL
         fb_api_url = "https://graph.facebook.com/v15.0/"
@@ -303,9 +306,12 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
         for idx, message in enumerate(messages, 1):
             # Check if stop was requested
             if stop_event.is_set():
-                log_message(batch_id, "Message sending stopped by user", "info")
-                batch.status = "stopped"
-                db.session.commit()
+                with app.app_context():
+                    log_message(batch_id, "Message sending stopped by user", "info")
+                    batch = FacebookBatch.query.get(batch_id)
+                    if batch:
+                        batch.status = "stopped"
+                        db.session.commit()
                 return
             
             # Format message with haters name if provided
@@ -317,7 +323,8 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
             token = tokens[current_token_index]
             
             # Log the message being sent
-            log_message(batch_id, f"Sending message {idx}/{total_messages}: {formatted_message[:40]}...", "pending")
+            with app.app_context():
+                log_message(batch_id, f"Sending message {idx}/{total_messages}: {formatted_message[:40]}...", "pending")
             
             try:
                 # Send message
@@ -329,7 +336,8 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
                 
                 # Check response
                 if response.status_code == 200:
-                    log_message(batch_id, f"Message {idx}/{total_messages} sent successfully", "success")
+                    with app.app_context():
+                        log_message(batch_id, f"Message {idx}/{total_messages} sent successfully", "success")
                 else:
                     # Try to parse error
                     error_msg = "Unknown error"
@@ -339,15 +347,17 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
                     except:
                         error_msg = f"HTTP Error {response.status_code}"
                     
-                    log_message(batch_id, f"Failed to send message {idx}/{total_messages}", "failed", error_msg)
-                    
-                    # Rotate token if access error
-                    if "access token" in error_msg.lower():
-                        current_token_index = (current_token_index + 1) % len(tokens)
-                        log_message(batch_id, f"Switching to next access token", "info")
+                    with app.app_context():
+                        log_message(batch_id, f"Failed to send message {idx}/{total_messages}", "failed", error_msg)
+                        
+                        # Rotate token if access error
+                        if "access token" in error_msg.lower():
+                            current_token_index = (current_token_index + 1) % len(tokens)
+                            log_message(batch_id, f"Switching to next access token", "info")
             
             except Exception as e:
-                log_message(batch_id, f"Error sending message {idx}/{total_messages}", "failed", str(e))
+                with app.app_context():
+                    log_message(batch_id, f"Error sending message {idx}/{total_messages}", "failed", str(e))
             
             # Delay before next message
             if idx < total_messages and not stop_event.is_set():
@@ -355,20 +365,26 @@ def send_messages_from_file(convo_id, tokens, messages, haters_name, speed, batc
         
         # If we get here without stopping, mark as completed
         if not stop_event.is_set():
-            log_message(batch_id, "All messages sent successfully", "success")
-            batch.status = "completed"
-            db.session.commit()
+            with app.app_context():
+                log_message(batch_id, "All messages sent successfully", "success")
+                batch = FacebookBatch.query.get(batch_id)
+                if batch:
+                    batch.status = "completed"
+                    db.session.commit()
             
     except Exception as e:
         logger.error(f"Error in message sending process: {str(e)}")
-        log_message(batch_id, "Error in message sending process", "failed", str(e))
-        
-        # Update batch status
-        try:
-            batch.status = "failed"
-            db.session.commit()
-        except:
-            pass
+        with app.app_context():
+            log_message(batch_id, "Error in message sending process", "failed", str(e))
+            
+            # Update batch status
+            try:
+                batch = FacebookBatch.query.get(batch_id)
+                if batch:
+                    batch.status = "failed"
+                    db.session.commit()
+            except Exception as inner_e:
+                logger.error(f"Error updating batch status: {str(inner_e)}")
 
 def log_message(batch_id, message, status="info", error=None):
     """Log a message to both console and database"""

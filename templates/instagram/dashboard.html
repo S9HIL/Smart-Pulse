@@ -6,7 +6,7 @@
 <div class="row mb-4">
     <div class="col">
         <h1 class="display-5 fw-bold mb-3">
-            <i class="fab fa-instagram me-2 text-primary"></i>
+            <i class="fab fa-instagram me-2 text-danger"></i>
             Instagram Dashboard
         </h1>
         <p class="lead">Manage your Instagram message automation batches.</p>
@@ -18,13 +18,13 @@
         <div class="card border-0 shadow mb-4 mb-md-0">
             <div class="card-header bg-transparent">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-tasks me-2 text-primary"></i>
+                    <i class="fas fa-tasks me-2 text-danger"></i>
                     Actions
                 </h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('instagram.index') }}" class="btn btn-primary">
+                    <a href="{{ url_for('instagram.index') }}" class="btn btn-danger">
                         <i class="fas fa-plus me-2"></i>
                         Create New Batch
                     </a>
@@ -40,31 +40,35 @@
     <div class="col-md-8">
         <div class="card border-0 shadow">
             <div class="card-header bg-transparent">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2 text-primary"></i>
-                        Overview
-                    </h5>
-                </div>
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2 text-danger"></i>
+                    Batch Statistics
+                </h5>
             </div>
             <div class="card-body">
-                <div class="row g-4 text-center">
-                    <div class="col-md-4">
-                        <div class="p-3 border bg-dark bg-opacity-50 rounded">
-                            <h2 class="h4 mb-3">Total Batches</h2>
-                            <p class="display-6 mb-0" id="total-batches">0</p>
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <h6 class="mb-1">Total</h6>
+                            <h3 id="stat-total" class="mb-0">-</h3>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="p-3 border bg-dark bg-opacity-50 rounded">
-                            <h2 class="h4 mb-3">Active Batches</h2>
-                            <p class="display-6 mb-0 text-success" id="active-batches">0</p>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <h6 class="mb-1">Running</h6>
+                            <h3 id="stat-running" class="mb-0 text-primary">-</h3>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="p-3 border bg-dark bg-opacity-50 rounded">
-                            <h2 class="h4 mb-3">Stopped Batches</h2>
-                            <p class="display-6 mb-0 text-secondary" id="stopped-batches">0</p>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <h6 class="mb-1">Completed</h6>
+                            <h3 id="stat-completed" class="mb-0 text-success">-</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <h6 class="mb-1">Stopped/Failed</h6>
+                            <h3 id="stat-stopped" class="mb-0 text-warning">-</h3>
                         </div>
                     </div>
                 </div>
@@ -73,51 +77,37 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col">
-        <div class="card border-0 shadow">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-list me-2 text-primary"></i>
-                    All Batches
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Batch ID</th>
-                                <th>Username</th>
-                                <th>Target</th>
-                                <th>Type</th>
-                                <th>Created At</th>
-                                <th>Status</th>
-                                <th>Messages</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="batches-table-body">
-                            <tr>
-                                <td colspan="8" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2 mb-0">Loading batches...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div id="no-batches" class="text-center py-4 d-none">
-                    <p class="text-muted mb-0">No batches found.</p>
-                    <a href="{{ url_for('instagram.index') }}" class="btn btn-primary mt-3">
-                        <i class="fas fa-plus me-2"></i>
-                        Create Your First Batch
-                    </a>
-                </div>
-            </div>
+<div class="card border-0 shadow">
+    <div class="card-header bg-transparent">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2 text-danger"></i>
+            All Batches
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Created</th>
+                        <th>Username</th>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="batch-list">
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading batches...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -126,159 +116,227 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load batches initially
-    loadBatches();
+    const batchList = document.getElementById('batch-list');
+    const refreshButton = document.getElementById('refresh-batches');
     
-    // Set up refresh button
-    const refreshBtn = document.getElementById('refresh-batches');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            loadBatches();
-        });
+    // Function to format dates
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleString();
     }
     
-    // Set up automatic refresh
-    setInterval(loadBatches, 30000);
-});
-
-function loadBatches() {
-    fetch('/instagram/api/batches')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.batches) {
-                updateBatchesTable(data.batches);
-                updateOverview(data.batches);
-            } else {
-                showToast('Error loading batches: ' + (data.message || 'Unknown error'), 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading batches:', error);
-            showToast('Failed to load batches: ' + error.message, 'danger');
-        });
-}
-
-function updateBatchesTable(batches) {
-    const tableBody = document.getElementById('batches-table-body');
-    const noBatchesMsg = document.getElementById('no-batches');
-    
-    if (batches.length === 0) {
-        tableBody.innerHTML = '';
-        noBatchesMsg.classList.remove('d-none');
-        return;
+    // Function to format batch ID (truncate)
+    function formatId(id) {
+        if (!id) return 'N/A';
+        return id.substring(0, 8) + '...';
     }
     
-    noBatchesMsg.classList.add('d-none');
+    // Function to truncate long text
+    function truncate(str, length = 20) {
+        if (!str) return 'N/A';
+        return str.length > length ? str.substring(0, length) + '...' : str;
+    }
     
-    let tableHtml = '';
-    
-    batches.forEach(batch => {
-        const shortId = batch.batch_id.substring(0, 8) + '...';
-        
-        tableHtml += `
+    // Function to load batches
+    function loadBatches() {
+        // Show loading
+        batchList.innerHTML = `
             <tr>
-                <td title="${batch.batch_id}">${shortId}</td>
-                <td>@${batch.username}</td>
-                <td>${batch.target}</td>
-                <td>${batch.target_type}</td>
-                <td>${batch.created_at}</td>
-                <td>
-                    <span class="badge ${batch.status === 'Running' ? 'bg-success' : 'bg-secondary'}">
-                        ${batch.status}
-                    </span>
-                </td>
-                <td>${batch.message_count}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <a href="/instagram/messages/${batch.batch_id}" class="btn btn-outline-primary" title="View Messages">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        ${batch.status === 'Running' ? 
-                            `<button class="btn btn-outline-danger stop-batch" data-batch-id="${batch.batch_id}" title="Stop Sending">
-                                <i class="fas fa-stop"></i>
-                            </button>` : 
-                            `<button class="btn btn-outline-success restart-batch" data-batch-id="${batch.batch_id}" title="Restart Sending">
-                                <i class="fas fa-play"></i>
-                            </button>`
-                        }
+                <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-danger" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-3">Loading batches...</p>
                 </td>
             </tr>
         `;
-    });
-    
-    tableBody.innerHTML = tableHtml;
-    
-    // Add event listeners to action buttons
-    document.querySelectorAll('.stop-batch').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const batchId = this.getAttribute('data-batch-id');
-            stopBatch(batchId);
-        });
-    });
-    
-    document.querySelectorAll('.restart-batch').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const batchId = this.getAttribute('data-batch-id');
-            restartBatch(batchId);
-        });
-    });
-}
-
-function updateOverview(batches) {
-    const totalBatches = batches.length;
-    const activeBatches = batches.filter(b => b.status === 'Running').length;
-    const stoppedBatches = totalBatches - activeBatches;
-    
-    document.getElementById('total-batches').textContent = totalBatches;
-    document.getElementById('active-batches').textContent = activeBatches;
-    document.getElementById('stopped-batches').textContent = stoppedBatches;
-}
-
-function stopBatch(batchId) {
-    if (!confirm('Are you sure you want to stop this batch?')) {
-        return;
+        
+        fetch('{{ url_for("instagram.list_batches") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update statistics
+                    updateStats(data.batches);
+                    
+                    // Process batches
+                    if (data.batches && data.batches.length > 0) {
+                        let html = '';
+                        
+                        data.batches.forEach(batch => {
+                            const statusClass = 
+                                batch.status === 'running' ? 'status-running' : 
+                                batch.status === 'completed' ? 'status-completed' : 
+                                batch.status === 'stopped' ? 'status-stopped' : 
+                                'status-failed';
+                            
+                            html += `
+                                <tr>
+                                    <td><small class="text-muted">${formatId(batch.id)}</small></td>
+                                    <td><small>${formatDate(batch.created_at)}</small></td>
+                                    <td>${truncate(batch.username)}</td>
+                                    <td>
+                                        ${batch.target_type === 'user' ? 
+                                            `<span class="badge bg-info">User</span> ${truncate(batch.target)}` : 
+                                            `<span class="badge bg-warning">Group</span> ${truncate(batch.target)}`}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${statusClass}">
+                                            ${batch.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('instagram.messages_page', batch_id='') }}${batch.id}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            ${batch.status === 'running' ? `
+                                                <button class="btn btn-sm btn-outline-warning stop-batch" data-id="${batch.id}">
+                                                    <i class="fas fa-stop"></i>
+                                                </button>
+                                            ` : ''}
+                                            <button class="btn btn-sm btn-outline-danger delete-batch" data-id="${batch.id}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        batchList.innerHTML = html;
+                        
+                        // Add event listeners
+                        document.querySelectorAll('.stop-batch').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const batchId = this.getAttribute('data-id');
+                                stopBatch(batchId);
+                            });
+                        });
+                        
+                        document.querySelectorAll('.delete-batch').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const batchId = this.getAttribute('data-id');
+                                deleteBatch(batchId);
+                            });
+                        });
+                    } else {
+                        batchList.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p>No Instagram batches found</p>
+                                    <a href="{{ url_for('instagram.index') }}" class="btn btn-sm btn-danger mt-2">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Create First Batch
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                } else {
+                    showToast(`Error: ${data.message}`, 'danger');
+                    batchList.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-danger">
+                                Error loading batches: ${data.message}
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                showToast(`Error: ${error.message}`, 'danger');
+                batchList.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">
+                            Error loading batches: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            });
     }
     
-    fetch(`/instagram/api/batch/${batchId}/stop`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch stopped successfully', 'success');
-            loadBatches(); // Refresh the table
-        } else {
-            showToast('Error stopping batch: ' + (data.message || 'Unknown error'), 'danger');
+    // Function to update statistics
+    function updateStats(batches) {
+        if (!batches) {
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error stopping batch:', error);
-        showToast('Failed to stop batch: ' + error.message, 'danger');
-    });
-}
-
-function restartBatch(batchId) {
-    if (!confirm('Are you sure you want to restart this batch?')) {
-        return;
+        
+        const total = batches.length;
+        const running = batches.filter(b => b.status === 'running').length;
+        const completed = batches.filter(b => b.status === 'completed').length;
+        const stoppedFailed = batches.filter(b => b.status === 'stopped' || b.status === 'failed').length;
+        
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-running').textContent = running;
+        document.getElementById('stat-completed').textContent = completed;
+        document.getElementById('stat-stopped').textContent = stoppedFailed;
     }
     
-    fetch(`/instagram/api/batch/${batchId}/restart`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch restarted successfully', 'success');
-            loadBatches(); // Refresh the table
-        } else {
-            showToast('Error restarting batch: ' + (data.message || 'Unknown error'), 'danger');
+    // Function to stop a batch
+    function stopBatch(batchId) {
+        if (!confirm('Are you sure you want to stop this batch?')) {
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error restarting batch:', error);
-        showToast('Failed to restart batch: ' + error.message, 'danger');
-    });
-}
+        
+        showSpinner('Stopping batch...');
+        
+        fetch('{{ url_for("instagram.stop_sending", batch_id="") }}' + batchId, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            
+            if (data.success) {
+                showToast('Batch stopped successfully', 'success');
+                loadBatches();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
+    
+    // Function to delete a batch
+    function deleteBatch(batchId) {
+        if (!confirm('Are you sure you want to delete this batch? This action cannot be undone.')) {
+            return;
+        }
+        
+        showSpinner('Deleting batch...');
+        
+        fetch('{{ url_for("instagram.delete_batch", batch_id="") }}' + batchId, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            
+            if (data.success) {
+                showToast('Batch deleted successfully', 'success');
+                loadBatches();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
+    
+    // Add event listener for refresh button
+    refreshButton.addEventListener('click', loadBatches);
+    
+    // Initial load
+    loadBatches();
+    
+    // Set auto-refresh every 30 seconds
+    setInterval(loadBatches, 30000);
+});
 </script>
 {% endblock %}

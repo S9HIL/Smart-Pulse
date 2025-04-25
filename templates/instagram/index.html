@@ -6,7 +6,7 @@
 <div class="row mb-4">
     <div class="col">
         <h1 class="display-5 fw-bold mb-3">
-            <i class="fab fa-instagram me-2 text-primary"></i>
+            <i class="fab fa-instagram me-2 text-danger"></i>
             Instagram Automation
         </h1>
         <p class="lead">Send automated direct messages to Instagram users or group chats.</p>
@@ -18,7 +18,7 @@
         <div class="card border-0 shadow">
             <div class="card-header bg-transparent">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-paper-plane me-2 text-primary"></i>
+                    <i class="fas fa-paper-plane me-2 text-danger"></i>
                     Send Instagram Messages
                 </h5>
             </div>
@@ -32,59 +32,78 @@
                     <div class="mb-3">
                         <label for="password" class="form-label required-field">Instagram Password</label>
                         <input type="password" class="form-control" id="password" name="password" placeholder="Your Instagram password" required>
-                        <small class="form-text text-muted">Your credentials are only used to authenticate with Instagram and are not stored.</small>
+                        <div class="form-text text-muted">
+                            Your credentials are only used to login to Instagram and are not stored permanently.
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="target_type" class="form-label required-field">Target Type</label>
-                        <select class="form-select" id="target_type" name="target_type" required>
-                            <option value="" selected disabled>Select target type</option>
-                            <option value="inbox">User Inbox (DM)</option>
-                            <option value="group">Group Chat</option>
-                        </select>
+                        <label for="target" class="form-label required-field">Target Username or Group ID</label>
+                        <input type="text" class="form-control" id="target" name="target" placeholder="Enter username or group ID" required>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="target" class="form-label required-field">Target</label>
-                        <input type="text" class="form-control" id="target" name="target" placeholder="Username or Group ID" required>
-                        <small id="target-help" class="form-text text-muted">For user inbox, enter the Instagram username. For group chat, enter the group chat ID.</small>
+                        <label class="form-label required-field">Target Type</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="target_type" id="target_type_user" value="user" checked>
+                            <label class="form-check-label" for="target_type_user">
+                                User (Direct Message)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="target_type" id="target_type_group" value="group">
+                            <label class="form-check-label" for="target_type_group">
+                                Group Chat (Thread ID)
+                            </label>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="message-content" class="form-label">Messages</label>
-                        <textarea class="form-control" id="message-content" name="messages" rows="5" placeholder="Enter your messages here (one per line)"></textarea>
+                        <label for="message_prefix" class="form-label">Message Prefix (Optional)</label>
+                        <input type="text" class="form-control" id="message_prefix" name="message_prefix" placeholder="Text to add before each message">
+                        <div class="form-text text-muted">
+                            This text will be added before each message.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="delay_time" class="form-label">Delay Between Messages (seconds)</label>
+                        <input type="number" class="form-control" id="delay_time" name="delay_time" min="5" max="60" value="10">
+                        <div class="form-text text-muted">
+                            Time to wait between sending messages (5-60 seconds recommended).
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="messages" class="form-label">Messages</label>
+                        <textarea class="form-control" id="messages" name="messages" rows="5" placeholder="Enter messages (one per line)"></textarea>
+                        <div class="form-text text-muted">
+                            Enter one message per line.
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="message_file" class="form-label">Or Upload Message File</label>
                         <input type="file" class="form-control" id="message_file" name="message_file">
-                        <small class="form-text text-muted">Upload a text file with messages (one per line). This will override the text area above.</small>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="message_prefix" class="form-label">Message Prefix</label>
-                                <input type="text" class="form-control" id="message_prefix" name="message_prefix" placeholder="Optional prefix for each message">
-                                <small class="form-text text-muted">This text will be added before each message.</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="delay_time" class="form-label required-field">Delay (seconds)</label>
-                                <input type="number" class="form-control" id="delay_time" name="delay_time" min="1" value="10" required>
-                                <small class="form-text text-muted">Time delay between messages in seconds.</small>
-                            </div>
+                        <div class="form-text text-muted">
+                            Upload a text file with one message per line.
                         </div>
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary" id="start-button">
-                            <i class="fas fa-play me-2"></i>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-paper-plane me-2"></i>
                             Start Sending Messages
                         </button>
                     </div>
                 </form>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('instagram.dashboard') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        View All Batches
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -93,19 +112,17 @@
         <div class="card border-0 shadow mb-4">
             <div class="card-header bg-transparent">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                    Instructions
+                    <i class="fas fa-info-circle me-2 text-danger"></i>
+                    How It Works
                 </h5>
             </div>
             <div class="card-body">
-                <ol class="ps-3">
-                    <li class="mb-2">Enter your Instagram credentials to login.</li>
-                    <li class="mb-2">Select whether you want to message a user (DM) or a group chat.</li>
-                    <li class="mb-2">Enter the target username or group ID.</li>
-                    <li class="mb-2">Type your messages in the text area (one per line) or upload a text file with messages.</li>
-                    <li class="mb-2">Optionally, add a prefix to be added before each message.</li>
-                    <li class="mb-2">Set the delay between messages (in seconds).</li>
-                    <li class="mb-2">Click "Start Sending Messages" to begin the process.</li>
+                <ol class="mb-0">
+                    <li class="mb-2">Enter your Instagram login credentials</li>
+                    <li class="mb-2">Specify the target username or group ID</li>
+                    <li class="mb-2">Add messages in the text area or upload a file</li>
+                    <li class="mb-2">Set a delay between messages</li>
+                    <li>Click "Start Sending Messages" to begin</li>
                 </ol>
             </div>
         </div>
@@ -113,54 +130,22 @@
         <div class="card border-0 shadow">
             <div class="card-header bg-transparent">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-lightbulb me-2 text-primary"></i>
-                    Tips
+                    <i class="fas fa-shield-alt me-2 text-danger"></i>
+                    Security Notice
                 </h5>
             </div>
             <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item bg-transparent">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Use longer delays (10+ seconds) to avoid Instagram rate limits
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Check your messages page to see sending progress
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Keep message content organic to reduce risk of being flagged
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        For group chats, you'll need the numeric group ID
-                    </li>
+                <p>Your Instagram credentials are used only to establish a connection with Instagram. They are:</p>
+                <ul class="mb-0">
+                    <li>Never stored permanently</li>
+                    <li>Only used for the current session</li>
+                    <li>Transmitted securely</li>
                 </ul>
-            </div>
-        </div>
-        
-        <div class="card border-0 shadow mt-4">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2 text-primary"></i>
-                    Active Batches
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="active-batches">
-                    <div class="text-center py-3" id="loading-batches">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mb-0 small">Loading batches...</p>
-                    </div>
-                </div>
-                <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('instagram.dashboard') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-tachometer-alt me-2"></i>
-                        View All Batches
-                    </a>
-                </div>
+                <hr>
+                <p class="mb-0 small text-muted">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Automated messaging may violate Instagram's terms of service. Use responsibly and at your own risk.
+                </p>
             </div>
         </div>
     </div>
@@ -171,35 +156,24 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('instagram-form');
-    const targetTypeSelect = document.getElementById('target_type');
-    const targetInput = document.getElementById('target');
-    const targetHelp = document.getElementById('target-help');
     
-    // Load active batches
-    loadActiveBatches();
-    
-    // Target type change handler
-    targetTypeSelect.addEventListener('change', function() {
-        if (this.value === 'inbox') {
-            targetInput.placeholder = 'Instagram username';
-            targetHelp.textContent = 'Enter the Instagram username of the person you want to message.';
-        } else if (this.value === 'group') {
-            targetInput.placeholder = 'Group chat ID';
-            targetHelp.textContent = 'Enter the numeric group chat ID.';
-        }
-    });
-    
-    // Form submission handler
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const messageTextarea = document.getElementById('message-content');
-        const messageFile = document.getElementById('message_file');
+        // Basic validation
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const target = document.getElementById('target').value.trim();
+        const messages = document.getElementById('messages').value.trim();
+        const messageFile = document.getElementById('message_file').files[0];
         
-        // Validate that either message text or file is provided
-        if ((!messageTextarea.value || messageTextarea.value.trim() === '') && 
-            (!messageFile.files || messageFile.files.length === 0)) {
-            showToast('Please enter messages in the text area or upload a message file', 'warning');
+        if (!username || !password || !target) {
+            showToast('Please fill in all required fields', 'danger');
+            return;
+        }
+        
+        if (!messages && !messageFile) {
+            showToast('Please enter messages or upload a message file', 'danger');
             return;
         }
         
@@ -218,8 +192,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showToast('Message sending started successfully', 'success');
                 
-                // Redirect to messages page
-                window.location.href = `/instagram/messages/${data.batch_id}`;
+                // Redirect to batch page
+                window.location.href = "{{ url_for('instagram.messages_page', batch_id='') }}" + data.batch_id;
             } else {
                 showToast(`Error: ${data.message}`, 'danger');
             }
@@ -229,45 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast(`Error: ${error.message}`, 'danger');
         });
     });
-    
-    // Function to load active batches
-    function loadActiveBatches() {
-        fetch('/instagram/api/batches')
-            .then(response => response.json())
-            .then(data => {
-                const batchesContainer = document.getElementById('active-batches');
-                const loadingElement = document.getElementById('loading-batches');
-                
-                if (loadingElement) {
-                    loadingElement.remove();
-                }
-                
-                if (data.success && data.batches && data.batches.length > 0) {
-                    let batchesHtml = '<div class="list-group list-group-flush">';
-                    
-                    data.batches.slice(0, 3).forEach(batch => {
-                        batchesHtml += `
-                            <a href="/instagram/messages/${batch.batch_id}" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="d-block text-truncate" style="max-width: 150px;">@${batch.username} → ${batch.target}</small>
-                                    <small class="text-muted">${batch.created_at}</small>
-                                </div>
-                                <span class="badge ${batch.status === 'Running' ? 'bg-success' : 'bg-secondary'}">${batch.status}</span>
-                            </a>
-                        `;
-                    });
-                    
-                    batchesHtml += '</div>';
-                    batchesContainer.innerHTML = batchesHtml;
-                } else {
-                    batchesContainer.innerHTML = '<p class="text-center text-muted small">No active batches</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading batches:', error);
-                document.getElementById('active-batches').innerHTML = '<p class="text-center text-danger small">Error loading batches</p>';
-            });
-    }
 });
 </script>
 {% endblock %}

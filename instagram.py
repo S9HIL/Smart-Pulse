@@ -287,7 +287,7 @@ def send_instagram_message(client, target, target_type, message):
                 return True, thread_id
             else:
                 logger.error(f"Unknown target type: {target_type}")
-                return False, None
+                return False, f"Unknown target type: {target_type}"
         except LoginRequired as e:
             # Session expired, need to relogin
             logger.error(f"Session expired during message send (attempt {retry_count+1}): {str(e)}")
@@ -384,13 +384,16 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         messages (list): List of messages to send
         delay_time (int): Delay between messages in seconds
     """
+    from app import app
+    
     try:
         # Mark as active
         active_batches[batch_id] = True
         
-        # Log start
-        log_message(batch_id, f"Starting Instagram message sending to {target}")
-        log_message(batch_id, f"Logging in as {username}...")
+        # Log start with application context
+        with app.app_context():
+            log_message(batch_id, f"Starting Instagram message sending to {target}")
+            log_message(batch_id, f"Logging in as {username}...")
         
         # Initialize Instagram client
         client = Client()
@@ -401,10 +404,12 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         # Try to login
         try:
             client.login(username, password)
-            log_message(batch_id, f"Successfully logged in as {username}", "success")
+            with app.app_context():
+                log_message(batch_id, f"Successfully logged in as {username}", "success")
         except Exception as e:
-            log_message(batch_id, f"Login failed: {str(e)}", "failed", str(e))
-            update_batch_status(batch_id, "failed")
+            with app.app_context():
+                log_message(batch_id, f"Login failed: {str(e)}", "failed", str(e))
+                update_batch_status(batch_id, "failed")
             active_batches.pop(batch_id, None)
             return
         
@@ -415,44 +420,51 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         if target_type == 'user':
             try:
                 user_id = client.user_id_from_username(target)
-                log_message(batch_id, f"Found user {target} (ID: {user_id})", "success")
+                with app.app_context():
+                    log_message(batch_id, f"Found user {target} (ID: {user_id})", "success")
             except Exception as e:
-                log_message(batch_id, f"Target user {target} not found", "failed", str(e))
-                update_batch_status(batch_id, "failed")
+                with app.app_context():
+                    log_message(batch_id, f"Target user {target} not found", "failed", str(e))
+                    update_batch_status(batch_id, "failed")
                 active_batches.pop(batch_id, None)
                 return
         
         # Send messages one by one
         total_messages = len(messages)
-        log_message(batch_id, f"Starting to send {total_messages} messages with {delay_time}s delay")
+        with app.app_context():
+            log_message(batch_id, f"Starting to send {total_messages} messages with {delay_time}s delay")
         
         for idx, message_text in enumerate(messages, 1):
             # Check if stop flag is set
             if stop_flags.get(batch_id, False):
-                log_message(batch_id, "Message sending stopped by user", "info")
-                update_batch_status(batch_id, "stopped")
+                with app.app_context():
+                    log_message(batch_id, "Message sending stopped by user", "info")
+                    update_batch_status(batch_id, "stopped")
                 break
             
             # Prepare full message with prefix if needed
             full_message = f"{message_prefix}\n{message_text}" if message_prefix else message_text
             
             # Log the message being sent
-            log_message(batch_id, f"Sending message {idx}/{total_messages}: {full_message[:50]}...", "pending")
+            with app.app_context():
+                log_message(batch_id, f"Sending message {idx}/{total_messages}: {full_message[:50]}...", "pending")
             
             # Send the message
             success, result = send_instagram_message(client, target, target_type, full_message)
             
             if success:
-                log_message(batch_id, f"Message {idx}/{total_messages} sent successfully", "success")
+                with app.app_context():
+                    log_message(batch_id, f"Message {idx}/{total_messages} sent successfully", "success")
             else:
                 error_msg = result if result else "Unknown error"
-                log_message(batch_id, f"Failed to send message {idx}/{total_messages}", "failed", error_msg)
-                
-                # If we've had too many failures, break
-                if idx >= 3 and idx / total_messages < 0.2:
-                    log_message(batch_id, "Too many failures, stopping process", "failed")
-                    update_batch_status(batch_id, "failed")
-                    break
+                with app.app_context():
+                    log_message(batch_id, f"Failed to send message {idx}/{total_messages}", "failed", error_msg)
+                    
+                    # If we've had too many failures, break
+                    if idx >= 3 and idx / total_messages < 0.2:
+                        log_message(batch_id, "Too many failures, stopping process", "failed")
+                        update_batch_status(batch_id, "failed")
+                        break
             
             # Delay before next message
             if idx < total_messages and not stop_flags.get(batch_id, False):
@@ -460,20 +472,24 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         
         # Log completion if not stopped
         if not stop_flags.get(batch_id, False):
-            log_message(batch_id, "Message sending completed", "success")
-            update_batch_status(batch_id, "completed")
+            with app.app_context():
+                log_message(batch_id, "Message sending completed", "success")
+                update_batch_status(batch_id, "completed")
         
         # Always logout when done
         try:
             client.logout()
-            log_message(batch_id, "Logged out of Instagram", "info")
+            with app.app_context():
+                log_message(batch_id, "Logged out of Instagram", "info")
         except Exception as e:
-            log_message(batch_id, "Error during logout", "failed", str(e))
+            with app.app_context():
+                log_message(batch_id, "Error during logout", "failed", str(e))
     
     except Exception as e:
         logger.error(f"Error in message sending thread: {str(e)}")
-        log_message(batch_id, "Error in message sending process", "failed", str(e))
-        update_batch_status(batch_id, "failed")
+        with app.app_context():
+            log_message(batch_id, "Error in message sending process", "failed", str(e))
+            update_batch_status(batch_id, "failed")
     
     finally:
         # Clean up
