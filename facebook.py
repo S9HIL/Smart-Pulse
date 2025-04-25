@@ -215,6 +215,29 @@ def stop_status(batch_id):
         
     return jsonify({"success": False, "status": "batch ID not found"}), 404
 
+@facebook_bp.route('/api/batches')
+def list_batches():
+    """API endpoint to list all Facebook batches"""
+    # Get batches from database
+    batches = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).all()
+    
+    # Convert to list of dictionaries
+    batch_list = []
+    for batch in batches:
+        # Get status from database and runtime flags
+        is_stopped = batch.status == 'stopped'
+        if batch.id in stop_flags:
+            is_stopped = is_stopped or stop_flags[batch.id].is_set()
+        
+        batch_data = batch.to_dict()
+        batch_data['status'] = 'stopped' if is_stopped else 'running'
+        batch_list.append(batch_data)
+        
+    return jsonify({
+        "success": True,
+        "batches": batch_list
+    })
+
 # Helper Functions
 def get_account_name(access_token):
     """Get Facebook account name from access token"""

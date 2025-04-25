@@ -426,3 +426,15 @@ def task_status(task_id):
             "failed": failed_count
         }
     })
+
+@whatsapp_bp.route('/api/tasks')
+def api_tasks():
+    """API endpoint for WhatsApp tasks (used by batch manager)"""
+    # Get tasks from database
+    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
+    tasks_list = [task.to_dict() for task in tasks]
+    
+    return jsonify({
+        "success": True,
+        "tasks": tasks_list
+    })
