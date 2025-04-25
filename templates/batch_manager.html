@@ -391,28 +391,30 @@ function displayFacebookBatches(batches) {
     
     batches.forEach(batch => {
         const statusClass = getStatusClass(batch.status);
-        const truncatedId = batch.id.substring(0, 8) + '...';
+        // Facebook model returns batch_id instead of id
+        const batchId = batch.batch_id || batch.id;
+        const truncatedId = batchId.substring(0, 8) + '...';
         const shortDate = new Date(batch.created_at).toLocaleString();
         
         html += `
             <tr>
-                <td><span class="badge bg-secondary" title="${batch.id}">${truncatedId}</span></td>
+                <td><span class="badge bg-secondary" title="${batchId}">${truncatedId}</span></td>
                 <td>${batch.conversation_id || 'N/A'}</td>
                 <td>${batch.account_name || 'Unknown'}</td>
                 <td>${shortDate}</td>
                 <td><span class="badge ${statusClass}">${batch.status}</span></td>
                 <td>
                     <div class="btn-group" role="group">
-                        <a href="/facebook/messages/${batch.id}" class="btn btn-sm btn-info" title="View Messages">
+                        <a href="/facebook/messages/${batchId}" class="btn btn-sm btn-info" title="View Messages">
                             <i class="fas fa-eye"></i>
                         </a>
                         ${batch.status.toLowerCase() === 'running' ? 
-                            `<button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('${batch.id}')" title="Stop Batch">
+                            `<button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('${batchId}')" title="Stop Batch">
                                 <i class="fas fa-stop"></i>
                             </button>` : 
                             ''
                         }
-                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('${batch.id}')" title="Delete Batch">
+                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('${batchId}')" title="Delete Batch">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
