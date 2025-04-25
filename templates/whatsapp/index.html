@@ -673,15 +673,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Phone number
                             phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
                             
-                            // Don't use template variables directly as they might cause issues
-                            // Only update UI if status changes are needed
-                            const currentStatus = connectionStatusEl.textContent.trim().toLowerCase();
-                            const newStatus = (data.status || 'disconnected').toLowerCase();
-                            
-                            if (currentStatus !== newStatus || 
-                                phoneNumberEl.textContent !== (data.phoneNumber || 'Not connected')) {
-                                updateStatus(data.status, data.phoneNumber);
+                            // If status changes to connected, immediately redirect to message form
+                            if (data.status === 'connected') {
+                                // Just a small delay to ensure server has registered the connected state
+                                setTimeout(() => {
+                                    window.location.href = '/whatsapp/';
+                                }, 500);
                             }
+                            
+                            // Update UI based on status changes
+                            updateStatus(data.status, data.phoneNumber);
                         }
                     }
                 })
