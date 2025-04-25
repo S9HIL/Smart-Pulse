@@ -100,12 +100,16 @@ async function connectToWhatsApp(sessionId = null, phoneNumber = null, forceNewS
         logger.info(`Found existing WhatsApp auth files in ${authDir}, will try to re-use them`);
     }
 
-    // Create socket for this session
+    // Create socket for this session with improved configuration
     const newSock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
         browser: Browsers.ubuntu('Chrome'),
-        logger: pino({ level: 'silent' }),
+        logger: pino({ level: 'warn' }), // Increase log level for debugging
+        connectTimeoutMs: 60000, // Longer timeout for connection
+        defaultQueryTimeoutMs: 60000, // Longer timeout for queries
+        emitOwnEvents: true, // Make sure we emit our own events
+        retryRequestDelayMs: 2000, // Wait 2 seconds before retrying requests
     });
     
     // If session ID is provided, store in active sessions
@@ -299,8 +303,8 @@ async function requestPairingCode(phoneNumber) {
         // Force new session to prevent auth_info file conflicts
         await connectToWhatsApp(sessionId, formattedPhone, true);
         
-        // Wait for the connection to be ready
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for the connection to be ready - increased wait time
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         // Add retry mechanism for improved reliability
         let retries = 5; // Increased retries
@@ -310,10 +314,22 @@ async function requestPairingCode(phoneNumber) {
         
         while (retries > 0 && !success) {
             try {
-                // Request pairing code from the current socket (will be the sessionId one)
+                if (!sock) {
+                    throw new Error('WhatsApp socket not initialized');
+                }
+
+                // Check if socket has the requestPairingCode method
+                if (typeof sock.requestPairingCode !== 'function') {
+                    throw new Error('requestPairingCode method not available in current WhatsApp client');
+                }
+
+                // Request pairing code from the current socket
+                logger.info(`Requesting pairing code for ${formattedPhone}, attempt ${6-retries}`);
                 code = await sock.requestPairingCode(formattedPhone);
+                
                 if (code) {
                     success = true;
+                    logger.info(`Successfully received pairing code: ${code}`);
                 } else {
                     throw new Error('No pairing code returned');
                 }
@@ -328,7 +344,7 @@ async function requestPairingCode(phoneNumber) {
                 if (retries === 2) {
                     logger.info('Refreshing WhatsApp connection before retry');
                     await connectToWhatsApp(sessionId, formattedPhone, true);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
             }
         }
@@ -722,24 +738,73 @@ async function processStdin() {
                     logger.info(`Connecting to WhatsApp with phone: ${phoneNumber}, usePairingCode: ${usePairingCode}`);
                     
                     if (usePairingCode && pairingCode) {
-                        // First we need to get the session ready for pairing code
-                        await connectToWhatsApp(sessionId, phoneNumber, forceNew);
+                        const formattedPhone = phoneNumber.toString().replace(/[^0-9]/g, '');
+                        
+                        // Generate a unique session ID for this connection
+                        const newSessionId = sessionId || generateSessionId(formattedPhone);
+                        
+                        // First we need to get the session ready for pairing code by creating a fresh connection
+                        logger.info(`Initializing fresh connection for pairing code authentication`);
+                        await connectToWhatsApp(newSessionId, formattedPhone, true);
                         
                         // Then we manually enter the pairing code
-                        logger.info(`Using pairing code: ${pairingCode} for connection`);
+                        logger.info(`Using pairing code: ${pairingCode} for connection with phone: ${formattedPhone}`);
+                        
                         if (sock && sock.authState && sock.authState.creds && sock.authState.creds.me) {
                             logger.info("Already authenticated, no need for pairing code");
+                            // Even though we're already authenticated, ensure the connected status is properly set
+                            connectionStatus = "connected";
+                            
+                            // Get connected phone number if available
+                            if (sock.user) {
+                                connectedPhoneNumber = sock.user.id.split(':')[0];
+                            }
                         } else {
                             try {
-                                // Wait a bit to ensure connection is ready for pairing code
-                                await new Promise(resolve => setTimeout(resolve, 2000));
-                                await sock.waitForConnectionUpdate(state => state.connection === 'open' || Boolean(state.qr));
+                                // Wait to ensure connection is ready for pairing code - increased wait time
+                                await new Promise(resolve => setTimeout(resolve, 5000));
                                 
-                                // If we got a QR code, try to use the pairing code instead
-                                if (sock.authState.creds && !sock.authState.creds.registered) {
-                                    logger.info("Entering pairing code to authenticate");
-                                    sock.ev.emit('pairing-code', { pairingCode: pairingCode });
+                                // Sometimes we need to wait for the connection to generate a QR or be ready for pairing
+                                await sock.waitForConnectionUpdate(state => {
+                                    logger.info(`Connection update received: ${JSON.stringify(state)}`);
+                                    return state.connection === 'open' || Boolean(state.qr);
+                                });
+                                
+                                // If socket has registerNewParticipant function (newer version)
+                                if (sock && typeof sock.registerNewParticipant === 'function') {
+                                    logger.info(`Registering with pairing code using modern method for ${formattedPhone}`);
+                                    try {
+                                        // Use the correct method for newer versions of the library
+                                        await sock.registerNewParticipant({ phone: formattedPhone, pairingCode });
+                                        logger.info("Successfully registered with pairing code");
+                                    } catch (pairingError) {
+                                        logger.error(`Error registering with pairing code: ${pairingError.message}`);
+                                        // Try alternate method as fallback
+                                        if (sock.authState && sock.authState.creds) {
+                                            logger.info("Trying alternate pairing method");
+                                            sock.ev.emit('pairing-code', { pairingCode });
+                                        }
+                                    }
+                                } 
+                                // Fallback for older versions
+                                else if (sock.authState && sock.authState.creds) {
+                                    logger.info("Using legacy pairing code method");
+                                    
+                                    // Try direct method first if available
+                                    if (typeof sock.registrationPairingCode === 'function') {
+                                        await sock.registrationPairingCode(formattedPhone, pairingCode);
+                                    } else {
+                                        // Use event method as last resort
+                                        sock.ev.emit('pairing-code', { pairingCode, phoneNumber: formattedPhone });
+                                    }
                                 }
+                                
+                                // Wait for authentication to complete
+                                logger.info("Waiting for authentication to complete...");
+                                await new Promise(resolve => setTimeout(resolve, 5000));
+                                
+                                // Log the current connection status
+                                logger.info(`Current connection status after pairing: ${connectionStatus}`);
                             } catch (err) {
                                 logger.error(`Error using pairing code: ${err.message}`);
                             }
