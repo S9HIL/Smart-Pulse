@@ -206,7 +206,17 @@ def instagram_login_and_send(batch_id, username, password, target, target_type, 
         client.delay_range = [1, 3]
         client.request_timeout = 30
         
-        # Update status
+        # Add login status message to database
+        login_msg = InstagramMessage(
+            batch_id=batch_id,
+            message="Logging in to Instagram...",
+            status="Info",
+            status_class="message-info"
+        )
+        db.session.add(login_msg)
+        db.session.commit()
+        
+        # Also update in-memory for backward compatibility
         user_batches[batch_id].append({
             "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "message": "Logging in to Instagram...",
@@ -225,7 +235,17 @@ def instagram_login_and_send(batch_id, username, password, target, target_type, 
                 login_success = True
                 logger.info(f"Successfully logged in as {username}")
                 
-                # Update status
+                # Add successful login message to database
+                success_msg = InstagramMessage(
+                    batch_id=batch_id,
+                    message=f"Successfully logged in as {username}",
+                    status="Success",
+                    status_class="message-success"
+                )
+                db.session.add(success_msg)
+                db.session.commit()
+                
+                # Update also in-memory for compatibility
                 user_batches[batch_id].append({
                     "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "message": f"Successfully logged in as {username}",
@@ -417,21 +437,61 @@ def dashboard():
 @instagram_bp.route('/messages/<batch_id>')
 def view_messages(batch_id):
     """View messages for a specific batch"""
-    if batch_id not in user_batches:
-        return render_template('instagram/message_output.html', 
-                             messages=[], 
-                             batch_id=batch_id, 
-                             error="Batch ID not found")
+    # First check database
+    batch = InstagramBatch.query.get(batch_id)
     
-    messages = user_batches.get(batch_id, [])
-    is_stopped = stop_flags.get(batch_id, True)
-    batch_info = active_batches.get(batch_id, {})
+    if not batch:
+        # If not in database, check in-memory for backward compatibility
+        if batch_id not in user_batches:
+            return render_template('instagram/message_output.html', 
+                                messages=[], 
+                                batch_id=batch_id, 
+                                error="Batch ID not found")
+
+    # Get batch info - prefer database but fall back to memory    
+    if batch:
+        # Get from database
+        batch_info = {
+            'username': batch.username,
+            'target': batch.target,
+            'target_type': batch.target_type,
+            'status': batch.status,
+            'created_at': batch.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'message_prefix': batch.message_prefix,
+            'delay_time': batch.delay_time
+        }
+        
+        # Get messages from database and convert to dict for template
+        db_messages = InstagramMessage.query.filter_by(batch_id=batch_id).order_by(InstagramMessage.timestamp).all()
+        messages = []
+        
+        for msg in db_messages:
+            messages.append({
+                'time': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'message': msg.message,
+                'status': msg.status,
+                'status_class': msg.status_class,
+                'error': msg.error
+            })
+        
+        # Get runtime status
+        is_stopped = stop_flags.get(batch_id, True)
+        
+        # If batch status doesn't match runtime status, update database
+        if (is_stopped and batch.status == 'running') or (not is_stopped and batch.status == 'stopped'):
+            batch.status = 'stopped' if is_stopped else 'running'
+            db.session.commit()
+    else:
+        # Fall back to in-memory data
+        messages = user_batches.get(batch_id, [])
+        is_stopped = stop_flags.get(batch_id, True)
+        batch_info = active_batches.get(batch_id, {})
     
     return render_template('instagram/message_output.html', 
-                          messages=messages, 
-                          batch_id=batch_id, 
-                          is_stopped=is_stopped,
-                          batch_info=batch_info)
+                         messages=messages, 
+                         batch_id=batch_id, 
+                         is_stopped=is_stopped,
+                         batch_info=batch_info)
 
 @instagram_bp.route('/api/batch/<batch_id>')
 def get_batch_info(batch_id):
@@ -854,14 +914,34 @@ def send_messages_thread(batch_id, client, target, target_type, message_prefix, 
                 # Prepare message
                 full_message = f"{message_prefix} {message}" if message_prefix else message
                 
-                # Send message
+                # Create pending message in database
+                pending_msg = InstagramMessage(
+                    batch_id=batch_id,
+                    message=full_message,
+                    status="Pending",
+                    status_class="message-pending"
+                )
+                db.session.add(pending_msg)
+                db.session.commit()
+                
+                # Send message with extended timeout
+                client.request_timeout = 60  # Extended timeout for sending messages
+                
                 if target_type == 'inbox':
                     result = client.direct_send(full_message, [target_id])
                 else:  # group
                     result = client.direct_send(full_message, thread_ids=[thread_id])
                 
+                # Update the message as sent in database
+                pending_msg.status = "Sent"
+                pending_msg.status_class = "message-success"
+                pending_msg.timestamp = datetime.utcnow()
+                db.session.commit()
+                
                 # Log success
                 logger.info(f"Message sent to {target}: {full_message}")
+                
+                # Also update in-memory for backward compatibility
                 user_batches[batch_id].append({
                     "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "message": full_message,
@@ -881,6 +961,27 @@ def send_messages_thread(batch_id, client, target, target_type, message_prefix, 
             except Exception as e:
                 error_msg = f"Error sending message: {str(e)}"
                 logger.error(error_msg)
+                
+                # Update the pending message as failed in database
+                if 'pending_msg' in locals():
+                    pending_msg.status = "Failed"
+                    pending_msg.status_class = "message-error"
+                    pending_msg.error = str(e)
+                    pending_msg.timestamp = datetime.utcnow()
+                else:
+                    # If pending_msg wasn't created for some reason, create a new error record
+                    error_record = InstagramMessage(
+                        batch_id=batch_id,
+                        message=full_message if 'full_message' in locals() else message,
+                        status="Failed",
+                        status_class="message-error",
+                        error=str(e)
+                    )
+                    db.session.add(error_record)
+                
+                db.session.commit()
+                
+                # Also update in-memory for backward compatibility
                 user_batches[batch_id].append({
                     "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "message": full_message,
@@ -890,6 +991,20 @@ def send_messages_thread(batch_id, client, target, target_type, message_prefix, 
                     "original_message": message
                 })
                 
+                # If it's a login error, we should stop the batch
+                if 'login' in str(e).lower() or 'session' in str(e).lower() or 'auth' in str(e).lower():
+                    logger.error(f"Login error detected, stopping batch: {str(e)}")
+                    
+                    # Get batch and update status
+                    batch = InstagramBatch.query.get(batch_id)
+                    if batch:
+                        batch.status = 'failed'
+                        db.session.commit()
+                        
+                    # Set stop flag
+                    stop_flags[batch_id] = True
+                    return
+                    
                 # If client error, wait longer
                 if isinstance(e, ClientError):
                     logger.info("Client error, waiting 30 seconds before next attempt")
@@ -899,6 +1014,23 @@ def send_messages_thread(batch_id, client, target, target_type, message_prefix, 
                     
         # Mark as completed
         logger.info(f"Message sending completed for batch {batch_id}")
+        
+        # Add completion message to database
+        completion_msg = InstagramMessage(
+            batch_id=batch_id,
+            message="Message sending process completed successfully",
+            status="Completed",
+            status_class="message-info"
+        )
+        db.session.add(completion_msg)
+        
+        # Update batch status in database
+        batch = InstagramBatch.query.get(batch_id)
+        if batch:
+            batch.status = 'completed'
+            db.session.commit()
+        
+        # Also update in-memory for backward compatibility
         user_batches[batch_id].append({
             "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "message": "Message sending process completed",
@@ -911,6 +1043,24 @@ def send_messages_thread(batch_id, client, target, target_type, message_prefix, 
         
     except Exception as e:
         logger.error(f"Error in message sending thread: {str(e)}")
+        
+        # Add error message to database
+        error_record = InstagramMessage(
+            batch_id=batch_id,
+            message=f"Error in message sending thread: {str(e)}",
+            status="Error",
+            status_class="message-error",
+            error=str(e)
+        )
+        db.session.add(error_record)
+        
+        # Update batch status in database
+        batch = InstagramBatch.query.get(batch_id)
+        if batch:
+            batch.status = 'failed'
+            db.session.commit()
+        
+        # Also update in-memory for backward compatibility
         user_batches[batch_id].append({
             "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "message": f"Error in message sending thread: {str(e)}",
