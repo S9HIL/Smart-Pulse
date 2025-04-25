@@ -6,8 +6,9 @@
 <div class="container mt-4">
     <h1 class="mb-4">WhatsApp Automation</h1>
     
+    <!-- Connection Section - Always visible -->
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6 mx-auto mb-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
@@ -50,9 +51,15 @@
                         <div class="alert alert-success" role="alert">
                             <i class="fas fa-check-circle me-2"></i> WhatsApp is connected and ready to send messages.
                         </div>
-                        <button id="disconnect-btn" class="btn btn-danger">
-                            <i class="fas fa-sign-out-alt me-1"></i> Disconnect
-                        </button>
+                        <div class="d-flex justify-content-between">
+                            <button id="disconnect-btn" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt me-1"></i> Disconnect
+                            </button>
+                            
+                            <button id="show-messaging-btn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
+                            </button>
+                        </div>
                         {% else %}
                         <div class="alert alert-info" role="alert">
                             <i class="fas fa-info-circle me-2"></i> Please connect to WhatsApp to start sending messages.
@@ -74,68 +81,87 @@
                             <div class="alert alert-info">
                                 <strong>Pairing Code:</strong> <span id="pairing-code">Waiting...</span>
                             </div>
+                            <p class="text-muted small">Enter this code in WhatsApp on your phone.</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            
-            {% if tasks %}
-            <div class="card mt-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-tasks me-2"></i> Active Tasks
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for task in tasks %}
-                        <a href="{{ url_for('whatsapp.view_task', task_id=task.id) }}" class="list-group-item list-group-item-action">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">Task: {{ task.id[:8] }}...</h6>
-                                    <small>Created: {{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                </div>
-                                <div>
-                                    <span class="badge 
-                                        {% if task.status == 'running' %}bg-primary
-                                        {% elif task.status == 'completed' %}bg-success
-                                        {% elif task.status == 'stopped' %}bg-warning
-                                        {% elif task.status == 'failed' %}bg-danger
-                                        {% else %}bg-secondary{% endif %}">
-                                        {{ task.status }}
-                                    </span>
-                                    <div class="progress mt-1" style="width: 100px;">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%" 
-                                             aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">
-                                            {{ task.progress }}%
+        </div>
+    </div>
+    
+    <!-- Message Sending Section - Only visible when connected -->
+    <div id="messaging-section" class="{% if status != 'connected' %}d-none{% endif %}">
+        <div class="row">
+            <!-- Tasks Column -->
+            <div class="col-md-5 mb-4">
+                {% if tasks %}
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i> Active Tasks
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for task in tasks %}
+                            <a href="{{ url_for('whatsapp.view_task', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Task: {{ task.id[:8] }}...</h6>
+                                        <small>Created: {{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge 
+                                            {% if task.status == 'running' %}bg-primary
+                                            {% elif task.status == 'completed' %}bg-success
+                                            {% elif task.status == 'stopped' %}bg-warning
+                                            {% elif task.status == 'failed' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                        <div class="progress mt-1" style="width: 100px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%" 
+                                                aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ task.progress }}%
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-list me-1"></i> View All Tasks
                         </a>
-                        {% endfor %}
                     </div>
                 </div>
-                <div class="card-footer">
-                    <a href="{{ url_for('whatsapp.list_tasks') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-list me-1"></i> View All Tasks
-                    </a>
+                {% else %}
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i> Active Tasks
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0">No active tasks found. Start sending messages to create a new task.</p>
+                    </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
-        </div>
-        
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-paper-plane me-2"></i> Send Messages
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form id="send-form" {% if status != 'connected' %}class="disabled"{% endif %}>
-                        <fieldset {% if status != 'connected' %}disabled{% endif %}>
+            
+            <!-- Message Sending Column -->
+            <div class="col-md-7 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-paper-plane me-2"></i> Send Messages
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="send-form">
                             <div class="mb-3">
                                 <label for="recipients" class="form-label">Recipients (comma separated)</label>
                                 <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="919876543210, 919876543211, 919876543212" required></textarea>
@@ -170,14 +196,8 @@
                                     <i class="fas fa-paper-plane me-1"></i> Start Sending Messages
                                 </button>
                             </div>
-                        </fieldset>
-                    </form>
-                    
-                    {% if status != 'connected' %}
-                    <div class="alert alert-warning mt-3" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2"></i> You need to connect to WhatsApp first.
+                        </form>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -217,6 +237,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial status check
     checkStatus();
+    
+    // Show messaging section button handler
+    const showMessagingBtn = document.getElementById('show-messaging-btn');
+    if (showMessagingBtn) {
+        showMessagingBtn.addEventListener('click', function() {
+            document.getElementById('messaging-section').classList.remove('d-none');
+            showMessagingBtn.textContent = 'Messaging Section Opened';
+            showMessagingBtn.disabled = true;
+            // Scroll to messaging section
+            document.getElementById('messaging-section').scrollIntoView({ behavior: 'smooth' });
+        });
+    }
     
     // Connect form handler
     const connectForm = document.getElementById('connect-form');
@@ -301,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     document.getElementById('pairing-code').textContent = data.pairingCode;
-                    alert(`Pairing code received: ${data.pairingCode}\n\nEnter this code in WhatsApp on your phone.`);
+                    // No alert - display the code in the UI instead
                 } else {
                     document.getElementById('pairing-code').textContent = 'Failed';
                     alert(`Error: ${data.message}`);
@@ -506,9 +538,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="alert alert-success" role="alert">
                         <i class="fas fa-check-circle me-2"></i> WhatsApp is connected and ready to send messages.
                     </div>
-                    <button id="disconnect-btn" class="btn btn-danger">
-                        <i class="fas fa-sign-out-alt me-1"></i> Disconnect
-                    </button>
+                    <div class="d-flex justify-content-between">
+                        <button id="disconnect-btn" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i> Disconnect
+                        </button>
+                        
+                        <button id="show-messaging-btn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
+                        </button>
+                    </div>
                 `;
                 
                 // Reattach disconnect event listener
