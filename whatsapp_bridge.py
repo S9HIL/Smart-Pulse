@@ -401,6 +401,41 @@ def list_tasks():
     
     return render_template('whatsapp/tasks.html', tasks=tasks)
 
+@whatsapp_bp.route('/delete_task/<task_id>', methods=['POST'])
+def delete_task(task_id):
+    """Delete a WhatsApp task and all its messages"""
+    try:
+        # Get task from database
+        task = WhatsAppTask.query.get(task_id)
+        if not task:
+            return jsonify({
+                "success": False,
+                "message": "Task not found"
+            })
+            
+        # If task is running, stop it first
+        if task.status == 'running':
+            whatsapp_service.send_command('stop_task', {'taskId': task_id})
+            
+        # Delete all messages first to avoid foreign key constraints
+        WhatsAppMessage.query.filter_by(task_id=task_id).delete()
+        
+        # Now delete the task
+        db.session.delete(task)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Task deleted successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting task {task_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        })
+
 @whatsapp_bp.route('/task_status/<task_id>')
 def task_status(task_id):
     """Get status for a specific task"""
