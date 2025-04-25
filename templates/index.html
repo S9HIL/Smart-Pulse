@@ -1,95 +1,79 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 
-{% block title %}Automation Hub{% endblock %}
+{% block title %}Automation Hub - Multi-Platform Messaging Automation{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row align-items-center mb-4">
-        <div class="col-md-8">
-            <h1 class="mb-0">{{ greeting }}</h1>
-            <p class="lead text-muted">Welcome to the Social Media Automation Hub</p>
-        </div>
-        <div class="col-md-4">
+<div class="row mb-4">
+    <div class="col">
+        <div class="text-center py-4">
+            <h1 class="display-4 fw-bold mb-3">{{ greeting }}</h1>
+            <p class="lead">Welcome to the Automation Hub - your multi-platform social messaging automation tool</p>
+            
             {% if not username %}
-            <div class="card">
-                <div class="card-body">
-                    <form action="{{ url_for('main.set_username') }}" method="post">
-                        <div class="input-group">
-                            <input type="text" name="username" class="form-control" placeholder="Your Name" required>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-user-check me-1"></i> Set Name
-                            </button>
-                        </div>
-                        <small class="form-text text-muted">We'll use this to personalize your experience.</small>
-                    </form>
+            <div class="mt-4 mb-5 col-md-6 mx-auto">
+                <div class="card border-0 shadow">
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('main.set_username') }}" class="d-flex">
+                            <input type="text" name="username" class="form-control me-2" placeholder="Enter your name" required>
+                            <button type="submit" class="btn btn-primary">Set Name</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="text-end">
-                <span class="badge bg-info px-3 py-2 fs-6">
-                    <i class="fas fa-user me-1"></i> {{ username }}
-                </span>
-                <form action="{{ url_for('main.set_username') }}" method="post" class="d-inline-block ms-2">
-                    <input type="hidden" name="username" value="">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-user-edit"></i> Change
-                    </button>
-                </form>
             </div>
             {% endif %}
         </div>
     </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="h4 mb-4"><i class="fas fa-plug me-2 text-primary"></i> Available Platforms</h2>
+    </div>
     
-    <h2 class="mb-4">Automation Services</h2>
+    <!-- WhatsApp Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow platform-card">
+            <div class="card-body text-center">
+                <i class="fab fa-whatsapp platform-icon text-success"></i>
+                <h3 class="h5 mb-3">WhatsApp Automation</h3>
+                <p class="card-text">Automate WhatsApp messages to multiple contacts with customizable delays.</p>
+                <a href="{{ url_for('whatsapp.index') }}" class="btn btn-success">Go to WhatsApp</a>
+            </div>
+        </div>
+    </div>
     
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fab fa-whatsapp me-2"></i> WhatsApp Automation
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Automate WhatsApp message sending to multiple recipients.</p>
-                    
-                    <!-- Active tasks section removed as per user request -->
-                    <div class="text-center mt-2 mb-3">
-                        <span class="badge bg-info">See Batch Manager for active tasks</span>
-                    </div>
-                    
-                    <a href="{{ url_for('whatsapp.index') }}" class="btn btn-primary">Go to WhatsApp</a>
-                </div>
+    <!-- Instagram Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow platform-card">
+            <div class="card-body text-center">
+                <i class="fab fa-instagram platform-icon text-danger"></i>
+                <h3 class="h5 mb-3">Instagram Automation</h3>
+                <p class="card-text">Automate Instagram message sending to followers and users.</p>
+                <a href="{{ url_for('instagram.index') }}" class="btn btn-danger">Go to Instagram</a>
             </div>
         </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fab fa-facebook me-2"></i> Facebook Automation
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Automate Facebook message sending to multiple recipients.</p>
-                    <a href="{{ url_for('facebook.index') }}" class="btn btn-success">Go to Facebook</a>
-                </div>
+    </div>
+    
+    <!-- Facebook Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow platform-card">
+            <div class="card-body text-center">
+                <i class="fab fa-facebook platform-icon text-primary"></i>
+                <h3 class="h5 mb-3">Facebook Automation</h3>
+                <p class="card-text">Automate Facebook message sending to users and conversations.</p>
+                <a href="{{ url_for('facebook.index') }}" class="btn btn-primary">Go to Facebook</a>
             </div>
         </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fab fa-instagram me-2"></i> Instagram Automation
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Automate Instagram message sending to followers and users.</p>
-                    <a href="{{ url_for('instagram.index') }}" class="btn btn-danger">Go to Instagram</a>
-                </div>
-            </div>
-        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="h4 mb-4"><i class="fas fa-tasks me-2 text-primary"></i> Batch Management</h2>
+        <p>Manage all your active message batches across platforms from a central dashboard.</p>
+        <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-primary">
+            <i class="fas fa-tachometer-alt me-2"></i> Go to Batch Manager
+        </a>
     </div>
 </div>
 {% endblock %}

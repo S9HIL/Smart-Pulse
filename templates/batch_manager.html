@@ -1,204 +1,228 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 
-{% block title %}Batch Manager - Sʌʜɩɭ Pʀʌjʌpʌtɩ Hub{% endblock %}
+{% block title %}Batch Manager - Automation Hub{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Batch Manager</h4>
-                </div>
-                <div class="card-body">
-                    <ul class="nav nav-tabs" id="batchManagerTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="instagram-tab" data-bs-toggle="tab" data-bs-target="#instagram" type="button" role="tab" aria-controls="instagram" aria-selected="true">
-                                <i class="fab fa-instagram me-1"></i> Instagram Batches
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="facebook-tab" data-bs-toggle="tab" data-bs-target="#facebook" type="button" role="tab" aria-controls="facebook" aria-selected="false">
-                                <i class="fab fa-facebook me-1"></i> Facebook Batches
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button" role="tab" aria-controls="whatsapp" aria-selected="false">
-                                <i class="fab fa-whatsapp me-1"></i> WhatsApp Tasks
-                            </button>
-                        </li>
-                    </ul>
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="fas fa-tasks me-2 text-primary"></i>
+            Batch Manager
+        </h1>
+        <p class="lead">Manage all your messaging batches across multiple platforms in one place.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button" role="tab" aria-controls="whatsapp" aria-selected="true">
+                            <i class="fab fa-whatsapp me-2 text-success"></i>
+                            WhatsApp
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="instagram-tab" data-bs-toggle="tab" data-bs-target="#instagram" type="button" role="tab" aria-controls="instagram" aria-selected="false">
+                            <i class="fab fa-instagram me-2 text-danger"></i>
+                            Instagram
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="facebook-tab" data-bs-toggle="tab" data-bs-target="#facebook" type="button" role="tab" aria-controls="facebook" aria-selected="false">
+                            <i class="fab fa-facebook me-2 text-primary"></i>
+                            Facebook
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- WhatsApp Tasks Tab -->
+                    <div class="tab-pane fade show active" id="whatsapp" role="tabpanel" aria-labelledby="whatsapp-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">WhatsApp Message Batches</h5>
+                            <div>
+                                <a href="{{ url_for('whatsapp.index') }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-plus me-1"></i> New Batch
+                                </a>
+                                <button id="refresh-whatsapp" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="whatsapp-stats mb-4 row g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Total</h6>
+                                    <h3 id="whatsapp-total" class="mb-0">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Running</h6>
+                                    <h3 id="whatsapp-running" class="mb-0 text-primary">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Completed</h6>
+                                    <h3 id="whatsapp-completed" class="mb-0 text-success">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Stopped/Failed</h6>
+                                    <h3 id="whatsapp-stopped" class="mb-0 text-warning">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Created</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="whatsapp-tasks">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">Loading tasks...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     
-                    <div class="tab-content p-3" id="batchManagerTabsContent">
-                        <!-- Instagram Batches Tab -->
-                        <div class="tab-pane fade show active" id="instagram" role="tabpanel" aria-labelledby="instagram-tab">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="instagramBatchesTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Batch ID</th>
-                                            <th>Target</th>
-                                            <th>Username</th>
-                                            <th>Created</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="instagramBatchesList">
-                                        {% if instagram_batches %}
-                                            {% for batch in instagram_batches %}
-                                            <tr>
-                                                <td><span class="badge bg-secondary" title="{{ batch.id }}">{{ batch.id[:8] }}...</span></td>
-                                                <td>{{ batch.target or 'N/A' }}</td>
-                                                <td>{{ batch.username or 'Unknown' }}</td>
-                                                <td>{{ batch.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                                                <td><span class="badge {{ 'bg-success' if batch.status == 'running' else 'bg-warning' }}">{{ batch.status }}</span></td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="/instagram/messages/{{ batch.id }}" class="btn btn-sm btn-info" title="View Messages">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        {% if batch.status == 'running' %}
-                                                        <button class="btn btn-sm btn-warning" onclick="stopInstagramBatch('{{ batch.id }}')" title="Stop Batch">
-                                                            <i class="fas fa-stop"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-sm btn-success" onclick="restartInstagramBatch('{{ batch.id }}')" title="Restart Batch">
-                                                            <i class="fas fa-play"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        <button class="btn btn-sm btn-danger" onclick="deleteInstagramBatch('{{ batch.id }}')" title="Delete Batch">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4">
-                                                <p class="text-muted">No active Instagram batches found</p>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
+                    <!-- Instagram Batches Tab -->
+                    <div class="tab-pane fade" id="instagram" role="tabpanel" aria-labelledby="instagram-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">Instagram Message Batches</h5>
+                            <div>
+                                <a href="{{ url_for('instagram.index') }}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-plus me-1"></i> New Batch
+                                </a>
+                                <button id="refresh-instagram" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
                             </div>
                         </div>
                         
-                        <!-- Facebook Batches Tab -->
-                        <div class="tab-pane fade" id="facebook" role="tabpanel" aria-labelledby="facebook-tab">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="facebookBatchesTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Batch ID</th>
-                                            <th>Conversation</th>
-                                            <th>Account</th>
-                                            <th>Created</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="facebookBatchesList">
-                                        {% if facebook_batches %}
-                                            {% for batch in facebook_batches %}
-                                            <tr>
-                                                <td><span class="badge bg-secondary" title="{{ batch.id }}">{{ batch.id[:8] }}...</span></td>
-                                                <td>{{ batch.conversation_id or 'N/A' }}</td>
-                                                <td>{{ batch.account_name or 'Unknown' }}</td>
-                                                <td>{{ batch.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                                                <td><span class="badge {{ 'bg-success' if batch.status == 'running' else 'bg-warning' }}">{{ batch.status }}</span></td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="/facebook/messages/{{ batch.id }}" class="btn btn-sm btn-info" title="View Messages">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        {% if batch.status == 'running' %}
-                                                        <button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('{{ batch.id }}')" title="Stop Batch">
-                                                            <i class="fas fa-stop"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('{{ batch.id }}')" title="Delete Batch">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4">
-                                                <p class="text-muted">No active Facebook batches found</p>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
+                        <div class="instagram-stats mb-4 row g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Total</h6>
+                                    <h3 id="instagram-total" class="mb-0">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Running</h6>
+                                    <h3 id="instagram-running" class="mb-0 text-primary">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Completed</h6>
+                                    <h3 id="instagram-completed" class="mb-0 text-success">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Stopped/Failed</h6>
+                                    <h3 id="instagram-stopped" class="mb-0 text-warning">-</h3>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- WhatsApp Tasks Tab -->
-                        <div class="tab-pane fade" id="whatsapp" role="tabpanel" aria-labelledby="whatsapp-tab">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="whatsappTasksTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Task ID</th>
-                                            <th>Phone</th>
-                                            <th>Recipients</th>
-                                            <th>Created</th>
-                                            <th>Progress</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="whatsappTasksList">
-                                        {% if whatsapp_tasks %}
-                                            {% for task in whatsapp_tasks %}
-                                            <tr>
-                                                <td><span class="badge bg-secondary" title="{{ task.id }}">{{ task.id[:8] }}...</span></td>
-                                                <td>{{ task.phone_number or 'N/A' }}</td>
-                                                <td>{{ task.total_recipients }}</td>
-                                                <td>{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                                                <td>
-                                                    <div class="progress">
-                                                        <div class="progress-bar {{ 'bg-success' if task.status == 'running' else 'bg-warning' }}" role="progressbar" 
-                                                             style="width: {{ task.progress() }}%">
-                                                            {{ task.progress() }}%
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="/whatsapp/task/{{ task.id }}" class="btn btn-sm btn-info" title="View Task">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        {% if task.status == 'running' %}
-                                                        <button class="btn btn-sm btn-warning" onclick="stopWhatsAppTask('{{ task.id }}')" title="Stop Task">
-                                                            <i class="fas fa-stop"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-sm btn-success" onclick="restartWhatsAppTask('{{ task.id }}')" title="Restart Task">
-                                                            <i class="fas fa-play"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        <button class="btn btn-sm btn-danger" onclick="deleteWhatsAppTask('{{ task.id }}')" title="Delete Task">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4">
-                                                <p class="text-muted">No active WhatsApp tasks found</p>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Created</th>
+                                        <th>Username</th>
+                                        <th>Target</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="instagram-batches">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">Loading batches...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Facebook Batches Tab -->
+                    <div class="tab-pane fade" id="facebook" role="tabpanel" aria-labelledby="facebook-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">Facebook Message Batches</h5>
+                            <div>
+                                <a href="{{ url_for('facebook.index') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus me-1"></i> New Batch
+                                </a>
+                                <button id="refresh-facebook" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
                             </div>
+                        </div>
+                        
+                        <div class="facebook-stats mb-4 row g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Total</h6>
+                                    <h3 id="facebook-total" class="mb-0">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Running</h6>
+                                    <h3 id="facebook-running" class="mb-0 text-primary">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Completed</h6>
+                                    <h3 id="facebook-completed" class="mb-0 text-success">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 border rounded bg-light text-center">
+                                    <h6 class="mb-1">Stopped/Failed</h6>
+                                    <h3 id="facebook-stopped" class="mb-0 text-warning">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Created</th>
+                                        <th>Account</th>
+                                        <th>Conversation</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="facebook-batches">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">Loading batches...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -208,471 +232,553 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-// Load all batches and tasks
 document.addEventListener('DOMContentLoaded', function() {
-    // Load Instagram batches
-    fetchInstagramBatches();
-    
-    // Load Facebook batches
-    fetchFacebookBatches();
-    
-    // Load WhatsApp tasks
-    fetchWhatsAppTasks();
-    
-    // Set refresh interval (every 30 seconds)
-    setInterval(() => {
-        fetchInstagramBatches();
-        fetchFacebookBatches();
-        fetchWhatsAppTasks();
-    }, 30000);
-});
-
-// Instagram Batches
-function fetchInstagramBatches() {
-    fetch('/instagram/api/batches')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayInstagramBatches(data.batches);
-            } else {
-                showError('instagramBatchesList', 'Failed to load Instagram batches');
-            }
-        })
-        .catch(err => {
-            showError('instagramBatchesList', 'Error loading Instagram batches');
-            console.error('Error fetching Instagram batches:', err);
-        });
-}
-
-function displayInstagramBatches(batches) {
-    const tableBody = document.getElementById('instagramBatchesList');
-    
-    if (!batches || batches.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <p class="text-muted">No active Instagram batches found</p>
-                </td>
-            </tr>
-        `;
-        return;
+    // Function to format dates
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleString();
     }
     
-    let html = '';
-    
-    batches.forEach(batch => {
-        const statusClass = getStatusClass(batch.status);
-        const truncatedId = batch.batch_id.substring(0, 8) + '...';
-        const shortDate = new Date(batch.created_at).toLocaleString();
-        
-        html += `
-            <tr>
-                <td><span class="badge bg-secondary" title="${batch.batch_id}">${truncatedId}</span></td>
-                <td>${batch.target || 'N/A'}</td>
-                <td>${batch.username || 'Unknown'}</td>
-                <td>${shortDate}</td>
-                <td><span class="badge ${statusClass}">${batch.status}</span></td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <a href="/instagram/messages/${batch.batch_id}" class="btn btn-sm btn-info" title="View Messages">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        ${batch.status.toLowerCase() === 'running' ? 
-                            `<button class="btn btn-sm btn-warning" onclick="stopInstagramBatch('${batch.batch_id}')" title="Stop Batch">
-                                <i class="fas fa-stop"></i>
-                            </button>` : 
-                            `<button class="btn btn-sm btn-success" onclick="restartInstagramBatch('${batch.batch_id}')" title="Restart Batch">
-                                <i class="fas fa-play"></i>
-                            </button>`
-                        }
-                        <button class="btn btn-sm btn-danger" onclick="deleteInstagramBatch('${batch.batch_id}')" title="Delete Batch">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = html;
-}
-
-function deleteInstagramBatch(batchId) {
-    fetch(`/instagram/api/batch/${batchId}/delete`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch deleted successfully', 'success');
-            setTimeout(() => fetchInstagramBatches(), 1000);
-        } else {
-            showToast('Failed to delete batch: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error deleting batch', 'danger');
-        console.error('Error deleting Instagram batch:', err);
-    });
-}
-
-function stopInstagramBatch(batchId) {
-    fetch(`/instagram/api/batch/${batchId}/stop`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch stopped successfully', 'success');
-            setTimeout(() => fetchInstagramBatches(), 1000);
-        } else {
-            showToast('Failed to stop batch: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error stopping batch', 'danger');
-        console.error('Error stopping Instagram batch:', err);
-    });
-}
-
-function restartInstagramBatch(batchId) {
-    fetch(`/instagram/api/batch/${batchId}/restart`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch restarted successfully', 'success');
-            setTimeout(() => fetchInstagramBatches(), 1000);
-        } else {
-            showToast('Failed to restart batch: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error restarting batch', 'danger');
-        console.error('Error restarting Instagram batch:', err);
-    });
-}
-
-// Facebook Batches
-function fetchFacebookBatches() {
-    fetch('/facebook/api/batches')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayFacebookBatches(data.batches);
-            } else {
-                showError('facebookBatchesList', 'Failed to load Facebook batches');
-            }
-        })
-        .catch(err => {
-            showError('facebookBatchesList', 'Error loading Facebook batches');
-            console.error('Error fetching Facebook batches:', err);
-        });
-}
-
-function displayFacebookBatches(batches) {
-    const tableBody = document.getElementById('facebookBatchesList');
-    
-    if (!batches || batches.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <p class="text-muted">No active Facebook batches found</p>
-                </td>
-            </tr>
-        `;
-        return;
+    // Function to truncate strings
+    function truncate(str, length = 20) {
+        if (!str) return 'N/A';
+        return str.length > length ? str.substring(0, length) + '...' : str;
     }
     
-    let html = '';
+    // Function to format batch ID
+    function formatId(id) {
+        if (!id) return 'N/A';
+        return id.substring(0, 8) + '...';
+    }
     
-    batches.forEach(batch => {
-        const statusClass = getStatusClass(batch.status);
-        // Facebook model returns batch_id instead of id
-        const batchId = batch.batch_id || batch.id;
-        const truncatedId = batchId.substring(0, 8) + '...';
-        const shortDate = new Date(batch.created_at).toLocaleString();
+    // Function to load WhatsApp tasks
+    function loadWhatsAppTasks() {
+        fetch('{{ url_for("whatsapp.api_tasks") }}')
+            .then(response => response.json())
+            .then(data => {
+                const tasksTable = document.getElementById('whatsapp-tasks');
+                
+                if (data.success && data.tasks && data.tasks.length > 0) {
+                    let html = '';
+                    
+                    data.tasks.forEach(task => {
+                        const statusClass = 
+                            task.status === 'running' ? 'status-running' : 
+                            task.status === 'completed' ? 'status-completed' : 
+                            task.status === 'stopped' ? 'status-stopped' : 
+                            'status-failed';
+                        
+                        html += `
+                            <tr>
+                                <td><small class="text-muted">${formatId(task.id)}</small></td>
+                                <td><small>${formatDate(task.created_at)}</small></td>
+                                <td>${task.phone_number || 'N/A'}</td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${task.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar ${task.status === 'running' ? 'progress-bar-striped progress-bar-animated' : ''}" 
+                                             role="progressbar" 
+                                             style="width: ${task.progress || 0}%;" 
+                                             aria-valuenow="${task.progress || 0}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small>${task.progress || 0}% (${task.sent_count || 0}/${task.total_messages || 0})</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('whatsapp.view_task', task_id='') }}${task.id}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        ${task.status === 'running' ? `
+                                            <button class="btn btn-sm btn-outline-warning stop-task" data-id="${task.id}">
+                                                <i class="fas fa-stop"></i>
+                                            </button>
+                                        ` : ''}
+                                        ${task.status === 'stopped' || task.status === 'failed' ? `
+                                            <button class="btn btn-sm btn-outline-success restart-task" data-id="${task.id}">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        ` : ''}
+                                        <button class="btn btn-sm btn-outline-danger delete-task" data-id="${task.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tasksTable.innerHTML = html;
+                    
+                    // Add event listeners to the generated buttons
+                    document.querySelectorAll('.stop-task').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            stopWhatsAppTask(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                    document.querySelectorAll('.restart-task').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            restartWhatsAppTask(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-task').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            deleteWhatsAppTask(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                } else {
+                    tasksTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">No WhatsApp tasks found</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading WhatsApp tasks:', error);
+                document.getElementById('whatsapp-tasks').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">Error loading tasks: ${error.message}</td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Function to load Instagram batches
+    function loadInstagramBatches() {
+        fetch('{{ url_for("instagram.list_batches") }}')
+            .then(response => response.json())
+            .then(data => {
+                const batchesTable = document.getElementById('instagram-batches');
+                
+                if (data.success && data.batches && data.batches.length > 0) {
+                    let html = '';
+                    
+                    data.batches.forEach(batch => {
+                        const statusClass = 
+                            batch.status === 'running' ? 'status-running' : 
+                            batch.status === 'completed' ? 'status-completed' : 
+                            batch.status === 'stopped' ? 'status-stopped' : 
+                            'status-failed';
+                        
+                        html += `
+                            <tr>
+                                <td><small class="text-muted">${formatId(batch.id)}</small></td>
+                                <td><small>${formatDate(batch.created_at)}</small></td>
+                                <td>${truncate(batch.username)}</td>
+                                <td>
+                                    ${batch.target_type === 'user' ? 
+                                        `<span class="badge bg-info">User</span> ${truncate(batch.target)}` : 
+                                        `<span class="badge bg-warning">Group</span> ${truncate(batch.target)}`}
+                                </td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${batch.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('instagram.messages_page', batch_id='') }}${batch.id}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        ${batch.status === 'running' ? `
+                                            <button class="btn btn-sm btn-outline-warning stop-instagram" data-id="${batch.id}">
+                                                <i class="fas fa-stop"></i>
+                                            </button>
+                                        ` : ''}
+                                        <button class="btn btn-sm btn-outline-danger delete-instagram" data-id="${batch.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    batchesTable.innerHTML = html;
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.stop-instagram').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            stopInstagramBatch(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-instagram').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            deleteInstagramBatch(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                } else {
+                    batchesTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">No Instagram batches found</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading Instagram batches:', error);
+                document.getElementById('instagram-batches').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">Error loading batches: ${error.message}</td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Function to load Facebook batches
+    function loadFacebookBatches() {
+        fetch('{{ url_for("facebook.list_batches") }}')
+            .then(response => response.json())
+            .then(data => {
+                const batchesTable = document.getElementById('facebook-batches');
+                
+                if (data.success && data.batches && data.batches.length > 0) {
+                    let html = '';
+                    
+                    data.batches.forEach(batch => {
+                        const statusClass = 
+                            batch.status === 'running' ? 'status-running' : 
+                            batch.status === 'completed' ? 'status-completed' : 
+                            batch.status === 'stopped' ? 'status-stopped' : 
+                            'status-failed';
+                        
+                        html += `
+                            <tr>
+                                <td><small class="text-muted">${formatId(batch.id)}</small></td>
+                                <td><small>${formatDate(batch.created_at)}</small></td>
+                                <td>${truncate(batch.account_name || 'Unknown')}</td>
+                                <td>${truncate(batch.conversation_id)}</td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${batch.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('facebook.messages_page', batch_id='') }}${batch.id}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        ${batch.status === 'running' ? `
+                                            <button class="btn btn-sm btn-outline-warning stop-facebook" data-id="${batch.id}">
+                                                <i class="fas fa-stop"></i>
+                                            </button>
+                                        ` : ''}
+                                        <button class="btn btn-sm btn-outline-danger delete-facebook" data-id="${batch.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    batchesTable.innerHTML = html;
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.stop-facebook').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            stopFacebookBatch(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-facebook').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            deleteFacebookBatch(this.getAttribute('data-id'));
+                        });
+                    });
+                    
+                } else {
+                    batchesTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">No Facebook batches found</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading Facebook batches:', error);
+                document.getElementById('facebook-batches').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">Error loading batches: ${error.message}</td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Function to load overall stats
+    function loadStats() {
+        fetch('{{ url_for("main.status") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // WhatsApp stats
+                    const wp = data.platforms.whatsapp.stats;
+                    document.getElementById('whatsapp-total').textContent = wp.total;
+                    document.getElementById('whatsapp-running').textContent = wp.running;
+                    document.getElementById('whatsapp-completed').textContent = wp.completed;
+                    document.getElementById('whatsapp-stopped').textContent = (wp.stopped + wp.failed);
+                    
+                    // Instagram stats
+                    const ig = data.platforms.instagram.stats;
+                    document.getElementById('instagram-total').textContent = ig.total;
+                    document.getElementById('instagram-running').textContent = ig.running;
+                    document.getElementById('instagram-completed').textContent = ig.completed;
+                    document.getElementById('instagram-stopped').textContent = (ig.stopped + ig.failed);
+                    
+                    // Facebook stats
+                    const fb = data.platforms.facebook.stats;
+                    document.getElementById('facebook-total').textContent = fb.total;
+                    document.getElementById('facebook-running').textContent = fb.running;
+                    document.getElementById('facebook-completed').textContent = fb.completed;
+                    document.getElementById('facebook-stopped').textContent = (fb.stopped + fb.failed);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+            });
+    }
+    
+    // WhatsApp task actions
+    function stopWhatsAppTask(taskId) {
+        if (!confirm('Are you sure you want to stop this task?')) return;
         
-        html += `
-            <tr>
-                <td><span class="badge bg-secondary" title="${batchId}">${truncatedId}</span></td>
-                <td>${batch.conversation_id || 'N/A'}</td>
-                <td>${batch.account_name || 'Unknown'}</td>
-                <td>${shortDate}</td>
-                <td><span class="badge ${statusClass}">${batch.status}</span></td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <a href="/facebook/messages/${batchId}" class="btn btn-sm btn-info" title="View Messages">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        ${batch.status.toLowerCase() === 'running' ? 
-                            `<button class="btn btn-sm btn-warning" onclick="stopFacebookBatch('${batchId}')" title="Stop Batch">
-                                <i class="fas fa-stop"></i>
-                            </button>` : 
-                            ''
-                        }
-                        <button class="btn btn-sm btn-danger" onclick="deleteFacebookBatch('${batchId}')" title="Delete Batch">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = html;
-}
-
-function stopFacebookBatch(batchId) {
-    fetch(`/facebook/stop/${batchId}`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Batch stopped successfully', 'success');
-            setTimeout(() => fetchFacebookBatches(), 1000);
-        } else {
-            showToast('Failed to stop batch: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error stopping batch', 'danger');
-        console.error('Error stopping Facebook batch:', err);
-    });
-}
-
-function deleteFacebookBatch(batchId) {
-    if (confirm('Are you sure you want to delete this Facebook batch?')) {
-        // TO DO: Implement Facebook batch deletion API
-        fetch(`/facebook/delete/${batchId}`, {
+        showSpinner('Stopping task...');
+        
+        fetch('{{ url_for("whatsapp.stop_task", task_id="") }}' + taskId, {
             method: 'POST'
         })
         .then(response => response.json())
         .then(data => {
+            hideSpinner();
             if (data.success) {
-                showToast('Batch deleted successfully', 'success');
-                setTimeout(() => fetchFacebookBatches(), 1000);
+                showToast('Task stopped successfully', 'success');
+                loadWhatsAppTasks();
+                loadStats();
             } else {
-                showToast('Failed to delete batch: ' + (data.message || 'Unknown error'), 'danger');
+                showToast(`Error: ${data.message}`, 'danger');
             }
         })
-        .catch(err => {
-            showToast('Error deleting batch', 'danger');
-            console.error('Error deleting Facebook batch:', err);
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
         });
     }
-}
-
-// WhatsApp Tasks
-function fetchWhatsAppTasks() {
-    fetch('/whatsapp/api/tasks')
+    
+    function restartWhatsAppTask(taskId) {
+        if (!confirm('Restart this task?')) return;
+        
+        showSpinner('Restarting task...');
+        
+        fetch('{{ url_for("whatsapp.restart_task", task_id="") }}' + taskId, {
+            method: 'POST'
+        })
         .then(response => response.json())
         .then(data => {
+            hideSpinner();
             if (data.success) {
-                displayWhatsAppTasks(data.tasks);
+                showToast('Task restarted successfully', 'success');
+                loadWhatsAppTasks();
+                loadStats();
             } else {
-                showError('whatsappTasksList', 'Failed to load WhatsApp tasks');
+                showToast(`Error: ${data.message}`, 'danger');
             }
         })
-        .catch(err => {
-            showError('whatsappTasksList', 'Error loading WhatsApp tasks');
-            console.error('Error fetching WhatsApp tasks:', err);
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
         });
-}
-
-function displayWhatsAppTasks(tasks) {
-    const tableBody = document.getElementById('whatsappTasksList');
-    
-    if (!tasks || tasks.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <p class="text-muted">No active WhatsApp tasks found</p>
-                </td>
-            </tr>
-        `;
-        return;
     }
     
-    let html = '';
-    
-    tasks.forEach(task => {
-        const statusClass = getStatusClass(task.status);
-        const truncatedId = task.id.substring(0, 8) + '...';
-        const shortDate = new Date(task.created_at).toLocaleString();
+    function deleteWhatsAppTask(taskId) {
+        if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) return;
         
-        html += `
-            <tr>
-                <td><span class="badge bg-secondary" title="${task.id}">${truncatedId}</span></td>
-                <td>${task.phone_number || 'N/A'}</td>
-                <td>${task.total_recipients}</td>
-                <td>${shortDate}</td>
-                <td>
-                    <div class="progress">
-                        <div class="progress-bar ${statusClass}" role="progressbar" style="width: ${task.progress}%">
-                            ${task.progress}%
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <a href="/whatsapp/task/${task.id}" class="btn btn-sm btn-info" title="View Task">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        ${task.status === 'running' ? 
-                            `<button class="btn btn-sm btn-warning" onclick="stopWhatsAppTask('${task.id}')" title="Stop Task">
-                                <i class="fas fa-stop"></i>
-                            </button>` : 
-                            `<button class="btn btn-sm btn-success" onclick="restartWhatsAppTask('${task.id}')" title="Restart Task">
-                                <i class="fas fa-play"></i>
-                            </button>`
-                        }
-                        <button class="btn btn-sm btn-danger" onclick="deleteWhatsAppTask('${task.id}')" title="Delete Task">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = html;
-}
-
-function stopWhatsAppTask(taskId) {
-    fetch(`/whatsapp/stop_task/${taskId}`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Task stopped successfully', 'success');
-            setTimeout(() => fetchWhatsAppTasks(), 1000);
-        } else {
-            showToast('Failed to stop task: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error stopping task', 'danger');
-        console.error('Error stopping WhatsApp task:', err);
-    });
-}
-
-function restartWhatsAppTask(taskId) {
-    fetch(`/whatsapp/restart_task/${taskId}`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Task restarted successfully', 'success');
-            setTimeout(() => fetchWhatsAppTasks(), 1000);
-        } else {
-            showToast('Failed to restart task: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error restarting task', 'danger');
-        console.error('Error restarting WhatsApp task:', err);
-    });
-}
-
-function deleteWhatsAppTask(taskId) {
-    fetch(`/whatsapp/delete_task/${taskId}`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Task deleted successfully', 'success');
-            setTimeout(() => fetchWhatsAppTasks(), 1000);
-        } else {
-            showToast('Failed to delete task: ' + data.message, 'danger');
-        }
-    })
-    .catch(err => {
-        showToast('Error deleting task', 'danger');
-        console.error('Error deleting WhatsApp task:', err);
-    });
-}
-
-// Helper functions
-function showError(elementId, message) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i> ${message}
-                    </div>
-                </td>
-            </tr>
-        `;
-    }
-}
-
-function getStatusClass(status) {
-    if (!status) return 'bg-secondary';
-    
-    status = status.toLowerCase();
-    
-    if (status === 'running') return 'bg-success';
-    if (status === 'stopped') return 'bg-warning';
-    if (status === 'completed') return 'bg-info';
-    if (status === 'failed') return 'bg-danger';
-    
-    return 'bg-secondary';
-}
-
-function showToast(message, type = 'info') {
-    // Check if toast container exists, if not create it
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(toastContainer);
+        showSpinner('Deleting task...');
+        
+        fetch('{{ url_for("whatsapp.delete_task", task_id="") }}' + taskId, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.success) {
+                showToast('Task deleted successfully', 'success');
+                loadWhatsAppTasks();
+                loadStats();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
     }
     
-    // Create toast element
-    const toastId = 'toast-' + Math.random().toString(36).substr(2, 9);
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-bg-${type} border-0`;
-    toast.id = toastId;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
+    // Instagram batch actions
+    function stopInstagramBatch(batchId) {
+        if (!confirm('Are you sure you want to stop this batch?')) return;
+        
+        showSpinner('Stopping batch...');
+        
+        fetch('{{ url_for("instagram.stop_sending", batch_id="") }}' + batchId, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.success) {
+                showToast('Batch stopped successfully', 'success');
+                loadInstagramBatches();
+                loadStats();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
     
-    // Toast content
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+    function deleteInstagramBatch(batchId) {
+        if (!confirm('Are you sure you want to delete this batch? This action cannot be undone.')) return;
+        
+        showSpinner('Deleting batch...');
+        
+        fetch('{{ url_for("instagram.delete_batch", batch_id="") }}' + batchId, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.success) {
+                showToast('Batch deleted successfully', 'success');
+                loadInstagramBatches();
+                loadStats();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
     
-    // Add to container
-    toastContainer.appendChild(toast);
+    // Facebook batch actions
+    function stopFacebookBatch(batchId) {
+        if (!confirm('Are you sure you want to stop this batch?')) return;
+        
+        showSpinner('Stopping batch...');
+        
+        fetch('{{ url_for("facebook.stop_sending", batch_id="") }}' + batchId, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.success) {
+                showToast('Batch stopped successfully', 'success');
+                loadFacebookBatches();
+                loadStats();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
     
-    // Create bootstrap toast
-    const bsToast = new bootstrap.Toast(toast, {
-        autohide: true,
-        delay: 5000
+    function deleteFacebookBatch(batchId) {
+        if (!confirm('Are you sure you want to delete this batch? This action cannot be undone.')) return;
+        
+        showSpinner('Deleting batch...');
+        
+        fetch('{{ url_for("facebook.delete_batch", batch_id="") }}' + batchId, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.success) {
+                showToast('Batch deleted successfully', 'success');
+                loadFacebookBatches();
+                loadStats();
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    }
+    
+    // Set up refresh buttons
+    document.getElementById('refresh-whatsapp').addEventListener('click', function() {
+        loadWhatsAppTasks();
     });
     
-    // Show toast
-    bsToast.show();
-    
-    // Remove from DOM after hiding
-    toast.addEventListener('hidden.bs.toast', function () {
-        toast.remove();
+    document.getElementById('refresh-instagram').addEventListener('click', function() {
+        loadInstagramBatches();
     });
-}
+    
+    document.getElementById('refresh-facebook').addEventListener('click', function() {
+        loadFacebookBatches();
+    });
+    
+    // Tab change handlers to load data when tab is shown
+    const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target').substring(1);
+            
+            if (targetId === 'whatsapp') {
+                loadWhatsAppTasks();
+            } else if (targetId === 'instagram') {
+                loadInstagramBatches();
+            } else if (targetId === 'facebook') {
+                loadFacebookBatches();
+            }
+        });
+    });
+    
+    // Initial load
+    loadWhatsAppTasks();
+    loadStats();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        const activeTab = document.querySelector('.nav-link.active');
+        const targetId = activeTab.getAttribute('data-bs-target').substring(1);
+        
+        if (targetId === 'whatsapp') {
+            loadWhatsAppTasks();
+        } else if (targetId === 'instagram') {
+            loadInstagramBatches();
+        } else if (targetId === 'facebook') {
+            loadFacebookBatches();
+        }
+        
+        loadStats();
+    }, 30000);
+});
 </script>
 {% endblock %}

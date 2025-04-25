@@ -39,53 +39,63 @@ def set_username():
 @main_bp.route('/batch-manager')
 def batch_manager():
     """Batch Manager page for all platforms"""
-    # Get personalized greeting
-    username = session.get('username', None)
-    greeting = get_personalized_greeting(username)
-    
-    # Fetch WhatsApp tasks from database
-    whatsapp_tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
-    
-    # Fetch Instagram batches from database
-    instagram_batches = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).all()
-    
-    # Fetch Facebook batches from database
-    facebook_batches = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).all()
-    
-    return render_template('batch_manager.html',
-                         greeting=greeting,
-                         username=username,
-                         whatsapp_tasks=whatsapp_tasks,
-                         instagram_batches=instagram_batches,
-                         facebook_batches=facebook_batches)
+    return render_template('batch_manager.html')
 
 @main_bp.route('/status')
 def status():
     """Get status of all services"""
-    # Get counts for each platform
-    instagram_count = InstagramBatch.query.filter(
-        InstagramBatch.status.in_(['running'])
-    ).count()
-    
-    facebook_count = FacebookBatch.query.filter(
-        FacebookBatch.status.in_(['running'])
-    ).count()
-    
-    whatsapp_count = WhatsAppTask.query.filter(
-        WhatsAppTask.status.in_(['created', 'running'])
-    ).count()
-    
-    return jsonify({
-        "whatsapp": {
-            "active": True,
-            "activeTaskCount": whatsapp_count
-        },
-        "facebook": {
-            "active": True,
-            "activeBatchCount": facebook_count
-        },
-        "instagram": {
-            "active": True,
-            "activeBatchCount": instagram_count
+    try:
+        # Count tasks by platform and status
+        whatsapp_stats = {
+            'total': WhatsAppTask.query.count(),
+            'running': WhatsAppTask.query.filter_by(status='running').count(),
+            'completed': WhatsAppTask.query.filter_by(status='completed').count(),
+            'stopped': WhatsAppTask.query.filter_by(status='stopped').count(),
+            'failed': WhatsAppTask.query.filter_by(status='failed').count()
         }
-    })
+        
+        instagram_stats = {
+            'total': InstagramBatch.query.count(),
+            'running': InstagramBatch.query.filter_by(status='running').count(),
+            'completed': InstagramBatch.query.filter_by(status='completed').count(),
+            'stopped': InstagramBatch.query.filter_by(status='stopped').count(),
+            'failed': InstagramBatch.query.filter_by(status='failed').count()
+        }
+        
+        facebook_stats = {
+            'total': FacebookBatch.query.count(),
+            'running': FacebookBatch.query.filter_by(status='running').count(),
+            'completed': FacebookBatch.query.filter_by(status='completed').count(),
+            'stopped': FacebookBatch.query.filter_by(status='stopped').count(),
+            'failed': FacebookBatch.query.filter_by(status='failed').count()
+        }
+        
+        # Get the latest tasks for each platform
+        latest_whatsapp = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).limit(5).all()
+        latest_instagram = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).limit(5).all()
+        latest_facebook = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).limit(5).all()
+        
+        return jsonify({
+            'success': True,
+            'platforms': {
+                'whatsapp': {
+                    'stats': whatsapp_stats,
+                    'latest': [task.to_dict() for task in latest_whatsapp]
+                },
+                'instagram': {
+                    'stats': instagram_stats,
+                    'latest': [batch.to_dict() for batch in latest_instagram]
+                },
+                'facebook': {
+                    'stats': facebook_stats,
+                    'latest': [batch.to_dict() for batch in latest_facebook]
+                }
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"Error getting platform status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f"Error getting status: {str(e)}"
+        })

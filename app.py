@@ -17,10 +17,19 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = "automation_hub_secret_key"  # Fixed secret key for development
+app.secret_key = os.environ.get("SESSION_SECRET", "automation_hub_secret_key")
 
 # Configure database
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://koyeb-adm:npg_ZCUA5mS8uOFw@ep-orange-lab-a2otm96c.eu-central-1.pg.koyeb.app/koyebdb"
+# Debug log for DATABASE_URL
+database_url = os.environ.get("DATABASE_URL", "sqlite:///automation_hub.db")
+logger.debug(f"Using database URL: {database_url}")
+
+# Handle special case for postgres:// URLs
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    logger.debug(f"Replaced postgres:// with postgresql:// in URL")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
