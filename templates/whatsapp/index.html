@@ -542,12 +542,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button id="disconnect-btn" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt me-1"></i> Disconnect
                         </button>
-                        
-                        <button id="show-messaging-btn" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
-                        </button>
                     </div>
                 `;
+                
+                // Auto-show the messaging section when connected
+                document.getElementById('messaging-section').classList.remove('d-none');
+                
+                // Scroll to the messaging section
+                document.getElementById('messaging-section').scrollIntoView({ behavior: 'smooth' });
                 
                 // Reattach disconnect event listener
                 const disconnectBtn = document.getElementById('disconnect-btn');
