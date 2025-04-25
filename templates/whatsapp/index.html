@@ -62,26 +62,34 @@
                         </div>
                         {% else %}
                         <div class="alert alert-info" role="alert">
-                            <i class="fas fa-info-circle me-2"></i> Please connect to WhatsApp to start sending messages.
+                            <i class="fas fa-info-circle me-2"></i> To connect WhatsApp, enter your phone number and request a pairing code.
                         </div>
-                        <form id="connect-form">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="phone-input" placeholder="Phone Number with Country Code" required>
-                                <button class="btn btn-primary" type="submit">
-                                    <i class="fas fa-sign-in-alt me-1"></i> Connect
-                                </button>
-                            </div>
+                        <div class="mb-3">
+                            <label for="phone-input" class="form-label">Phone Number with Country Code</label>
+                            <input type="text" class="form-control" id="phone-input" placeholder="Phone Number with Country Code" required>
                             <small class="form-text text-muted">Example: 919876543210 (91 is country code for India)</small>
-                        </form>
+                        </div>
                         
-                        <button id="code-btn" class="btn btn-outline-primary mt-2">
+                        <button id="code-btn" class="btn btn-primary btn-lg w-100">
                             <i class="fas fa-key me-1"></i> Request Pairing Code
                         </button>
+                        
                         <div id="pairing-code-container" class="d-none mt-3">
-                            <div class="alert alert-info">
-                                <strong>Pairing Code:</strong> <span id="pairing-code">Waiting...</span>
+                            <div class="alert alert-primary">
+                                <div class="text-center">
+                                    <h4 class="alert-heading">Pairing Code Generated!</h4>
+                                    <p class="display-4 fw-bold my-3" id="pairing-code">Waiting...</p>
+                                    <hr>
+                                    <p class="mb-0">Enter this code in WhatsApp on your phone within 60 seconds.</p>
+                                    <small class="d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> The system will automatically connect when pairing is successful.
+                                    </small>
+                                </div>
                             </div>
-                            <p class="text-muted small">Enter this code in WhatsApp on your phone.</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                    role="progressbar" style="width: 100%" id="pairing-progress-bar"></div>
+                            </div>
                         </div>
                         {% endif %}
                     </div>
@@ -250,39 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Connect form handler
-    const connectForm = document.getElementById('connect-form');
-    if (connectForm) {
-        connectForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const phoneNumber = document.getElementById('phone-input').value.trim();
-            if (!phoneNumber) {
-                alert('Please enter a phone number');
-                return;
-            }
-            
-            fetch('/whatsapp/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `phone_number=${encodeURIComponent(phoneNumber)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateStatus('connecting', null);
-                    alert('Connection initiated. Please wait...');
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            })
-            .catch(error => {
-                alert(`Error: ${error}`);
-            });
-        });
-    }
+    // We've removed the connect form handler since we're using pairing code only
     
     // Disconnect button handler
     const disconnectBtn = document.getElementById('disconnect-btn');
