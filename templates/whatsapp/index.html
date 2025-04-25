@@ -332,7 +332,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Check status on a reasonable interval to avoid excessive refreshing
-    setInterval(checkStatus, 10000);
+    // Check status less frequently to reduce page refresh issues
+    setInterval(checkStatus, 30000);
     
     // Also check once right away
     setTimeout(checkStatus, 100);
@@ -726,12 +727,26 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Phone number
                             phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
                             
-                            // If status changes to connected, immediately redirect to message form
+                            // If status changes to connected, show the messaging section instead of redirecting
                             if (data.status === 'connected') {
-                                // Just a small delay to ensure server has registered the connected state
-                                setTimeout(() => {
-                                    window.location.href = '/whatsapp/';
-                                }, 500);
+                                // Just show the messaging section without reload
+                                const messagingSection = document.getElementById('messaging-section');
+                                if (messagingSection) {
+                                    messagingSection.classList.remove('d-none');
+                                }
+                                
+                                // Hide connection form elements
+                                const pairingContainer = document.getElementById('pairing-code-container');
+                                const phoneInput = document.getElementById('phone-input');
+                                const codeBtn = document.getElementById('code-btn');
+                                
+                                if (pairingContainer) pairingContainer.classList.add('d-none');
+                                if (phoneInput) phoneInput.parentElement.classList.add('d-none');
+                                if (codeBtn) codeBtn.classList.add('d-none');
+                                
+                                // Show connection success elements
+                                const connectedControls = document.querySelector('.connected-controls');
+                                if (connectedControls) connectedControls.classList.remove('d-none');
                             }
                             
                             // Update UI based on status changes
