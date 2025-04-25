@@ -25,9 +25,10 @@ logger = logging.getLogger(__name__)
 instagram_bp = Blueprint('instagram', __name__, template_folder='templates')
 
 # Global variables (will be kept for backward compatibility and runtime processing)
-user_batches = {}  # Store batch messages (temporary)
-stop_flags = {}    # Control message sending
-clients = {}       # Store Instagram client instances
+user_batches = {}    # Store batch messages (temporary)
+stop_flags = {}      # Control message sending
+clients = {}         # Store Instagram client instances
+active_batches = {}  # For backward compatibility
 
 @instagram_bp.route('/')
 def index():
