@@ -309,8 +309,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Check status more frequently for faster response times
-    setInterval(checkStatus, 2000);
+    // Check status on a reasonable interval to avoid excessive refreshing
+    setInterval(checkStatus, 10000);
     
     // Also check once right away
     setTimeout(checkStatus, 100);
@@ -738,7 +738,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (shouldShowForm) {
-            console.log("Showing message form due to status or active pairing");
+            // Only log this message when form is initially shown, not on every update
+            if (messagingSection && messagingSection.classList.contains('d-none')) {
+                console.log("Showing message form due to connected status");
+            }
             
             // Show messaging section
             if (messagingSection) {

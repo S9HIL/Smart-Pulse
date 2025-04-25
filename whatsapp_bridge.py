@@ -111,14 +111,22 @@ def status():
     """Get WhatsApp connection status"""
     # Actively request a status update from the WhatsApp service
     try:
-        # Send ping command to force immediate status update
-        whatsapp_service.send_command('ping')
+        # Track when the last ping was sent to avoid excessive pings
+        current_time = time.time()
+        last_ping_time = getattr(status, 'last_ping_time', 0)
+        
+        # Only send a new ping if more than 3 seconds have passed since the last one
+        if current_time - last_ping_time > 3:
+            # Send ping command to force immediate status update
+            whatsapp_service.send_command('ping')
+            # Update the timestamp
+            status.last_ping_time = current_time
         
         # Add special flag for faster UI response when a pairing code is present
         is_pairing_active = whatsapp_service.pairing_code is not None
         
-        # A shorter wait time for faster responsiveness
-        time.sleep(0.1)
+        # A minimal wait time just to ensure async processing
+        time.sleep(0.05)
         
         return jsonify({
             "success": True,
