@@ -158,16 +158,34 @@ async function connectToWhatsApp(sessionId = null, phoneNumber = null, forceNewS
                 logger.info(`QR code received but not used (functionality removed)`);
             }
 
+            // Track connection updates to reduce duplicate notifications
+            let lastConnectionStatus = connectionStatus;
+            let shouldNotify = false;
+            
             if (connection) {
                 logger.info(`Connection update: ${connection}`);
-                connectionStatus = connection;
                 
-                // Send connection update to parent
-                sendToParent({
-                    type: 'connection_update',
-                    status: connection,
-                    phoneNumber: connectedPhoneNumber
-                });
+                // Only send updates if status changed
+                if (connection !== lastConnectionStatus) {
+                    shouldNotify = true;
+                    connectionStatus = connection;
+                }
+                
+                // Always send updates if we get a 'connected' status
+                if (connection === 'open') {
+                    shouldNotify = true;
+                    // Update to a more user-friendly status term
+                    connectionStatus = 'connected';
+                }
+                
+                // Send connection update to parent only if status changed
+                if (shouldNotify) {
+                    sendToParent({
+                        type: 'connection_update',
+                        status: connectionStatus,
+                        phoneNumber: connectedPhoneNumber
+                    });
+                }
             }
 
             if (connection === 'close') {
@@ -262,12 +280,15 @@ async function connectToWhatsApp(sessionId = null, phoneNumber = null, forceNewS
                     if (!sessionId || (sessionId && sessionId === currentSessionId)) {
                         connectedPhoneNumber = connectedPhone;
                         
-                        // Send connection update to parent
-                        sendToParent({
-                            type: 'connection_update',
-                            status: 'connected',
-                            phoneNumber: connectedPhone
-                        });
+                        // Send connection update to parent only if we weren't already connected
+                        // This prevents duplicate updates that cause UI flickering
+                        if (connectionStatus !== 'connected') {
+                            sendToParent({
+                                type: 'connection_update',
+                                status: 'connected',
+                                phoneNumber: connectedPhone
+                            });
+                        }
                     }
                     
                     logger.info(`Connected with phone number: ${connectedPhone}`);

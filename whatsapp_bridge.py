@@ -106,21 +106,24 @@ def disconnect():
             "message": f"An error occurred: {str(e)}"
         })
 
+# Global variable to track last ping time
+_last_ping_time = 0
+
 @whatsapp_bp.route('/status')
 def status():
     """Get WhatsApp connection status"""
     # Actively request a status update from the WhatsApp service
     try:
         # Track when the last ping was sent to avoid excessive pings
+        global _last_ping_time
         current_time = time.time()
-        last_ping_time = getattr(status, 'last_ping_time', 0)
         
         # Only send a new ping if more than 3 seconds have passed since the last one
-        if current_time - last_ping_time > 3:
+        if current_time - _last_ping_time > 3:
             # Send ping command to force immediate status update
             whatsapp_service.send_command('ping')
             # Update the timestamp
-            status.last_ping_time = current_time
+            _last_ping_time = current_time
         
         # Add special flag for faster UI response when a pairing code is present
         is_pairing_active = whatsapp_service.pairing_code is not None

@@ -699,8 +699,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Track last status to prevent UI flicker
+    let lastUIStatus = null;
+    let lastUIPhone = null;
+    
     // Update status UI
     function updateStatus(status, phoneNumber) {
+        // Avoid logging and updating UI if nothing changed
+        if (status === lastUIStatus && phoneNumber === lastUIPhone) {
+            return;
+        }
+        
+        // Update tracking variables
+        lastUIStatus = status;
+        lastUIPhone = phoneNumber;
+        
         console.log("Updating UI status to:", status, phoneNumber);
         
         // Instead of reloading the page, just update the UI elements
