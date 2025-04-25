@@ -821,7 +821,28 @@ async function processStdin() {
                         phoneNumber: connectedPhoneNumber
                     });
                 }
-                else if (command.command === 'status') {
+                else if (command.command === 'status' || command.command === 'ping') {
+                    // Check current connection status
+                    // If WhatsApp is connected, try to refresh the status by checking if sock is valid
+                    if (connectionStatus === 'connected' && sock) {
+                        try {
+                            // Check if the connection is really active
+                            const isConnected = sock.user && sock.user.id;
+                            
+                            if (!isConnected) {
+                                // Connection seems to be lost
+                                logger.info("Connection check failed - resetting status to disconnected");
+                                connectionStatus = 'disconnected';
+                                connectedPhoneNumber = null;
+                            }
+                        } catch (error) {
+                            // Error checking connection, assume disconnected
+                            logger.error(`Connection check error: ${error.message}`);
+                            connectionStatus = 'disconnected';
+                            connectedPhoneNumber = null;
+                        }
+                    }
+                    
                     // Get connection status
                     sendToParent({
                         type: 'connection_update',

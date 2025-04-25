@@ -106,14 +106,31 @@ def disconnect():
 @whatsapp_bp.route('/status')
 def status():
     """Get WhatsApp connection status"""
-    return jsonify({
-        "success": True,
-        "isRunning": whatsapp_service.is_running(),
-        "status": whatsapp_service.status,
-        "phoneNumber": whatsapp_service.phone_number,
-        "hasPairingCode": whatsapp_service.pairing_code is not None,
-        "error": whatsapp_service.last_error
-    })
+    # Actively request a status update from the WhatsApp service
+    try:
+        # Send ping command to force status update
+        whatsapp_service.send_command('ping')
+        
+        # Wait a short time for status to update
+        time.sleep(0.3)
+        
+        return jsonify({
+            "success": True,
+            "isRunning": whatsapp_service.is_running(),
+            "status": whatsapp_service.status,
+            "phoneNumber": whatsapp_service.phone_number,
+            "hasPairingCode": whatsapp_service.pairing_code is not None,
+            "error": whatsapp_service.last_error,
+            "lastChecked": datetime.now().strftime("%H:%M:%S")
+        })
+    except Exception as e:
+        logger.error(f"Error checking WhatsApp status: {str(e)}")
+        return jsonify({
+            "success": False,
+            "isRunning": whatsapp_service.is_running(),
+            "status": "error",
+            "error": str(e)
+        })
 
 # QR code functionality removed as per requirements
 

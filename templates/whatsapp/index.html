@@ -2,6 +2,59 @@
 
 {% block title %}WhatsApp Automation{% endblock %}
 
+{% block head %}
+{{ super() }}
+<style>
+    .blink-warning {
+        animation: blink-animation 1s steps(5, start) infinite;
+    }
+    @keyframes blink-animation {
+        to {
+            opacity: 0;
+        }
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    
+    .status-indicator.connected {
+        background-color: #28a745;
+        box-shadow: 0 0 5px #28a745;
+    }
+    
+    .status-indicator.disconnected {
+        background-color: #dc3545;
+        box-shadow: 0 0 5px #dc3545;
+    }
+    
+    .status-indicator.connecting {
+        background-color: #ffc107;
+        box-shadow: 0 0 5px #ffc107;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.8;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.8);
+            opacity: 0.8;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h1 class="mb-4">WhatsApp Automation</h1>
@@ -603,9 +656,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
                         </a>
                     </div>
-                    <div class="d-grid">
+                    <div class="d-grid gap-2">
+                        <button id="refresh-status-btn" class="btn btn-info mb-2">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh Connection Status
+                        </button>
                         <button id="refresh-page-btn" class="btn btn-success" onclick="window.location.reload()">
-                            <i class="fas fa-sync-alt me-1"></i> Refresh Page to Show Messaging Form
+                            <i class="fas fa-redo-alt me-1"></i> Reload Page
                         </button>
                     </div>
                 `;
@@ -620,6 +676,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
+                
+                // Attach refresh status button event listener
+                const refreshStatusBtn = document.getElementById('refresh-status-btn');
+                if (refreshStatusBtn) {
+                    refreshStatusBtn.addEventListener('click', function() {
+                        // Show loading spinner on the button
+                        const originalText = refreshStatusBtn.innerHTML;
+                        refreshStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+                        refreshStatusBtn.disabled = true;
+                        
+                        // Force check status
+                        fetch('/whatsapp/status')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update the UI with latest status
+                            if (data.success) {
+                                updateStatus(data.status, data.phoneNumber);
+                                
+                                // If connected, enable the send form
+                                if (data.status === 'connected') {
+                                    const sendForm = document.getElementById('send-form');
+                                    if (sendForm) {
+                                        sendForm.classList.remove('disabled');
+                                        sendForm.querySelector('fieldset').disabled = false;
+                                    }
+                                    
+                                    // Show messaging section
+                                    document.getElementById('messaging-section').classList.remove('d-none');
+                                }
+                                
+                                // Alert with current status
+                                alert(`Status refreshed: ${data.status.toUpperCase()}\nTime: ${data.lastChecked || 'now'}`);
+                            } else {
+                                alert('Error refreshing status: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            alert('Error checking status: ' + error);
+                        })
+                        .finally(() => {
+                            // Restore button text
+                            refreshStatusBtn.innerHTML = originalText;
+                            refreshStatusBtn.disabled = false;
+                        });
+                    });
+                }
                 
                 // Reattach disconnect event listener
                 const disconnectBtn = document.getElementById('disconnect-btn');
