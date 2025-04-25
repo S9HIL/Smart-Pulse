@@ -243,8 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check status periodically
     setInterval(checkStatus, 5000);
     
-    // Initial status check
-    checkStatus();
+    // Initial status check with delay to ensure DOM is fully loaded
+    setTimeout(function() {
+        checkStatus();
+    }, 500);
     
     // Show messaging section button handler
     const showMessagingBtn = document.getElementById('show-messaging-btn');
@@ -469,56 +471,62 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to check WhatsApp status
     function checkStatus() {
-        fetch('/whatsapp/status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Make sure elements exist before updating them
-                    const serviceStatusEl = document.getElementById('service-status');
-                    const connectionStatusEl = document.getElementById('connection-status');
-                    const phoneNumberEl = document.getElementById('phone-number');
-                    
-                    // Only proceed if all elements exist
-                    if (serviceStatusEl && connectionStatusEl && phoneNumberEl) {
-                        // Service status
-                        serviceStatusEl.innerHTML = data.isRunning 
-                            ? '<span class="badge bg-success">Running</span>' 
-                            : '<span class="badge bg-danger">Stopped</span>';
+        try {
+            fetch('/whatsapp/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.success) {
+                        // Make sure elements exist before updating them
+                        const serviceStatusEl = document.getElementById('service-status');
+                        const connectionStatusEl = document.getElementById('connection-status');
+                        const phoneNumberEl = document.getElementById('phone-number');
                         
-                        // Connection status
-                        let statusClass = '';
-                        switch (data.status) {
-                            case 'connected':
-                                statusClass = 'bg-success';
-                                break;
-                            case 'connecting':
-                                statusClass = 'bg-warning';
-                                break;
-                            default:
-                                statusClass = 'bg-secondary';
-                        }
-                        
-                        connectionStatusEl.innerHTML = 
-                            `<span class="badge ${statusClass}">${data.status || 'disconnected'}</span>`;
-                        
-                        // Phone number
-                        phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
-                        
-                        // Update status if values changed (check if template variables exist)
-                        const templateStatus = '{{ status }}';
-                        const templatePhone = '{{ phone_number }}';
-                        
-                        if (templateStatus && templatePhone && 
-                            (data.status !== templateStatus || data.phoneNumber !== templatePhone)) {
-                            updateStatus(data.status, data.phoneNumber);
+                        // Only proceed if all elements exist
+                        if (serviceStatusEl && connectionStatusEl && phoneNumberEl) {
+                            // Service status
+                            serviceStatusEl.innerHTML = data.isRunning 
+                                ? '<span class="badge bg-success">Running</span>' 
+                                : '<span class="badge bg-danger">Stopped</span>';
+                            
+                            // Connection status
+                            let statusClass = '';
+                            switch (data.status) {
+                                case 'connected':
+                                    statusClass = 'bg-success';
+                                    break;
+                                case 'connecting':
+                                    statusClass = 'bg-warning';
+                                    break;
+                                default:
+                                    statusClass = 'bg-secondary';
+                            }
+                            
+                            connectionStatusEl.innerHTML = 
+                                `<span class="badge ${statusClass}">${data.status || 'disconnected'}</span>`;
+                            
+                            // Phone number
+                            phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
+                            
+                            // Don't use template variables directly as they might cause issues
+                            // Only update UI if status changes are needed
+                            const currentStatus = connectionStatusEl.textContent.trim().toLowerCase();
+                            const newStatus = (data.status || 'disconnected').toLowerCase();
+                            
+                            if (currentStatus !== newStatus || 
+                                phoneNumberEl.textContent !== (data.phoneNumber || 'Not connected')) {
+                                updateStatus(data.status, data.phoneNumber);
+                            }
                         }
                     }
-                }
-            })
-            .catch(error => {
-                // Just log the error, no need to show to user
-                console.error('Error checking status:', error);
-            });
+                })
+                .catch(error => {
+                    // Just log the error, no need to show to user
+                    console.log('Error fetching status:', error.message || 'Unknown error');
+                });
+        } catch (err) {
+            // Catch any unexpected errors in the function itself
+            console.log('Error in checkStatus function:', err.message || 'Unknown error');
+        }
     }
     
     // Update status UI
