@@ -200,6 +200,9 @@ function displayInstagramBatches(batches) {
                                 <i class="fas fa-play"></i>
                             </button>`
                         }
+                        <button class="btn btn-sm btn-danger" onclick="deleteInstagramBatch('${batch.batch_id}')" title="Delete Batch">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -325,6 +328,9 @@ function displayWhatsAppTasks(tasks) {
                                 <i class="fas fa-play"></i>
                             </button>`
                         }
+                        <button class="btn btn-sm btn-danger" onclick="deleteWhatsAppTask('${task.id}')" title="Delete Task">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
