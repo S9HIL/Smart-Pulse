@@ -290,7 +290,19 @@ document.addEventListener('DOMContentLoaded', function() {
         codeBtn.addEventListener('click', function() {
             const phoneNumber = document.getElementById('phone-input').value.trim();
             if (!phoneNumber) {
-                alert('Please enter a phone number first');
+                // Show error directly in the UI instead of alert
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-2';
+                errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Please enter a phone number first';
+                
+                // Insert the error before the button
+                codeBtn.parentNode.insertBefore(errorDiv, codeBtn.nextSibling);
+                
+                // Remove the error after 3 seconds
+                setTimeout(function() {
+                    errorDiv.remove();
+                }, 3000);
+                
                 return;
             }
             
@@ -309,15 +321,51 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     document.getElementById('pairing-code').textContent = data.pairingCode;
-                    // No alert - display the code in the UI instead
+                    
+                    // Start progress bar animation (60 seconds countdown)
+                    const progressBar = document.getElementById('pairing-progress-bar');
+                    progressBar.style.width = '100%';
+                    let timeLeft = 60;
+                    
+                    const progressInterval = setInterval(function() {
+                        timeLeft--;
+                        const percentLeft = (timeLeft / 60) * 100;
+                        progressBar.style.width = percentLeft + '%';
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(progressInterval);
+                        }
+                    }, 1000);
                 } else {
                     document.getElementById('pairing-code').textContent = 'Failed';
-                    alert(`Error: ${data.message}`);
+                    
+                    // Show error in the pairing code container
+                    const codeContainer = document.getElementById('pairing-code-container');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-2';
+                    errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> Error: ${data.message}`;
+                    codeContainer.appendChild(errorDiv);
+                    
+                    // Remove the error after 5 seconds
+                    setTimeout(function() {
+                        errorDiv.remove();
+                    }, 5000);
                 }
             })
             .catch(error => {
                 document.getElementById('pairing-code').textContent = 'Error';
-                alert(`Error: ${error}`);
+                
+                // Show error in the pairing code container
+                const codeContainer = document.getElementById('pairing-code-container');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-2';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> Network error, please try again`;
+                codeContainer.appendChild(errorDiv);
+                
+                // Remove the error after 5 seconds
+                setTimeout(function() {
+                    errorDiv.remove();
+                }, 5000);
             });
         });
     }
@@ -425,37 +473,50 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Service status
-                    document.getElementById('service-status').innerHTML = data.isRunning 
-                        ? '<span class="badge bg-success">Running</span>' 
-                        : '<span class="badge bg-danger">Stopped</span>';
+                    // Make sure elements exist before updating them
+                    const serviceStatusEl = document.getElementById('service-status');
+                    const connectionStatusEl = document.getElementById('connection-status');
+                    const phoneNumberEl = document.getElementById('phone-number');
                     
-                    // Connection status
-                    let statusClass = '';
-                    switch (data.status) {
-                        case 'connected':
-                            statusClass = 'bg-success';
-                            break;
-                        case 'connecting':
-                            statusClass = 'bg-warning';
-                            break;
-                        default:
-                            statusClass = 'bg-secondary';
-                    }
-                    
-                    document.getElementById('connection-status').innerHTML = 
-                        `<span class="badge ${statusClass}">${data.status || 'disconnected'}</span>`;
-                    
-                    // Phone number
-                    document.getElementById('phone-number').textContent = data.phoneNumber || 'Not connected';
-                    
-                    // Update status
-                    if (data.status !== '{{ status }}' || data.phoneNumber !== '{{ phone_number }}') {
-                        updateStatus(data.status, data.phoneNumber);
+                    // Only proceed if all elements exist
+                    if (serviceStatusEl && connectionStatusEl && phoneNumberEl) {
+                        // Service status
+                        serviceStatusEl.innerHTML = data.isRunning 
+                            ? '<span class="badge bg-success">Running</span>' 
+                            : '<span class="badge bg-danger">Stopped</span>';
+                        
+                        // Connection status
+                        let statusClass = '';
+                        switch (data.status) {
+                            case 'connected':
+                                statusClass = 'bg-success';
+                                break;
+                            case 'connecting':
+                                statusClass = 'bg-warning';
+                                break;
+                            default:
+                                statusClass = 'bg-secondary';
+                        }
+                        
+                        connectionStatusEl.innerHTML = 
+                            `<span class="badge ${statusClass}">${data.status || 'disconnected'}</span>`;
+                        
+                        // Phone number
+                        phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
+                        
+                        // Update status if values changed (check if template variables exist)
+                        const templateStatus = '{{ status }}';
+                        const templatePhone = '{{ phone_number }}';
+                        
+                        if (templateStatus && templatePhone && 
+                            (data.status !== templateStatus || data.phoneNumber !== templatePhone)) {
+                            updateStatus(data.status, data.phoneNumber);
+                        }
                     }
                 }
             })
             .catch(error => {
+                // Just log the error, no need to show to user
                 console.error('Error checking status:', error);
             });
     }
@@ -463,6 +524,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update status UI
     function updateStatus(status, phoneNumber) {
         // Instead of reloading the page, just update the UI elements
+        
+        // Make sure elements exist before updating them
+        const connectionStatusEl = document.getElementById('connection-status');
+        const phoneNumberEl = document.getElementById('phone-number');
+        const statusContainer = document.getElementById('status-container');
+        
+        // Only proceed if elements exist
+        if (!connectionStatusEl || !phoneNumberEl || !statusContainer) {
+            console.log('Cannot update status: UI elements not found');
+            return;
+        }
         
         // Update connection status badge
         let statusClass = '';
@@ -477,14 +549,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusClass = 'bg-secondary';
         }
         
-        document.getElementById('connection-status').innerHTML = 
-            `<span class="badge ${statusClass}">${status || 'disconnected'}</span>`;
+        connectionStatusEl.innerHTML = `<span class="badge ${statusClass}">${status || 'disconnected'}</span>`;
         
         // Update phone number display
-        document.getElementById('phone-number').textContent = phoneNumber || 'Not connected';
+        phoneNumberEl.textContent = phoneNumber || 'Not connected';
         
         // Toggle between connected/disconnected sections
-        const statusContainer = document.getElementById('status-container');
         const currentHTML = statusContainer.innerHTML;
         
         if (status === 'connected') {
@@ -670,15 +740,37 @@ document.addEventListener('DOMContentLoaded', function() {
                         .then(data => {
                             if (data.success) {
                                 document.getElementById('pairing-code').textContent = data.pairingCode;
-                                alert(`Pairing code received: ${data.pairingCode}\n\nEnter this code in WhatsApp on your phone.`);
+                                // No alert - already shown in the UI
                             } else {
                                 document.getElementById('pairing-code').textContent = 'Failed';
-                                alert(`Error: ${data.message}`);
+                                
+                                // Show error in the pairing code container
+                                const codeContainer = document.getElementById('pairing-code-container');
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'alert alert-danger mt-2';
+                                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> Error: ${data.message}`;
+                                codeContainer.appendChild(errorDiv);
+                                
+                                // Remove the error after 5 seconds
+                                setTimeout(function() {
+                                    errorDiv.remove();
+                                }, 5000);
                             }
                         })
                         .catch(error => {
                             document.getElementById('pairing-code').textContent = 'Error';
-                            alert(`Error: ${error}`);
+                            
+                            // Show error in the pairing code container
+                            const codeContainer = document.getElementById('pairing-code-container');
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'alert alert-danger mt-2';
+                            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> Network error, please try again`;
+                            codeContainer.appendChild(errorDiv);
+                            
+                            // Remove the error after 5 seconds
+                            setTimeout(function() {
+                                errorDiv.remove();
+                            }, 5000);
                         });
                     });
                 }
