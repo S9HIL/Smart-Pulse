@@ -55,9 +55,22 @@ def connect():
     """Connect to WhatsApp"""
     try:
         phone_number = request.form.get('phone_number')
+        use_pairing_code = request.form.get('use_pairing_code', 'false').lower() == 'true'
+        pairing_code = request.form.get('pairing_code')
         
-        # Send connect command
-        whatsapp_service.send_command('connect', {'phoneNumber': phone_number})
+        # If using pairing code, make sure it's provided
+        if use_pairing_code and not pairing_code:
+            return jsonify({
+                "success": False,
+                "message": "Pairing code is required when use_pairing_code is true"
+            })
+        
+        # Send connect command with appropriate parameters
+        whatsapp_service.send_command('connect', {
+            'phoneNumber': phone_number,
+            'usePairingCode': use_pairing_code,
+            'pairingCode': pairing_code
+        })
         
         return jsonify({
             "success": True,

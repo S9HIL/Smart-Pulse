@@ -716,8 +716,38 @@ async function processStdin() {
                     const sessionId = command.sessionId || null;
                     const phoneNumber = command.phoneNumber || null;
                     const forceNew = command.forceNew || false;
+                    const usePairingCode = command.usePairingCode || false;
+                    const pairingCode = command.pairingCode || null;
                     
-                    await connectToWhatsApp(sessionId, phoneNumber, forceNew);
+                    logger.info(`Connecting to WhatsApp with phone: ${phoneNumber}, usePairingCode: ${usePairingCode}`);
+                    
+                    if (usePairingCode && pairingCode) {
+                        // First we need to get the session ready for pairing code
+                        await connectToWhatsApp(sessionId, phoneNumber, forceNew);
+                        
+                        // Then we manually enter the pairing code
+                        logger.info(`Using pairing code: ${pairingCode} for connection`);
+                        if (sock && sock.authState && sock.authState.creds && sock.authState.creds.me) {
+                            logger.info("Already authenticated, no need for pairing code");
+                        } else {
+                            try {
+                                // Wait a bit to ensure connection is ready for pairing code
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                await sock.waitForConnectionUpdate(state => state.connection === 'open' || Boolean(state.qr));
+                                
+                                // If we got a QR code, try to use the pairing code instead
+                                if (sock.authState.creds && !sock.authState.creds.registered) {
+                                    logger.info("Entering pairing code to authenticate");
+                                    sock.ev.emit('pairing-code', { pairingCode: pairingCode });
+                                }
+                            } catch (err) {
+                                logger.error(`Error using pairing code: ${err.message}`);
+                            }
+                        }
+                    } else {
+                        // Regular connection without pairing code
+                        await connectToWhatsApp(sessionId, phoneNumber, forceNew);
+                    }
                     
                     // Send back status
                     sendToParent({
