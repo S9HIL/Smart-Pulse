@@ -225,9 +225,31 @@
                         <form id="send-form" method="post" action="/whatsapp/send_messages" enctype="multipart/form-data">
                             <fieldset>
                                 <div class="mb-3">
+                                    <label class="form-label">Message Target Type</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="target_type" id="target-individual" value="individual" checked>
+                                        <label class="form-check-label" for="target-individual">
+                                            Individual Recipients
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="target_type" id="target-group" value="group">
+                                        <label class="form-check-label" for="target-group">
+                                            Group Chat
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3" id="individual-targets-container">
                                     <label for="recipients" class="form-label">Recipients (comma separated)</label>
                                     <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="919876543210, 919876543211, 919876543212" required></textarea>
                                     <div class="form-text">Enter phone numbers with country code, separated by commas.</div>
+                                </div>
+                                
+                                <div class="mb-3 d-none" id="group-target-container">
+                                    <label for="group-id" class="form-label">WhatsApp Group ID</label>
+                                    <input type="text" class="form-control" id="group-id" name="group_id" placeholder="919876543210-1234567890@g.us">
+                                    <div class="form-text">Enter the WhatsApp group ID (format: xxxxxxxxxx-xxxxxxxxxx@g.us)</div>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -314,6 +336,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Also check once right away
     setTimeout(checkStatus, 100);
+    
+    // Target type radio button handlers
+    const targetIndividual = document.getElementById('target-individual');
+    const targetGroup = document.getElementById('target-group');
+    const individualTargetsContainer = document.getElementById('individual-targets-container');
+    const groupTargetContainer = document.getElementById('group-target-container');
+    const recipientsField = document.getElementById('recipients');
+    const groupIdField = document.getElementById('group-id');
+    
+    if (targetIndividual && targetGroup) {
+        targetIndividual.addEventListener('change', function() {
+            if (this.checked) {
+                individualTargetsContainer.classList.remove('d-none');
+                groupTargetContainer.classList.add('d-none');
+                recipientsField.setAttribute('required', '');
+                groupIdField.removeAttribute('required');
+            }
+        });
+        
+        targetGroup.addEventListener('change', function() {
+            if (this.checked) {
+                individualTargetsContainer.classList.add('d-none');
+                groupTargetContainer.classList.remove('d-none');
+                recipientsField.removeAttribute('required');
+                groupIdField.setAttribute('required', '');
+            }
+        });
+    }
     
     // Initial status check with delay to ensure DOM is fully loaded
     setTimeout(function() {
