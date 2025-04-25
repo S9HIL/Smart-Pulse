@@ -26,9 +26,16 @@ class WhatsAppService:
         
     def start(self):
         """Start the WhatsApp service process"""
+        # Check if file exists before trying to start
+        if not os.path.isfile(self.service_path):
+            logger.error(f"WhatsApp service not found at path: {self.service_path}")
+            self.status = "disconnected"
+            self.last_error = f"WhatsApp service file not found: {self.service_path}"
+            return False
+            
         if self.process and self.process.poll() is None:
             logger.info("WhatsApp service is already running")
-            return
+            return True
             
         try:
             # Determine the Node.js path based on platform
@@ -40,6 +47,7 @@ class WhatsAppService:
                 [node_executable, self.service_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE,
                 text=True,
                 bufsize=1,
                 env=os.environ.copy()
@@ -55,11 +63,13 @@ class WhatsAppService:
             
             self.status = "starting"
             logger.info("WhatsApp service started")
+            return True
             
         except Exception as e:
             logger.error(f"Failed to start WhatsApp service: {str(e)}")
             self.last_error = str(e)
-            self.status = "error"
+            self.status = "disconnected"
+            return False
             
     def stop(self):
         """Stop the WhatsApp service process"""
@@ -112,6 +122,10 @@ class WhatsAppService:
         
     def _read_stdout(self):
         """Read and process stdout from the WhatsApp service"""
+        if not self.process or not self.process.stdout:
+            logger.error("No process or stdout to read from")
+            return
+            
         for line in iter(self.process.stdout.readline, ''):
             if not line:
                 break
@@ -152,6 +166,10 @@ class WhatsAppService:
         
     def _read_stderr(self):
         """Read stderr from the WhatsApp service"""
+        if not self.process or not self.process.stderr:
+            logger.error("No process or stderr to read from")
+            return
+            
         for line in iter(self.process.stderr.readline, ''):
             if not line:
                 break
@@ -164,8 +182,8 @@ class WhatsAppService:
         
     def send_command(self, command, data=None):
         """Send a command to the WhatsApp service using stdin"""
-        if not self.is_running():
-            logger.error("Cannot send command - WhatsApp service is not running")
+        if not self.is_running() or not self.process or not self.process.stdin:
+            logger.error("Cannot send command - WhatsApp service is not running or stdin is not available")
             return False
             
         try:

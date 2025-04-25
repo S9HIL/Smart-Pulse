@@ -35,16 +35,23 @@ def connect():
     try:
         # Start WhatsApp service if not already running
         if not whatsapp_service.is_running():
-            whatsapp_service.start()
+            started = whatsapp_service.start()
+            
+            # If service didn't start successfully
+            if not started:
+                return jsonify({
+                    "success": False,
+                    "message": f"Failed to start WhatsApp service: {whatsapp_service.last_error}"
+                })
             
         # Wait for service to initialize
-        time.sleep(2)
+        time.sleep(1)
         
-        # Check status
+        # Check if service is still running
         if not whatsapp_service.is_running():
             return jsonify({
                 "success": False,
-                "message": f"Failed to start WhatsApp service: {whatsapp_service.last_error}"
+                "message": f"WhatsApp service started but then stopped: {whatsapp_service.last_error}"
             })
             
         return jsonify({
@@ -79,12 +86,20 @@ def disconnect():
 @whatsapp_bp.route('/status')
 def status():
     """Get WhatsApp connection status"""
+    # Make sure there's a valid status even if service isn't running
+    if not whatsapp_service.is_running():
+        status_value = "disconnected"
+    else:
+        status_value = whatsapp_service.status or "disconnected"
+        
     return jsonify({
         "success": True,
-        "status": whatsapp_service.status,
+        "running": whatsapp_service.is_running(),
+        "status": status_value,
         "phoneNumber": whatsapp_service.connected_phone,
         "hasQR": whatsapp_service.qr_code is not None,
-        "hasPairingCode": whatsapp_service.pairing_code is not None
+        "hasPairingCode": whatsapp_service.pairing_code is not None,
+        "error": whatsapp_service.last_error
     })
 
 @whatsapp_bp.route('/qr_code')
