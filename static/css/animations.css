@@ -1,0 +1,89 @@
+/* Animations for the SP logo and owner name */
+
+/* Logo animation */
+.sp-logo {
+    position: relative;
+    transition: transform 0.3s ease;
+    animation: logo-pulse 3s infinite alternate;
+}
+
+@keyframes logo-pulse {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(0, 123, 255, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 6px rgba(111, 66, 193, 0.7));
+    }
+    100% {
+        filter: drop-shadow(0 0 2px rgba(40, 167, 69, 0.5));
+    }
+}
+
+.logo-hover-effect:hover .sp-logo {
+    transform: scale(1.1);
+}
+
+/* Animation for logo text */
+.sp-logo-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(90deg, #007bff, #6f42c1, #28a745, #fd7e14, #dc3545, #007bff);
+    background-size: 400% 100%;
+    animation: gradient-slide 8s linear infinite;
+}
+
+@keyframes gradient-slide {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+/* Owner name animation */
+.animated-owner-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: inline-block;
+    background: linear-gradient(90deg, #007bff, #6f42c1, #28a745, #fd7e14, #dc3545, #007bff);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-animation 6s linear infinite;
+    text-shadow: none;
+    margin-left: 15px;
+}
+
+@keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+/* Letter animation */
+.animated-letter {
+    display: inline-block;
+    transform-origin: center bottom;
+    animation: floating 3s ease-in-out infinite;
+    animation-delay: calc(var(--letter-index) * 0.1s);
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    .animated-owner-name {
+        font-size: 1rem;
+        margin-left: 5px;
+    }
+    
+    .sp-logo {
+        max-width: 30px;
+        max-height: 30px;
+    }
+}
