@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 whatsapp_bp = Blueprint('whatsapp', __name__, template_folder='templates')
 
-# Initialize WhatsApp service
+# Initialize WhatsApp service but don't start it automatically
 whatsapp_service = WhatsAppService("whatsapp_service.js")
 
-# Start the service when the blueprint is registered
+# No automatic start - we'll start it on-demand when needed
 @whatsapp_bp.record_once
 def on_register(state):
-    if not whatsapp_service.is_running():
-        whatsapp_service.start()
+    # Don't auto-start the service
+    pass
 
 @whatsapp_bp.route('/')
 def index():
