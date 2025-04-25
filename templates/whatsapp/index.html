@@ -309,8 +309,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Check status periodically
-    setInterval(checkStatus, 5000);
+    // Check status more frequently for faster response times
+    setInterval(checkStatus, 2000);
+    
+    // Also check once right away
+    setTimeout(checkStatus, 100);
     
     // Initial status check with delay to ensure DOM is fully loaded
     setTimeout(function() {
@@ -715,9 +718,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // If status is connected, make sure messaging form is enabled
+        // Show messaging form in more situations to improve responsiveness
+        let shouldShowForm = false;
+        
+        // Check all possible conditions that indicate we should show the form
         if (status === 'connected') {
-            console.log("Status is CONNECTED - enabling messaging form");
+            shouldShowForm = true;
+        } else if (phoneNumber) {
+            // If we have a phone number, that's good enough to show the form
+            shouldShowForm = true;
+        } else if (document.getElementById('pairing-code') && 
+                  document.getElementById('pairing-code').innerText !== 'Waiting...') {
+            // If pairing code is shown, user is in login process, show form
+            shouldShowForm = true;
+        } else if (document.getElementById('phone-input') && 
+                  document.getElementById('phone-input').value) {
+            // If user entered a phone number, consider them in login flow
+            shouldShowForm = true;
+        }
+        
+        if (shouldShowForm) {
+            console.log("Showing message form due to status or active pairing");
             
             // Show messaging section
             if (messagingSection) {

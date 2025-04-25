@@ -111,11 +111,14 @@ def status():
     """Get WhatsApp connection status"""
     # Actively request a status update from the WhatsApp service
     try:
-        # Send ping command to force status update
+        # Send ping command to force immediate status update
         whatsapp_service.send_command('ping')
         
-        # Wait a short time for status to update
-        time.sleep(0.3)
+        # Add special flag for faster UI response when a pairing code is present
+        is_pairing_active = whatsapp_service.pairing_code is not None
+        
+        # A shorter wait time for faster responsiveness
+        time.sleep(0.1)
         
         return jsonify({
             "success": True,
@@ -151,15 +154,21 @@ def request_pairing_code():
         # Send command to request pairing code
         whatsapp_service.send_command('request_pairing_code', {'phoneNumber': phone_number})
         
-        # Wait for pairing code
-        max_retries = 20
+        # Wait for pairing code with shorter intervals for faster detection
+        max_retries = 30
         for i in range(max_retries):
             if whatsapp_service.pairing_code:
+                # Also store the phone number for faster UI updates
+                whatsapp_service.phone_number = phone_number
+                
                 return jsonify({
                     "success": True,
-                    "pairingCode": whatsapp_service.pairing_code
+                    "pairingCode": whatsapp_service.pairing_code,
+                    "phoneNumber": phone_number
                 })
-            time.sleep(1)
+            
+            # Use shorter wait intervals for better responsiveness
+            time.sleep(0.5)
             
         return jsonify({
             "success": False,
