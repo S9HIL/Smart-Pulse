@@ -1,0 +1,438 @@
+{% extends "layout.html" %}
+
+{% block title %}Instagram Messages - Automation Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="fab fa-instagram me-2 text-primary"></i>
+            Instagram Message Status
+        </h1>
+        <p class="lead">Track your Instagram direct message automation progress.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-envelope me-2 text-primary"></i>
+                    Message Logs
+                </h5>
+                <div>
+                    <span class="badge bg-primary" id="batch-id">{{ batch_id }}</span>
+                    <span class="badge batch-status" id="status-badge">
+                        {% if is_stopped %}Stopped{% else %}Running{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ error }}
+                </div>
+                {% else %}
+                <div class="message-container" id="message-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="message-row {{ message.status_class }}">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ message.time }}</small>
+                                <span class="badge {% if message.status == 'Sent' %}bg-success{% elif message.status == 'Failed' %}bg-danger{% elif message.status == 'Stopped' %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ message.status }}
+                                </span>
+                            </div>
+                            <div class="mt-1">
+                                {% if message.target %}
+                                <p class="mb-0"><strong>@{{ message.target }}</strong>: {{ message.message }}</p>
+                                {% else %}
+                                <p class="mb-0">{{ message.message }}</p>
+                                {% endif %}
+                                
+                                {% if message.error %}
+                                <small class="text-danger">Error: {{ message.error }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4" id="loading-messages">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Waiting for messages...</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not is_stopped %}
+                    <button type="button" class="btn btn-danger" id="stop-button">
+                        <i class="fas fa-stop me-2"></i>
+                        Stop Message Sending
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-success" id="restart-button" {% if not batch_info %}disabled{% endif %}>
+                        <i class="fas fa-play me-2"></i>
+                        Restart Message Sending
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Start New Batch
+                    </a>
+                    
+                    <a href="{{ url_for('instagram.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>
+                        View All Batches
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    Batch Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if batch_info %}
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent d-flex justify-content-between">
+                        <span>Username:</span>
+                        <span class="text-primary">@{{ batch_info.username }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between">
+                        <span>Target:</span>
+                        <span class="text-primary">{{ batch_info.target }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between">
+                        <span>Type:</span>
+                        <span>{{ batch_info.target_type|capitalize }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between">
+                        <span>Created:</span>
+                        <span>{{ batch_info.created_at }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between">
+                        <span>Delay:</span>
+                        <span>{{ batch_info.delay_time }} seconds</span>
+                    </li>
+                </ul>
+                {% else %}
+                <p class="text-muted text-center">No batch information available</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2 text-primary"></i>
+                    Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h6 class="text-muted">Total Messages</h6>
+                        <h3 id="total-count">{{ messages|length }}</h3>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h6 class="text-muted">Success Rate</h6>
+                        <h3 id="success-rate">
+                            {% if messages|length > 0 %}
+                                {% set success_count = messages|selectattr('status', 'equalto', 'Sent')|list|length %}
+                                {% set rate = (success_count / messages|length * 100)|int %}
+                                {{ rate }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Sent</h6>
+                        <h3 id="success-count" class="text-success">
+                            {{ messages|selectattr('status', 'equalto', 'Sent')|list|length }}
+                        </h3>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Failed</h6>
+                        <h3 id="failed-count" class="text-danger">
+                            {{ messages|selectattr('status', 'equalto', 'Failed')|list|length }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let messageUpdateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const batchId = '{{ batch_id }}';
+    
+    // Set up event listeners
+    const stopButton = document.getElementById('stop-button');
+    if (stopButton) {
+        stopButton.addEventListener('click', function() {
+            stopMessageSending(batchId);
+        });
+    }
+    
+    const restartButton = document.getElementById('restart-button');
+    if (restartButton) {
+        restartButton.addEventListener('click', function() {
+            restartMessageSending(batchId);
+        });
+    }
+    
+    // Start interval for updating messages
+    messageUpdateInterval = setInterval(function() {
+        updateMessages(batchId);
+    }, 5000);
+    
+    // Initial load if needed
+    {% if not messages %}
+        updateMessages(batchId);
+    {% endif %}
+});
+
+function updateMessages(batchId) {
+    fetch(`/instagram/api/batch/${batchId}/messages`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update messages
+                const messageContainer = document.getElementById('message-container');
+                const loadingElement = document.getElementById('loading-messages');
+                
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                if (data.messages && data.messages.length > 0) {
+                    // Clear existing messages and rebuild
+                    messageContainer.innerHTML = '';
+                    
+                    // Process messages
+                    let successCount = 0;
+                    let failedCount = 0;
+                    
+                    data.messages.forEach(message => {
+                        // Create message row
+                        const row = document.createElement('div');
+                        row.className = `message-row ${message.status_class || 'message-info'}`;
+                        
+                        // Count successes and failures
+                        if (message.status === 'Sent') {
+                            successCount++;
+                        } else if (message.status === 'Failed') {
+                            failedCount++;
+                        }
+                        
+                        // Create row content
+                        let rowContent = `
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">${message.time || 'Unknown'}</small>
+                                <span class="badge 
+                                    ${message.status === 'Sent' ? 'bg-success' : 
+                                      message.status === 'Failed' ? 'bg-danger' : 
+                                      message.status === 'Stopped' ? 'bg-warning' : 'bg-info'}">
+                                    ${message.status || 'Unknown'}
+                                </span>
+                            </div>
+                            <div class="mt-1">`;
+                            
+                        if (message.target) {
+                            rowContent += `<p class="mb-0"><strong>@${message.target}</strong>: ${message.message}</p>`;
+                        } else {
+                            rowContent += `<p class="mb-0">${message.message}</p>`;
+                        }
+                        
+                        if (message.error) {
+                            rowContent += `<small class="text-danger">Error: ${message.error}</small>`;
+                        }
+                        
+                        rowContent += `</div>`;
+                        
+                        row.innerHTML = rowContent;
+                        messageContainer.appendChild(row);
+                    });
+                    
+                    // Update statistics
+                    const totalCount = data.messages.length;
+                    document.getElementById('total-count').textContent = totalCount;
+                    document.getElementById('success-count').textContent = successCount;
+                    document.getElementById('failed-count').textContent = failedCount;
+                    
+                    if (totalCount > 0) {
+                        const rate = Math.round((successCount / totalCount) * 100);
+                        document.getElementById('success-rate').textContent = `${rate}%`;
+                    }
+                    
+                    // Check if batch is running
+                    fetch(`/instagram/api/batch/${batchId}`)
+                        .then(response => response.json())
+                        .then(batchData => {
+                            if (batchData.success) {
+                                const statusBadge = document.getElementById('status-badge');
+                                
+                                if (batchData.info.status === 'Running') {
+                                    statusBadge.textContent = 'Running';
+                                    statusBadge.className = 'badge batch-status bg-success';
+                                    
+                                    // Show stop button, hide restart button
+                                    const stopButton = document.getElementById('stop-button');
+                                    const restartButton = document.getElementById('restart-button');
+                                    
+                                    if (stopButton && restartButton) {
+                                        stopButton.classList.remove('d-none');
+                                        restartButton.classList.add('d-none');
+                                    }
+                                } else {
+                                    statusBadge.textContent = 'Stopped';
+                                    statusBadge.className = 'badge batch-status bg-secondary';
+                                    
+                                    // Hide stop button, show restart button
+                                    const stopButton = document.getElementById('stop-button');
+                                    const restartButton = document.getElementById('restart-button');
+                                    
+                                    if (stopButton && restartButton) {
+                                        stopButton.classList.add('d-none');
+                                        restartButton.classList.remove('d-none');
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking batch status:', error);
+                        });
+                    
+                    // Scroll to bottom of message container
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                } else {
+                    messageContainer.innerHTML = `
+                        <div class="text-center py-4">
+                            <p class="text-muted">No messages found for this batch.</p>
+                        </div>
+                    `;
+                }
+            } else {
+                console.error('Error loading messages:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating messages:', error);
+        });
+}
+
+function stopMessageSending(batchId) {
+    // Confirm before stopping
+    if (!confirm('Are you sure you want to stop sending messages?')) {
+        return;
+    }
+    
+    fetch(`/instagram/api/batch/${batchId}/stop`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Message sending stopped', 'info');
+            
+            // Update UI
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.textContent = 'Stopped';
+            statusBadge.className = 'badge batch-status bg-secondary';
+            
+            // Switch buttons
+            const stopButton = document.getElementById('stop-button');
+            const restartButton = document.getElementById('restart-button');
+            
+            if (stopButton && restartButton) {
+                stopButton.classList.add('d-none');
+                restartButton.classList.remove('d-none');
+            }
+            
+            // Update messages
+            updateMessages(batchId);
+        } else {
+            showToast(`Error: ${data.message}`, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast(`Error: ${error.message}`, 'danger');
+    });
+}
+
+function restartMessageSending(batchId) {
+    // Confirm before restarting
+    if (!confirm('Are you sure you want to restart message sending?')) {
+        return;
+    }
+    
+    fetch(`/instagram/api/batch/${batchId}/restart`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Message sending restarted', 'success');
+            
+            // Update UI
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.textContent = 'Running';
+            statusBadge.className = 'badge batch-status bg-success';
+            
+            // Switch buttons
+            const stopButton = document.getElementById('stop-button');
+            const restartButton = document.getElementById('restart-button');
+            
+            if (stopButton && restartButton) {
+                stopButton.classList.remove('d-none');
+                restartButton.classList.add('d-none');
+            }
+            
+            // Update messages
+            updateMessages(batchId);
+        } else {
+            showToast(`Error: ${data.message}`, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast(`Error: ${error.message}`, 'danger');
+    });
+}
+
+// Clean up when leaving the page
+window.addEventListener('beforeunload', function() {
+    if (messageUpdateInterval) {
+        clearInterval(messageUpdateInterval);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block title %}WhatsApp Automation - Automation Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="fab fa-whatsapp me-2 text-primary"></i>
+            WhatsApp Automation
+        </h1>
+        <p class="lead">Connect to WhatsApp and send automated messages to contacts or groups.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plug me-2 text-primary"></i>
+                    Connection Status
+                </h5>
+                <div>
+                    <span class="status-indicator whatsapp-indicator status-disconnected"></span>
+                    <span class="badge bg-danger" id="whatsapp-status">Disconnected</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-none" id="phone-number-container">
+                    <p class="mb-3">Connected as: <span class="fw-bold text-primary" id="whatsapp-phone"></span></p>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button id="connect-whatsapp" class="btn btn-primary">
+                        <i class="fas fa-link me-2"></i>
+                        Connect to WhatsApp
+                    </button>
+                    
+                    <button id="disconnect-whatsapp" class="btn btn-danger d-none">
+                        <i class="fas fa-unlink me-2"></i>
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pairing-section" class="card border-0 shadow mb-4 d-none">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-mobile-alt me-2 text-primary"></i>
+                    Pairing Code
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="phone-number" class="form-label">Phone Number with Country Code</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="phone-number" placeholder="e.g., 911234567890">
+                        <button class="btn btn-primary" id="request-pairing-code">
+                            <i class="fas fa-key me-2"></i>
+                            Get Code
+                        </button>
+                    </div>
+                    <small class="text-muted">Enter your phone number with country code (e.g., 911234567890 for India)</small>
+                </div>
+                
+                <div id="pairing-code-container" class="d-none mt-3">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Your Pairing Code:</h5>
+                        <div class="d-flex justify-content-center">
+                            <h2 id="pairing-code-display" class="display-6 mb-0 text-monospace"></h2>
+                        </div>
+                        <hr>
+                        <p class="mb-0">Enter this code in your WhatsApp app to connect. (Settings → Linked Devices → Link a Device)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div id="qr-section" class="card border-0 shadow d-none">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-qrcode me-2 text-primary"></i>
+                    Scan QR Code
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="qr-container" class="d-none qr-container mb-3">
+                    <img id="qr-display" src="" alt="WhatsApp QR Code">
+                </div>
+                
+                <div id="qr-instructions" class="d-none">
+                    <ol class="text-start">
+                        <li>Open WhatsApp on your phone</li>
+                        <li>Tap Menu <i class="fas fa-ellipsis-v"></i> or Settings <i class="fas fa-cog"></i></li>
+                        <li>Select "Linked Devices"</li>
+                        <li>Tap on "Link a Device"</li>
+                        <li>Point your phone camera to scan this QR code</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="message-form-section" class="row d-none">
+    <div class="col">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-paper-plane me-2 text-primary"></i>
+                    Send WhatsApp Messages
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="send-message-form">
+                    <div class="mb-3">
+                        <label for="recipients" class="form-label required-field">Recipients</label>
+                        <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="Enter phone numbers with country code (one per line or comma-separated)" required></textarea>
+                        <small class="form-text text-muted">Format: country code + number (e.g., 911234567890), one per line or comma-separated.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="5" placeholder="Enter your message here"></textarea>
+                        <small class="form-text text-muted">Enter your message or upload a file below with multiple messages (one per line).</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message-file" class="form-label">Or Upload Message File</label>
+                        <input type="file" class="form-control" id="message-file" name="message_file">
+                        <small class="form-text text-muted">Upload a text file with messages (one per line). This will override the text area above.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="delay" class="form-label required-field">Delay Between Messages (seconds)</label>
+                        <input type="number" class="form-control" id="delay" name="delay" min="1" value="5" required>
+                        <small class="form-text text-muted">Set the time delay between messages to avoid rate limiting (5+ seconds recommended).</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-2"></i>
+                            Start Sending Messages
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/whatsapp.js') }}"></script>
+{% endblock %}

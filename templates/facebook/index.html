@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block title %}Facebook Automation - Automation Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="fab fa-facebook me-2 text-primary"></i>
+            Facebook Automation
+        </h1>
+        <p class="lead">Send automated messages to Facebook conversations using multiple access tokens.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-paper-plane me-2 text-primary"></i>
+                    Send Facebook Messages
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="facebook-form" method="post" action="{{ url_for('facebook.send_messages') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="accessToken" class="form-label required-field">Facebook Access Tokens</label>
+                        <input type="file" class="form-control" id="accessToken" name="accessToken" required>
+                        <small class="form-text text-muted">Upload a text file with Facebook access tokens (one per line).</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="threadId" class="form-label required-field">Thread/Conversation ID</label>
+                        <input type="text" class="form-control" id="threadId" name="threadId" placeholder="Enter conversation ID" required>
+                        <small class="form-text text-muted">The ID of the Facebook conversation you want to message.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="txtFile" class="form-label required-field">Message File</label>
+                        <input type="file" class="form-control" id="txtFile" name="txtFile" required>
+                        <small class="form-text text-muted">Upload a text file with messages (one per line).</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="kidx" class="form-label">Message Prefix</label>
+                                <input type="text" class="form-control" id="kidx" name="kidx" placeholder="Optional message prefix">
+                                <small class="form-text text-muted">Text to add before each message (e.g., a name).</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="time" class="form-label required-field">Delay (seconds)</label>
+                                <input type="number" class="form-control" id="time" name="time" min="1" value="5" required>
+                                <small class="form-text text-muted">Time delay between messages in seconds.</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="start-button">
+                            <i class="fas fa-play me-2"></i>
+                            Start Sending Messages
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol class="ps-3">
+                    <li class="mb-2">Upload a text file containing Facebook access tokens (one per line).</li>
+                    <li class="mb-2">Enter the Facebook conversation/thread ID you want to message.</li>
+                    <li class="mb-2">Upload a text file with messages you want to send (one per line).</li>
+                    <li class="mb-2">Optionally, add a prefix to be added before each message.</li>
+                    <li class="mb-2">Set the delay between messages (in seconds).</li>
+                    <li class="mb-2">Click "Start Sending Messages" to begin the process.</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2 text-primary"></i>
+                    Tips
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Use multiple access tokens to distribute the message load
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Set appropriate delays to avoid rate limits (5+ seconds recommended)
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Keep message files organized with clear content
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('facebook-form');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading spinner
+        showSpinner('Starting Facebook message sending...');
+        
+        // Submit as AJAX request
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            
+            if (data.success) {
+                showToast('Message sending started successfully', 'success');
+                
+                // Redirect to messages page
+                if (data.links && data.links.messages) {
+                    window.location.href = data.links.messages;
+                }
+            } else {
+                showToast(`Error: ${data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            showToast(`Error: ${error.message}`, 'danger');
+        });
+    });
+});
+</script>
+{% endblock %}

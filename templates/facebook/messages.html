@@ -1,0 +1,268 @@
+{% extends "layout.html" %}
+
+{% block title %}Facebook Messages - Automation Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="fab fa-facebook me-2 text-primary"></i>
+            Facebook Message Status
+        </h1>
+        <p class="lead">Track your Facebook message automation progress.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-envelope me-2 text-primary"></i>
+                    Message Logs
+                </h5>
+                <div>
+                    <span class="badge bg-primary" id="batch-id">{{ batch_id }}</span>
+                    <span class="badge batch-status" id="status-badge">Loading...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ error }}
+                </div>
+                {% else %}
+                <div class="message-container" id="message-container">
+                    <div class="text-center py-4" id="loading-messages">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading messages...</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-danger" id="stop-button">
+                        <i class="fas fa-stop me-2"></i>
+                        Stop Message Sending
+                    </button>
+                    <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Start New Batch
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2 text-primary"></i>
+                    Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h6 class="text-muted">Total Messages</h6>
+                        <h3 id="total-count">0</h3>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h6 class="text-muted">Success Rate</h6>
+                        <h3 id="success-rate">0%</h3>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Successful</h6>
+                        <h3 id="success-count" class="text-success">0</h3>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Failed</h6>
+                        <h3 id="failed-count" class="text-danger">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isActive = false;
+let logUpdateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const batchId = '{{ batch_id }}';
+    
+    // Initial load
+    checkStatus();
+    loadLogs();
+    
+    // Start interval for checking status and updating logs
+    logUpdateInterval = setInterval(function() {
+        checkStatus();
+        loadLogs();
+    }, 5000);
+    
+    // Stop button handler
+    document.getElementById('stop-button').addEventListener('click', function() {
+        stopSending(batchId);
+    });
+});
+
+function checkStatus() {
+    const batchId = '{{ batch_id }}';
+    fetch(`/facebook/stop-status/${batchId}`)
+        .then(response => response.json())
+        .then(data => {
+            const statusBadge = document.getElementById('status-badge');
+            
+            if (data.success) {
+                isActive = data.status === 'active';
+                
+                if (isActive) {
+                    statusBadge.textContent = 'Running';
+                    statusBadge.className = 'badge batch-status bg-success';
+                    document.getElementById('stop-button').disabled = false;
+                } else {
+                    statusBadge.textContent = 'Stopped';
+                    statusBadge.className = 'badge batch-status bg-secondary';
+                    document.getElementById('stop-button').disabled = true;
+                    
+                    // If stopped, we can reduce the update frequency
+                    if (logUpdateInterval) {
+                        clearInterval(logUpdateInterval);
+                        logUpdateInterval = setInterval(function() {
+                            loadLogs();
+                        }, 15000);
+                    }
+                }
+            } else {
+                statusBadge.textContent = 'Error';
+                statusBadge.className = 'badge batch-status bg-danger';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking status:', error);
+        });
+}
+
+function loadLogs() {
+    const batchId = '{{ batch_id }}';
+    const messageContainer = document.getElementById('message-container');
+    const loadingElement = document.getElementById('loading-messages');
+    
+    fetch(`/facebook/logs/${batchId}`)
+        .then(response => response.json())
+        .then(logs => {
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+            
+            // Clear container if this is first load
+            if (messageContainer.querySelectorAll('.message-row').length === 0) {
+                messageContainer.innerHTML = '';
+            }
+            
+            // Process logs
+            let successCount = 0;
+            let failedCount = 0;
+            
+            if (Array.isArray(logs)) {
+                // Clear existing messages and add all
+                messageContainer.innerHTML = '';
+                
+                logs.forEach(log => {
+                    // Create message row
+                    const row = document.createElement('div');
+                    row.className = `message-row ${log.status === 'Success' ? 'message-success' : (log.status === 'Stopped' ? 'message-stopped' : 'message-error')}`;
+                    
+                    // Count successes and failures
+                    if (log.status === 'Success') {
+                        successCount++;
+                    } else if (log.status === 'Failed') {
+                        failedCount++;
+                    }
+                    
+                    // Create row content
+                    row.innerHTML = `
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">${log.time}</small>
+                            <span class="badge ${log.status === 'Success' ? 'bg-success' : (log.status === 'Stopped' ? 'bg-warning' : 'bg-danger')}">${log.status}</span>
+                        </div>
+                        <div class="mt-1">
+                            ${log.status === 'Stopped' ? 
+                                `<p class="mb-0">${log.message}</p>` : 
+                                `<p class="mb-0"><strong>${log.accountName}:</strong> ${log.message}</p>`
+                            }
+                        </div>
+                    `;
+                    
+                    messageContainer.appendChild(row);
+                });
+                
+                // Update statistics
+                const totalCount = logs.length - (logs.some(log => log.status === 'Stopped') ? 1 : 0);
+                document.getElementById('total-count').textContent = totalCount;
+                document.getElementById('success-count').textContent = successCount;
+                document.getElementById('failed-count').textContent = failedCount;
+                
+                if (totalCount > 0) {
+                    const rate = Math.round((successCount / totalCount) * 100);
+                    document.getElementById('success-rate').textContent = `${rate}%`;
+                }
+                
+                // Scroll to bottom if we're actively sending
+                if (isActive) {
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading logs:', error);
+        });
+}
+
+function stopSending(batchId) {
+    // Confirm before stopping
+    if (!confirm('Are you sure you want to stop sending messages?')) {
+        return;
+    }
+    
+    fetch(`/facebook/stop/${batchId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Message sending stopped', 'info');
+            checkStatus();
+            loadLogs();
+        } else {
+            showToast(`Error: ${data.status}`, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast(`Error: ${error.message}`, 'danger');
+    });
+}
+</script>
+{% endblock %}
