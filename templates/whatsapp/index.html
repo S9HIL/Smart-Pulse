@@ -454,8 +454,233 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update status UI
     function updateStatus(status, phoneNumber) {
-        // Reload the page after status change
-        window.location.reload();
+        // Instead of reloading the page, just update the UI elements
+        
+        // Update connection status badge
+        let statusClass = '';
+        switch (status) {
+            case 'connected':
+                statusClass = 'bg-success';
+                break;
+            case 'connecting':
+                statusClass = 'bg-warning';
+                break;
+            default:
+                statusClass = 'bg-secondary';
+        }
+        
+        document.getElementById('connection-status').innerHTML = 
+            `<span class="badge ${statusClass}">${status || 'disconnected'}</span>`;
+        
+        // Update phone number display
+        document.getElementById('phone-number').textContent = phoneNumber || 'Not connected';
+        
+        // Toggle between connected/disconnected sections
+        const statusContainer = document.getElementById('status-container');
+        const currentHTML = statusContainer.innerHTML;
+        
+        if (status === 'connected') {
+            // Only update if not already showing connected view
+            if (!currentHTML.includes('WhatsApp is connected and ready')) {
+                statusContainer.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6>Service Status:</h6>
+                            <span id="service-status">
+                                <span class="badge bg-success">Running</span>
+                            </span>
+                        </div>
+                        <div>
+                            <h6>Connection Status:</h6>
+                            <span id="connection-status">
+                                <span class="badge bg-success">Connected</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Connected Phone:</h6>
+                        <span id="phone-number">${phoneNumber || 'Not connected'}</span>
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i> WhatsApp is connected and ready to send messages.
+                    </div>
+                    <button id="disconnect-btn" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt me-1"></i> Disconnect
+                    </button>
+                `;
+                
+                // Reattach disconnect event listener
+                const disconnectBtn = document.getElementById('disconnect-btn');
+                if (disconnectBtn) {
+                    disconnectBtn.addEventListener('click', function() {
+                        if (confirm('Are you sure you want to disconnect from WhatsApp?')) {
+                            fetch('/whatsapp/disconnect', {
+                                method: 'POST'
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    updateStatus('disconnected', null);
+                                    alert('Disconnection initiated. Please wait...');
+                                } else {
+                                    alert(`Error: ${data.message}`);
+                                }
+                            })
+                            .catch(error => {
+                                alert(`Error: ${error}`);
+                            });
+                        }
+                    });
+                }
+                
+                // Enable the send form
+                const sendForm = document.getElementById('send-form');
+                if (sendForm) {
+                    sendForm.classList.remove('disabled');
+                    sendForm.querySelector('fieldset').disabled = false;
+                }
+                
+                // Hide the warning message
+                const warningMessage = document.querySelector('.alert-warning');
+                if (warningMessage) {
+                    warningMessage.classList.add('d-none');
+                }
+            }
+        } else {
+            // Only update if not already showing disconnected view
+            if (!currentHTML.includes('Please connect to WhatsApp')) {
+                statusContainer.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6>Service Status:</h6>
+                            <span id="service-status">
+                                <span class="badge bg-success">Running</span>
+                            </span>
+                        </div>
+                        <div>
+                            <h6>Connection Status:</h6>
+                            <span id="connection-status">
+                                <span class="badge ${statusClass}">${status || 'disconnected'}</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Connected Phone:</h6>
+                        <span id="phone-number">Not connected</span>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i> Please connect to WhatsApp to start sending messages.
+                    </div>
+                    <form id="connect-form">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="phone-input" placeholder="Phone Number with Country Code" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-sign-in-alt me-1"></i> Connect
+                            </button>
+                        </div>
+                        <small class="form-text text-muted">Example: 919876543210 (91 is country code for India)</small>
+                    </form>
+                    
+                    <button id="code-btn" class="btn btn-outline-primary mt-2">
+                        <i class="fas fa-key me-1"></i> Request Pairing Code
+                    </button>
+                    <div id="pairing-code-container" class="d-none mt-3">
+                        <div class="alert alert-info">
+                            <strong>Pairing Code:</strong> <span id="pairing-code">Waiting...</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Reattach connect form event listener
+                const connectForm = document.getElementById('connect-form');
+                if (connectForm) {
+                    connectForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        const phoneNumber = document.getElementById('phone-input').value.trim();
+                        if (!phoneNumber) {
+                            alert('Please enter a phone number');
+                            return;
+                        }
+                        
+                        fetch('/whatsapp/connect', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `phone_number=${encodeURIComponent(phoneNumber)}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                updateStatus('connecting', null);
+                                alert('Connection initiated. Please wait...');
+                            } else {
+                                alert(`Error: ${data.message}`);
+                            }
+                        })
+                        .catch(error => {
+                            alert(`Error: ${error}`);
+                        });
+                    });
+                }
+                
+                // Reattach pairing code button event listener
+                const codeBtn = document.getElementById('code-btn');
+                if (codeBtn) {
+                    codeBtn.addEventListener('click', function() {
+                        const phoneNumber = document.getElementById('phone-input').value.trim();
+                        if (!phoneNumber) {
+                            alert('Please enter a phone number first');
+                            return;
+                        }
+                        
+                        // Show pairing code container
+                        document.getElementById('pairing-code-container').classList.remove('d-none');
+                        document.getElementById('pairing-code').textContent = 'Requesting...';
+                        
+                        fetch('/whatsapp/pairing_code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `phone_number=${encodeURIComponent(phoneNumber)}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('pairing-code').textContent = data.pairingCode;
+                                alert(`Pairing code received: ${data.pairingCode}\n\nEnter this code in WhatsApp on your phone.`);
+                            } else {
+                                document.getElementById('pairing-code').textContent = 'Failed';
+                                alert(`Error: ${data.message}`);
+                            }
+                        })
+                        .catch(error => {
+                            document.getElementById('pairing-code').textContent = 'Error';
+                            alert(`Error: ${error}`);
+                        });
+                    });
+                }
+                
+                // Disable the send form
+                const sendForm = document.getElementById('send-form');
+                if (sendForm) {
+                    sendForm.classList.add('disabled');
+                    sendForm.querySelector('fieldset').disabled = true;
+                }
+                
+                // Show the warning message
+                const warningMessage = document.querySelector('.alert-warning');
+                if (warningMessage) {
+                    warningMessage.classList.remove('d-none');
+                }
+            }
+        }
     }
 });
 </script>

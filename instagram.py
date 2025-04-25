@@ -91,125 +91,270 @@ def send_message():
         user_batches[batch_id] = []
         stop_flags[batch_id] = False
         
-        # Create and login Instagram client
-        client = Client()
-        try:
-            logger.info(f"Attempting to login with username: {username}")
-            
-            # Set client settings for better reliability
-            client.delay_range = [1, 3]
-            client.request_timeout = 30
-            
-            # Try to authenticate with a delay and proper error handling
-            max_retries = 3
-            retry_count = 0
-            login_success = False
-            
-            while retry_count < max_retries and not login_success:
-                try:
-                    client.login(username, password)
-                    login_success = True
-                    logger.info(f"Successfully logged in as {username}")
-                except ClientLoginRequired as e:
-                    logger.error(f"Instagram login error (attempt {retry_count+1}): {str(e)}")
-                    retry_count += 1
-                    if retry_count < max_retries:
-                        logger.info(f"Waiting 3 seconds before retry...")
-                        time.sleep(3)
-                except Exception as e:
-                    logger.error(f"Unexpected error during login: {str(e)}")
-                    raise
-            
-            if not login_success:
-                return jsonify({
-                    "success": False,
-                    "message": "Failed to login after multiple attempts. Please check your credentials and try again."
-                })
-                
-            clients[batch_id] = client
-            
-            # Store active batch info
-            active_batches[batch_id] = {
-                'username': username,
-                'target': target,
-                'target_type': target_type,
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'delay_time': delay_time,
-                'message_prefix': message_prefix
-            }
-            
-            # Validate target based on type
-            if target_type == 'inbox':
-                try:
-                    user_id = client.user_id_from_username(target)
-                    active_batches[batch_id]['target_id'] = user_id
-                except Exception as e:
-                    logger.error(f"Error finding user {target}: {str(e)}")
-                    return jsonify({
-                        "success": False,
-                        "message": f"Target username '{target}' not found"
-                    })
-            elif target_type == 'group':
-                try:
-                    # For group chat, target should be thread_id
-                    # Check if it's numeric
-                    if not target.isdigit():
-                        return jsonify({
-                            "success": False,
-                            "message": "Group chat ID should be numeric"
-                        })
-                    active_batches[batch_id]['target_id'] = target
-                except Exception as e:
-                    logger.error(f"Error with group ID {target}: {str(e)}")
-                    return jsonify({
-                        "success": False,
-                        "message": f"Invalid group chat ID: {str(e)}"
-                    })
-            else:
-                return jsonify({
-                    "success": False,
-                    "message": "Invalid target type. Choose either 'inbox' or 'group'"
-                })
-                
-            # Start message sending process
-            start_message_sending(
-                batch_id=batch_id,
-                client=client,
-                username=username,
-                password=password,
-                target=target,
-                target_type=target_type,
-                message_prefix=message_prefix,
-                messages=messages,
-                delay_time=delay_time
+        # Store active batch info - don't wait for login
+        active_batches[batch_id] = {
+            'username': username,
+            'target': target,
+            'target_type': target_type,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'delay_time': delay_time,
+            'message_prefix': message_prefix,
+            'status': 'initializing'
+        }
+        
+        # Add initial message
+        user_batches[batch_id].append({
+            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "username": username,
+            "target": target,
+            "message": "Message sending process initialized. Logging in to Instagram...",
+            "status": "Info",
+            "status_class": "message-info"
+        })
+        
+        # Start the login and sending process in a background thread
+        # This prevents timeout issues during the Instagram login process
+        threading.Thread(
+            target=instagram_login_and_send,
+            args=(
+                batch_id,
+                username,
+                password,
+                target,
+                target_type,
+                message_prefix,
+                messages,
+                delay_time
             )
+        ).start()
+        
+        # Return immediately with batch ID
+        return jsonify({
+            "success": True,
+            "message": "Message sending process initialized. Login in progress...",
+            "batch_id": batch_id
+        })
             
-            # Return a JSON response with the batch_id
-            # The frontend will handle the redirect
-            return jsonify({
-                "success": True,
-                "message": "Message sending started successfully",
-                "batch_id": batch_id
-            })
-            
-        except (LoginRequired, ClientLoginRequired) as e:
-            logger.error(f"Instagram login required: {str(e)}")
-            return jsonify({
-                "success": False,
-                "message": "Instagram login required. Your session may have expired."
-            })
-        except Exception as e:
-            logger.error(f"Instagram login failed: {str(e)}")
-            return jsonify({
-                "success": False,
-                "message": f"Login failed: {str(e)}"
-            })
     except Exception as e:
         logger.error(f"Error in send_message: {str(e)}")
         return jsonify({
             "success": False,
             "message": f"An error occurred: {str(e)}"
         })
+
+def instagram_login_and_send(batch_id, username, password, target, target_type, message_prefix, messages, delay_time):
+    """Background thread to handle Instagram login and message sending"""
+    try:
+        # Create Instagram client
+        client = Client()
+        logger.info(f"Attempting to login with username: {username} in background thread")
+        
+        # Set client settings for better reliability
+        client.delay_range = [1, 3]
+        client.request_timeout = 30
+        
+        # Update status
+        user_batches[batch_id].append({
+            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "message": "Logging in to Instagram...",
+            "status": "Info",
+            "status_class": "message-info"
+        })
+        
+        # Try to authenticate with a delay and proper error handling
+        max_retries = 3
+        retry_count = 0
+        login_success = False
+        
+        while retry_count < max_retries and not login_success:
+            try:
+                client.login(username, password)
+                login_success = True
+                logger.info(f"Successfully logged in as {username}")
+                
+                # Update status
+                user_batches[batch_id].append({
+                    "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "message": f"Successfully logged in as {username}",
+                    "status": "Success",
+                    "status_class": "message-success"
+                })
+                
+            except ClientLoginRequired as e:
+                logger.error(f"Instagram login error (attempt {retry_count+1}): {str(e)}")
+                
+                # Update status
+                user_batches[batch_id].append({
+                    "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "message": f"Login attempt {retry_count+1} failed: {str(e)}. Retrying...",
+                    "status": "Warning",
+                    "status_class": "message-warning"
+                })
+                
+                retry_count += 1
+                if retry_count < max_retries:
+                    logger.info(f"Waiting 3 seconds before retry...")
+                    time.sleep(3)
+            except Exception as e:
+                logger.error(f"Unexpected error during login: {str(e)}")
+                
+                # Update status
+                user_batches[batch_id].append({
+                    "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "message": f"Login error: {str(e)}",
+                    "status": "Error",
+                    "status_class": "message-error"
+                })
+                
+                raise
+        
+        if not login_success:
+            # Update status for failed login
+            user_batches[batch_id].append({
+                "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "message": "Failed to login after multiple attempts. Please check your credentials.",
+                "status": "Error",
+                "status_class": "message-error"
+            })
+            
+            # Update batch status
+            active_batches[batch_id]['status'] = 'failed'
+            stop_flags[batch_id] = True
+            return
+        
+        # Store client for later use
+        clients[batch_id] = client
+        
+        # Validate target based on type
+        target_validation_success = False
+        
+        try:
+            if target_type == 'inbox':
+                try:
+                    user_id = client.user_id_from_username(target)
+                    active_batches[batch_id]['target_id'] = user_id
+                    target_validation_success = True
+                    
+                    # Update status
+                    user_batches[batch_id].append({
+                        "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "message": f"Found target user: {target}",
+                        "status": "Info",
+                        "status_class": "message-info"
+                    })
+                    
+                except Exception as e:
+                    logger.error(f"Error finding user {target}: {str(e)}")
+                    
+                    # Update status
+                    user_batches[batch_id].append({
+                        "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "message": f"Target username '{target}' not found: {str(e)}",
+                        "status": "Error",
+                        "status_class": "message-error"
+                    })
+            elif target_type == 'group':
+                try:
+                    # For group chat, target should be thread_id
+                    # Check if it's numeric
+                    if not target.isdigit():
+                        # Update status
+                        user_batches[batch_id].append({
+                            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "message": "Group chat ID should be numeric",
+                            "status": "Error",
+                            "status_class": "message-error"
+                        })
+                    else:
+                        active_batches[batch_id]['target_id'] = target
+                        target_validation_success = True
+                        
+                        # Update status
+                        user_batches[batch_id].append({
+                            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "message": f"Using group chat ID: {target}",
+                            "status": "Info",
+                            "status_class": "message-info"
+                        })
+                except Exception as e:
+                    logger.error(f"Error with group ID {target}: {str(e)}")
+                    
+                    # Update status
+                    user_batches[batch_id].append({
+                        "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "message": f"Invalid group chat ID: {str(e)}",
+                        "status": "Error",
+                        "status_class": "message-error"
+                    })
+            else:
+                # Update status
+                user_batches[batch_id].append({
+                    "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "message": "Invalid target type. Choose either 'inbox' or 'group'",
+                    "status": "Error",
+                    "status_class": "message-error"
+                })
+        except Exception as e:
+            logger.error(f"Error validating target: {str(e)}")
+            
+            # Update status
+            user_batches[batch_id].append({
+                "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "message": f"Error validating target: {str(e)}",
+                "status": "Error",
+                "status_class": "message-error"
+            })
+        
+        # If target validation failed, stop
+        if not target_validation_success:
+            # Update batch status
+            active_batches[batch_id]['status'] = 'failed'
+            stop_flags[batch_id] = True
+            return
+            
+        # Update batch status
+        active_batches[batch_id]['status'] = 'running'
+            
+        # Start message sending process
+        send_messages_thread(
+            batch_id=batch_id,
+            client=client,
+            target=target,
+            target_type=target_type,
+            message_prefix=message_prefix,
+            messages=messages,
+            delay_time=delay_time
+        )
+            
+    except (LoginRequired, ClientLoginRequired) as e:
+        logger.error(f"Instagram login required: {str(e)}")
+        
+        # Update status
+        user_batches[batch_id].append({
+            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "message": f"Instagram login required: {str(e)}",
+            "status": "Error",
+            "status_class": "message-error"
+        })
+        
+        # Update batch status
+        active_batches[batch_id]['status'] = 'failed'
+        stop_flags[batch_id] = True
+            
+    except Exception as e:
+        logger.error(f"Instagram login failed: {str(e)}")
+        
+        # Update status
+        user_batches[batch_id].append({
+            "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "message": f"Login failed: {str(e)}",
+            "status": "Error",
+            "status_class": "message-error"
+        })
+        
+        # Update batch status
+        active_batches[batch_id]['status'] = 'failed'
+        stop_flags[batch_id] = True
 
 @instagram_bp.route('/dashboard')
 def dashboard():
