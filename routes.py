@@ -4,7 +4,7 @@ Handles dashboard and status endpoints
 """
 import logging
 from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for
-from models import WhatsAppTask
+from models import WhatsAppTask, FacebookBatch, InstagramBatch
 from utils import get_personalized_greeting
 
 # Configure logging
@@ -39,20 +39,44 @@ def set_username():
         session['username'] = username
     return redirect(url_for('main.index'))
 
+@main_bp.route('/batch-manager')
+def batch_manager():
+    """Batch Manager page for all platforms"""
+    # Get personalized greeting
+    username = session.get('username', None)
+    greeting = get_personalized_greeting(username)
+    
+    return render_template('batch_manager.html',
+                         greeting=greeting,
+                         username=username)
+
 @main_bp.route('/status')
 def status():
     """Get status of all services"""
+    # Get counts for each platform
+    instagram_count = InstagramBatch.query.filter(
+        InstagramBatch.status.in_(['running'])
+    ).count()
+    
+    facebook_count = FacebookBatch.query.filter(
+        FacebookBatch.status.in_(['running'])
+    ).count()
+    
+    whatsapp_count = WhatsAppTask.query.filter(
+        WhatsAppTask.status.in_(['created', 'running'])
+    ).count()
+    
     return jsonify({
         "whatsapp": {
             "active": True,
-            "activeTaskCount": WhatsAppTask.query.filter(
-                WhatsAppTask.status.in_(['created', 'running'])
-            ).count()
+            "activeTaskCount": whatsapp_count
         },
         "facebook": {
-            "active": True
+            "active": True,
+            "activeBatchCount": facebook_count
         },
         "instagram": {
-            "active": True
+            "active": True,
+            "activeBatchCount": instagram_count
         }
     })

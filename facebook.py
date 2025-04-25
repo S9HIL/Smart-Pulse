@@ -98,14 +98,9 @@ def send_messages():
             args=(convo_id, tokens, messages, haters_name, speed, batch_id)
         ).start()
 
-        return jsonify({
-            "success": True,
-            "status": "started",
-            "batch_id": batch_id,
-            "links": {
-                "messages": url_for('facebook.messages_page', batch_id=batch_id)
-            }
-        })
+        # Return redirect URL instead of JSON
+        message_url = url_for('facebook.messages_page', batch_id=batch_id)
+        return redirect(message_url)
     except Exception as e:
         logger.error(f"Error starting Facebook messages: {str(e)}")
         return jsonify({

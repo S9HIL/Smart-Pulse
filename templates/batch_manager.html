@@ -1,0 +1,450 @@
+{% extends 'layout.html' %}
+
+{% block title %}Batch Manager - Sʌʜɩɭ Pʀʌjʌpʌtɩ Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Batch Manager</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="batchManagerTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="instagram-tab" data-bs-toggle="tab" data-bs-target="#instagram" type="button" role="tab" aria-controls="instagram" aria-selected="true">
+                                <i class="fab fa-instagram me-1"></i> Instagram Batches
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="facebook-tab" data-bs-toggle="tab" data-bs-target="#facebook" type="button" role="tab" aria-controls="facebook" aria-selected="false">
+                                <i class="fab fa-facebook me-1"></i> Facebook Batches
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button" role="tab" aria-controls="whatsapp" aria-selected="false">
+                                <i class="fab fa-whatsapp me-1"></i> WhatsApp Tasks
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3" id="batchManagerTabsContent">
+                        <!-- Instagram Batches Tab -->
+                        <div class="tab-pane fade show active" id="instagram" role="tabpanel" aria-labelledby="instagram-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="instagramBatchesTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Batch ID</th>
+                                            <th>Target</th>
+                                            <th>Username</th>
+                                            <th>Created</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="instagramBatchesList">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading Instagram batches...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Facebook Batches Tab -->
+                        <div class="tab-pane fade" id="facebook" role="tabpanel" aria-labelledby="facebook-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="facebookBatchesTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Batch ID</th>
+                                            <th>Conversation</th>
+                                            <th>Account</th>
+                                            <th>Created</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="facebookBatchesList">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading Facebook batches...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- WhatsApp Tasks Tab -->
+                        <div class="tab-pane fade" id="whatsapp" role="tabpanel" aria-labelledby="whatsapp-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="whatsappTasksTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Task ID</th>
+                                            <th>Phone</th>
+                                            <th>Recipients</th>
+                                            <th>Created</th>
+                                            <th>Progress</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="whatsappTasksList">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading WhatsApp tasks...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load all batches and tasks
+document.addEventListener('DOMContentLoaded', function() {
+    // Load Instagram batches
+    fetchInstagramBatches();
+    
+    // Load Facebook batches
+    fetchFacebookBatches();
+    
+    // Load WhatsApp tasks
+    fetchWhatsAppTasks();
+    
+    // Set refresh interval (every 30 seconds)
+    setInterval(() => {
+        fetchInstagramBatches();
+        fetchFacebookBatches();
+        fetchWhatsAppTasks();
+    }, 30000);
+});
+
+// Instagram Batches
+function fetchInstagramBatches() {
+    fetch('/instagram/api/batches')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayInstagramBatches(data.batches);
+            } else {
+                showError('instagramBatchesList', 'Failed to load Instagram batches');
+            }
+        })
+        .catch(err => {
+            showError('instagramBatchesList', 'Error loading Instagram batches');
+            console.error('Error fetching Instagram batches:', err);
+        });
+}
+
+function displayInstagramBatches(batches) {
+    const tableBody = document.getElementById('instagramBatchesList');
+    
+    if (!batches || batches.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <p class="text-muted">No active Instagram batches found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    batches.forEach(batch => {
+        const statusClass = getStatusClass(batch.status);
+        const truncatedId = batch.batch_id.substring(0, 8) + '...';
+        const shortDate = new Date(batch.created_at).toLocaleString();
+        
+        html += `
+            <tr>
+                <td><span class="badge bg-secondary" title="${batch.batch_id}">${truncatedId}</span></td>
+                <td>${batch.target || 'N/A'}</td>
+                <td>${batch.username || 'Unknown'}</td>
+                <td>${shortDate}</td>
+                <td><span class="badge ${statusClass}">${batch.status}</span></td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="/instagram/messages/${batch.batch_id}" class="btn btn-sm btn-info" title="View Messages">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        ${batch.status.toLowerCase() === 'running' ? 
+                            `<button class="btn btn-sm btn-warning" onclick="stopInstagramBatch('${batch.batch_id}')" title="Stop Batch">
+                                <i class="fas fa-stop"></i>
+                            </button>` : 
+                            `<button class="btn btn-sm btn-success" onclick="restartInstagramBatch('${batch.batch_id}')" title="Restart Batch">
+                                <i class="fas fa-play"></i>
+                            </button>`
+                        }
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+}
+
+function stopInstagramBatch(batchId) {
+    fetch(`/instagram/api/batch/${batchId}/stop`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Batch stopped successfully', 'success');
+            setTimeout(() => fetchInstagramBatches(), 1000);
+        } else {
+            showToast('Failed to stop batch: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error stopping batch', 'danger');
+        console.error('Error stopping Instagram batch:', err);
+    });
+}
+
+function restartInstagramBatch(batchId) {
+    fetch(`/instagram/api/batch/${batchId}/restart`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Batch restarted successfully', 'success');
+            setTimeout(() => fetchInstagramBatches(), 1000);
+        } else {
+            showToast('Failed to restart batch: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error restarting batch', 'danger');
+        console.error('Error restarting Instagram batch:', err);
+    });
+}
+
+// Facebook Batches
+function fetchFacebookBatches() {
+    // We need to create an API endpoint to list Facebook batches
+    // For now, we'll use a placeholder
+    const tableBody = document.getElementById('facebookBatchesList');
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-4">
+                <p class="text-muted">Facebook batch listing will be implemented soon</p>
+            </td>
+        </tr>
+    `;
+}
+
+// WhatsApp Tasks
+function fetchWhatsAppTasks() {
+    fetch('/whatsapp/api/tasks')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayWhatsAppTasks(data.tasks);
+            } else {
+                showError('whatsappTasksList', 'Failed to load WhatsApp tasks');
+            }
+        })
+        .catch(err => {
+            showError('whatsappTasksList', 'Error loading WhatsApp tasks');
+            console.error('Error fetching WhatsApp tasks:', err);
+        });
+}
+
+function displayWhatsAppTasks(tasks) {
+    const tableBody = document.getElementById('whatsappTasksList');
+    
+    if (!tasks || tasks.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <p class="text-muted">No active WhatsApp tasks found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    tasks.forEach(task => {
+        const statusClass = getStatusClass(task.status);
+        const truncatedId = task.id.substring(0, 8) + '...';
+        const shortDate = new Date(task.created_at).toLocaleString();
+        
+        html += `
+            <tr>
+                <td><span class="badge bg-secondary" title="${task.id}">${truncatedId}</span></td>
+                <td>${task.phone_number || 'N/A'}</td>
+                <td>${task.total_recipients}</td>
+                <td>${shortDate}</td>
+                <td>
+                    <div class="progress">
+                        <div class="progress-bar ${statusClass}" role="progressbar" style="width: ${task.progress}%">
+                            ${task.progress}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="/whatsapp/task/${task.id}" class="btn btn-sm btn-info" title="View Task">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        ${task.status === 'running' ? 
+                            `<button class="btn btn-sm btn-warning" onclick="stopWhatsAppTask('${task.id}')" title="Stop Task">
+                                <i class="fas fa-stop"></i>
+                            </button>` : 
+                            `<button class="btn btn-sm btn-success" onclick="restartWhatsAppTask('${task.id}')" title="Restart Task">
+                                <i class="fas fa-play"></i>
+                            </button>`
+                        }
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+}
+
+function stopWhatsAppTask(taskId) {
+    fetch(`/whatsapp/stop_task/${taskId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Task stopped successfully', 'success');
+            setTimeout(() => fetchWhatsAppTasks(), 1000);
+        } else {
+            showToast('Failed to stop task: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error stopping task', 'danger');
+        console.error('Error stopping WhatsApp task:', err);
+    });
+}
+
+function restartWhatsAppTask(taskId) {
+    fetch(`/whatsapp/restart_task/${taskId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Task restarted successfully', 'success');
+            setTimeout(() => fetchWhatsAppTasks(), 1000);
+        } else {
+            showToast('Failed to restart task: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error restarting task', 'danger');
+        console.error('Error restarting WhatsApp task:', err);
+    });
+}
+
+// Helper functions
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> ${message}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function getStatusClass(status) {
+    if (!status) return 'bg-secondary';
+    
+    status = status.toLowerCase();
+    
+    if (status === 'running') return 'bg-success';
+    if (status === 'stopped') return 'bg-warning';
+    if (status === 'completed') return 'bg-info';
+    if (status === 'failed') return 'bg-danger';
+    
+    return 'bg-secondary';
+}
+
+function showToast(message, type = 'info') {
+    // Check if toast container exists, if not create it
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toastId = 'toast-' + Math.random().toString(36).substr(2, 9);
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-bg-${type} border-0`;
+    toast.id = toastId;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    // Toast content
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Create bootstrap toast
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+    
+    // Show toast
+    bsToast.show();
+    
+    // Remove from DOM after hiding
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+</script>
+{% endblock %}

@@ -33,8 +33,8 @@ def on_register(state):
 @whatsapp_bp.route('/')
 def index():
     """WhatsApp automation main page"""
-    # Get active tasks from database
-    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).limit(10).all()
+    # Remove this. Don't show any WhatsApp tasks
+    tasks = []
     
     return render_template('whatsapp/index.html', 
                           tasks=tasks, 
@@ -45,8 +45,8 @@ def index():
 @whatsapp_bp.route('/dashboard')
 def dashboard():
     """WhatsApp task dashboard"""
-    # Get active tasks from database
-    tasks = WhatsAppTask.query.order_by(WhatsAppTask.created_at.desc()).all()
+    # Don't show any tasks
+    tasks = []
     
     return render_template('whatsapp/dashboard.html', tasks=tasks)
 
