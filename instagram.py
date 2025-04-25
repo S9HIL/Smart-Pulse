@@ -185,12 +185,8 @@ def send_message():
             )
         ).start()
         
-        # Return immediately with batch ID
-        return jsonify({
-            "success": True,
-            "message": "Message sending process initialized. Login in progress...",
-            "batch_id": batch_id
-        })
+        # Redirect directly to message viewing page instead of returning JSON
+        return redirect(url_for('instagram.view_messages', batch_id=batch_id))
             
     except Exception as e:
         logger.error(f"Error in send_message: {str(e)}")
