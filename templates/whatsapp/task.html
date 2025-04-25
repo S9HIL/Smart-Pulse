@@ -179,23 +179,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const stopBtn = document.getElementById('stop-btn');
     if (stopBtn) {
         stopBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to stop this task?')) {
-                fetch('/whatsapp/stop_task/{{ task.id }}', {
-                    method: 'POST',
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Task stopped successfully');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    alert('Error: ' + error);
-                });
-            }
+            fetch('/whatsapp/stop_task/{{ task.id }}', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
         });
     }
     
@@ -203,23 +200,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const restartBtn = document.getElementById('restart-btn');
     if (restartBtn) {
         restartBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to restart this task?')) {
-                fetch('/whatsapp/restart_task/{{ task.id }}', {
-                    method: 'POST',
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Task restarted successfully');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    alert('Error: ' + error);
-                });
-            }
+            fetch('/whatsapp/restart_task/{{ task.id }}', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
         });
     }
     
@@ -241,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Task set to loop ' + (parseInt(loopCount) === 0 ? 'infinitely' : loopCount + ' times'));
                         location.reload();
                     } else {
                         alert('Error: ' + data.message);

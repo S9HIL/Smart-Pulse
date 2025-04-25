@@ -213,24 +213,22 @@ function displayInstagramBatches(batches) {
 }
 
 function deleteInstagramBatch(batchId) {
-    if (confirm('Are you sure you want to delete this batch?')) {
-        fetch(`/instagram/api/batch/${batchId}/delete`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Batch deleted successfully', 'success');
-                setTimeout(() => fetchInstagramBatches(), 1000);
-            } else {
-                showToast('Failed to delete batch: ' + data.message, 'danger');
-            }
-        })
-        .catch(err => {
-            showToast('Error deleting batch', 'danger');
-            console.error('Error deleting Instagram batch:', err);
-        });
-    }
+    fetch(`/instagram/api/batch/${batchId}/delete`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Batch deleted successfully', 'success');
+            setTimeout(() => fetchInstagramBatches(), 1000);
+        } else {
+            showToast('Failed to delete batch: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error deleting batch', 'danger');
+        console.error('Error deleting Instagram batch:', err);
+    });
 }
 
 function stopInstagramBatch(batchId) {
@@ -400,24 +398,22 @@ function restartWhatsAppTask(taskId) {
 }
 
 function deleteWhatsAppTask(taskId) {
-    if (confirm('Are you sure you want to delete this task?')) {
-        fetch(`/whatsapp/delete_task/${taskId}`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Task deleted successfully', 'success');
-                setTimeout(() => fetchWhatsAppTasks(), 1000);
-            } else {
-                showToast('Failed to delete task: ' + data.message, 'danger');
-            }
-        })
-        .catch(err => {
-            showToast('Error deleting task', 'danger');
-            console.error('Error deleting WhatsApp task:', err);
-        });
-    }
+    fetch(`/whatsapp/delete_task/${taskId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Task deleted successfully', 'success');
+            setTimeout(() => fetchWhatsAppTasks(), 1000);
+        } else {
+            showToast('Failed to delete task: ' + data.message, 'danger');
+        }
+    })
+    .catch(err => {
+        showToast('Error deleting task', 'danger');
+        console.error('Error deleting WhatsApp task:', err);
+    });
 }
 
 // Helper functions
