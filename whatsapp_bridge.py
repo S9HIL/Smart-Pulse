@@ -22,11 +22,13 @@ whatsapp_bp = Blueprint('whatsapp', __name__, template_folder='templates')
 # Initialize WhatsApp service but don't start it automatically
 whatsapp_service = WhatsAppService("whatsapp_service.js")
 
-# No automatic start - we'll start it on-demand when needed
+# Start the service when the blueprint is registered
 @whatsapp_bp.record_once
 def on_register(state):
-    # Don't auto-start the service
-    pass
+    # Ensure WhatsApp service is running
+    if not whatsapp_service.is_running():
+        logger.info("Starting WhatsApp service from blueprint registration")
+        whatsapp_service.start()
 
 @whatsapp_bp.route('/')
 def index():
