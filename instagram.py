@@ -14,6 +14,8 @@ from flask import Blueprint, request, render_template, jsonify, redirect, url_fo
 from utils import get_personalized_greeting
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired, ClientError, ClientLoginRequired
+from app import db
+from models import InstagramBatch, InstagramMessage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,11 +24,10 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 instagram_bp = Blueprint('instagram', __name__, template_folder='templates')
 
-# Global variables
-user_batches = {}  # Store batch information
+# Global variables (will be kept for backward compatibility and runtime processing)
+user_batches = {}  # Store batch messages (temporary)
 stop_flags = {}    # Control message sending
 clients = {}       # Store Instagram client instances
-active_batches = {}  # Track active batches
 
 @instagram_bp.route('/')
 def index():
@@ -42,9 +43,35 @@ def index():
 @instagram_bp.route('/api/batches')
 def get_batches():
     """Get all active message batches"""
+    # Get batches from database
+    batches = InstagramBatch.query.all()
     batches_list = []
     
+    for batch in batches:
+        # Check if we have a runtime stop flag
+        is_stopped = stop_flags.get(batch.id, True) 
+        
+        # If the DB says it's stopped, respect that
+        if batch.status == 'stopped':
+            is_stopped = True
+        
+        # Update the status based on current stop flag state
+        status = 'Running' if not is_stopped else 'Stopped'
+        
+        # If database and runtime state are different, sync them
+        if (status == 'Running' and batch.status == 'stopped') or (status == 'Stopped' and batch.status == 'running'):
+            batch.status = 'running' if status == 'Running' else 'stopped'
+            db.session.commit()
+        
+        batches_list.append(batch.to_dict())
+    
+    # For backward compatibility, also include any batches only in memory
     for batch_id, batch_info in active_batches.items():
+        # Skip if already in database
+        if any(b['batch_id'] == batch_id for b in batches_list):
+            continue
+            
+        # Add memory-only batch
         batches_list.append({
             'batch_id': batch_id,
             'target': batch_info.get('target', 'Unknown'),
@@ -98,7 +125,19 @@ def send_message():
         user_batches[batch_id] = []
         stop_flags[batch_id] = False
         
-        # Store active batch info - don't wait for login
+        # Store batch info in database
+        batch = InstagramBatch(
+            id=batch_id,
+            username=username,
+            target=target,
+            target_type=target_type,
+            message_prefix=message_prefix,
+            delay_time=delay_time,
+            status='running'
+        )
+        db.session.add(batch)
+        
+        # Store batch info in memory for compatibility
         active_batches[batch_id] = {
             'username': username,
             'target': target,
@@ -109,7 +148,17 @@ def send_message():
             'status': 'initializing'
         }
         
-        # Add initial message
+        # Create initial message in database
+        init_message = InstagramMessage(
+            batch_id=batch_id,
+            message="Message sending process initialized. Logging in to Instagram...",
+            status="Info",
+            status_class="message-info"
+        )
+        db.session.add(init_message)
+        db.session.commit()
+        
+        # Also store in memory for compatibility
         user_batches[batch_id].append({
             "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "username": username,
@@ -448,7 +497,43 @@ def get_batch_messages(batch_id):
 @instagram_bp.route('/api/batch/<batch_id>/stop', methods=['POST'])
 def stop_message_sending(batch_id):
     """Stop message sending for a batch"""
-    if batch_id in stop_flags:
+    # First check database
+    batch = InstagramBatch.query.get(batch_id)
+    
+    if batch:
+        # Update database status
+        batch.status = 'stopped'
+        db.session.commit()
+        
+        # Update runtime flag
+        stop_flags[batch_id] = True
+        
+        # Add status message to database
+        status_message = InstagramMessage(
+            batch_id=batch_id,
+            message="Message sending stopped by user",
+            status="Stopped",
+            status_class="message-stopped"
+        )
+        db.session.add(status_message)
+        db.session.commit()
+        
+        # For compatibility, also update in-memory records
+        if batch_id in user_batches:
+            user_batches[batch_id].append({
+                "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "message": "Message sending stopped by user",
+                "status": "Stopped",
+                "status_class": "message-stopped"
+            })
+            
+        return jsonify({
+            "success": True, 
+            "message": "Message sending process stopped"
+        })
+    
+    # For backward compatibility, check memory
+    elif batch_id in stop_flags:
         stop_flags[batch_id] = True
         
         # Add a status message
@@ -473,7 +558,117 @@ def stop_message_sending(batch_id):
 @instagram_bp.route('/api/batch/<batch_id>/restart', methods=['POST'])
 def restart_message_sending(batch_id):
     """Restart message sending for a batch"""
-    if batch_id in clients and batch_id in active_batches:
+    # First check database
+    batch = InstagramBatch.query.get(batch_id)
+    
+    if batch:
+        # Check if client is in memory
+        if batch_id not in clients:
+            return jsonify({
+                "success": False, 
+                "message": "Session expired. Please start a new batch."
+            }), 400
+        
+        if not clients[batch_id]:
+            return jsonify({
+                "success": False, 
+                "message": "Session expired. Please start a new batch."
+            }), 400
+        
+        # Update database status
+        batch.status = 'running'
+        db.session.commit()
+        
+        # Update runtime flag
+        stop_flags[batch_id] = False
+        client = clients[batch_id]
+        
+        # Get batch info from memory if it exists
+        batch_info = {}
+        if batch_id in active_batches:
+            batch_info = active_batches[batch_id]
+        else:
+            # Create from database
+            batch_info = {
+                'username': batch.username,
+                'target': batch.target,
+                'target_type': batch.target_type,
+                'message_prefix': batch.message_prefix,
+                'delay_time': batch.delay_time
+            }
+            active_batches[batch_id] = batch_info
+        
+        # Check if client is still connected
+        try:
+            # Test client connection
+            try:
+                client.get_timeline_feed()
+            except (LoginRequired, ClientLoginRequired):
+                # Re-login if needed - we need the password which we don't store in DB
+                # So use password from memory if available
+                if 'password' in batch_info:
+                    client.login(batch_info.get('username'), batch_info.get('password'))
+                else:
+                    return jsonify({
+                        "success": False, 
+                        "message": "Session expired and password not available for re-login. Please start a new batch."
+                    }), 400
+            
+            # Retrieve unsent messages from memory
+            messages = [msg.get('original_message') for msg in user_batches.get(batch_id, []) 
+                       if msg.get('original_message') and msg.get('status') != 'Sent']
+            
+            if not messages:
+                return jsonify({
+                    "success": False, 
+                    "message": "No remaining messages to send"
+                })
+            
+            # Add status message to database
+            status_message = InstagramMessage(
+                batch_id=batch_id,
+                message="Message sending restarted by user",
+                status="Info",
+                status_class="message-info"
+            )
+            db.session.add(status_message)
+            db.session.commit()
+                
+            # Also add status message to memory for compatibility
+            user_batches[batch_id].append({
+                "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "message": "Message sending restarted",
+                "status": "Info",
+                "status_class": "message-info"
+            })
+            
+            # Restart sending in background
+            threading.Thread(
+                target=send_messages_thread,
+                args=(
+                    batch_id,
+                    client,
+                    batch_info.get('target'),
+                    batch_info.get('target_type'),
+                    batch_info.get('message_prefix', ''),
+                    messages,
+                    batch_info.get('delay_time', 5)
+                )
+            ).start()
+            
+            return jsonify({
+                "success": True, 
+                "message": "Message sending restarted successfully"
+            })
+        except Exception as e:
+            logger.error(f"Error restarting message sending: {str(e)}")
+            return jsonify({
+                "success": False, 
+                "message": f"Error restarting: {str(e)}"
+            })
+    
+    # Fall back to memory-only for backward compatibility
+    elif batch_id in clients and batch_id in active_batches:
         if not clients[batch_id]:
             return jsonify({
                 "success": False, 
