@@ -88,8 +88,11 @@ def connect():
 def disconnect():
     """Disconnect from WhatsApp"""
     try:
-        # Send disconnect command
-        whatsapp_service.send_command('logout')
+        # Get force parameter if provided
+        force = request.json.get('force', False) if request.is_json else False
+        
+        # Send disconnect command with force parameter
+        whatsapp_service.send_command('logout', {'force': force})
         
         return jsonify({
             "success": True,

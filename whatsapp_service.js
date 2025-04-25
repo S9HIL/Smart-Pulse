@@ -172,7 +172,10 @@ async function connectToWhatsApp(sessionId = null, phoneNumber = null, forceNewS
 
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
-                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+                
+                // Always try to reconnect regardless of status code
+                // This ensures we maintain connection until manual logout
+                const shouldReconnect = true;
                 
                 logger.info(`Connection closed with status code: ${statusCode}`);
                 
