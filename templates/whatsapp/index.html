@@ -169,41 +169,43 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form id="send-form">
-                            <div class="mb-3">
-                                <label for="recipients" class="form-label">Recipients (comma separated)</label>
-                                <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="919876543210, 919876543211, 919876543212" required></textarea>
-                                <div class="form-text">Enter phone numbers with country code, separated by commas.</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="message-prefix" class="form-label">Message Prefix (optional)</label>
-                                <input type="text" class="form-control" id="message-prefix" name="message_prefix" placeholder="Hi there! ">
-                                <div class="form-text">Text to add before each message (e.g., greeting or personalization)</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="message" class="form-label">Messages (one per line)</label>
-                                <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message 1&#10;Message 2&#10;Message 3"></textarea>
-                                <div class="form-text">Enter one message per line or upload a text file.</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="message-file" class="form-label">Or upload a text file</label>
-                                <input class="form-control" type="file" id="message-file" name="message_file" accept=".txt">
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="delay" class="form-label">Delay between messages (seconds)</label>
-                                <input type="number" class="form-control" id="delay" name="delay" min="1" max="60" value="5">
-                                <div class="form-text">Recommended: 5+ seconds to avoid being blocked.</div>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-paper-plane me-1"></i> Start Sending Messages
-                                </button>
-                            </div>
+                        <form id="send-form" method="post" action="/whatsapp/send_messages" enctype="multipart/form-data">
+                            <fieldset>
+                                <div class="mb-3">
+                                    <label for="recipients" class="form-label">Recipients (comma separated)</label>
+                                    <textarea class="form-control" id="recipients" name="recipients" rows="3" placeholder="919876543210, 919876543211, 919876543212" required></textarea>
+                                    <div class="form-text">Enter phone numbers with country code, separated by commas.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="message-prefix" class="form-label">Message Prefix (optional)</label>
+                                    <input type="text" class="form-control" id="message-prefix" name="message_prefix" placeholder="Hi there! ">
+                                    <div class="form-text">Text to add before each message (e.g., greeting or personalization)</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Messages (one per line)</label>
+                                    <textarea class="form-control" id="message" name="message" rows="5" placeholder="Message 1&#10;Message 2&#10;Message 3"></textarea>
+                                    <div class="form-text">Enter one message per line or upload a text file.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="message-file" class="form-label">Or upload a text file</label>
+                                    <input class="form-control" type="file" id="message-file" name="message_file" accept=".txt">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="delay" class="form-label">Delay between messages (seconds)</label>
+                                    <input type="number" class="form-control" id="delay" name="delay" min="1" max="60" value="5">
+                                    <div class="form-text">Recommended: 5+ seconds to avoid being blocked.</div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-paper-plane me-1"></i> Start Sending Messages
+                                    </button>
+                                </div>
+                            </fieldset>
                         </form>
                     </div>
                 </div>
@@ -596,6 +598,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button id="disconnect-btn" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt me-1"></i> Disconnect
                         </button>
+                        
+                        <button id="show-messaging-btn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Continue to Messaging
+                        </button>
                     </div>
                 `;
                 
@@ -626,6 +632,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 alert(`Error: ${error}`);
                             });
                         }
+                    });
+                }
+                
+                // Reattach show messaging button event listener
+                const showMessagingBtn = document.getElementById('show-messaging-btn');
+                if (showMessagingBtn) {
+                    showMessagingBtn.addEventListener('click', function() {
+                        document.getElementById('messaging-section').classList.remove('d-none');
+                        showMessagingBtn.textContent = 'Messaging Section Opened';
+                        showMessagingBtn.disabled = true;
+                        // Scroll to messaging section
+                        document.getElementById('messaging-section').scrollIntoView({ behavior: 'smooth' });
                     });
                 }
                 
