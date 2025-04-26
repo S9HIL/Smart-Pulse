@@ -31,7 +31,7 @@ def login():
         # Validate input
         if not email or not password:
             flash('Email and password are required.', 'danger')
-            return render_template('auth/login.html')
+            return redirect(url_for('main.index'))
         
         # Find user
         user = User.query.filter_by(email=email).first()
@@ -41,7 +41,7 @@ def login():
             # Check if user is banned
             if user.is_banned:
                 flash('Your account has been banned. Please contact an administrator.', 'danger')
-                return render_template('auth/login.html')
+                return redirect(url_for('main.index'))
             
             # Login user
             login_user(user, remember=remember)
@@ -63,8 +63,10 @@ def login():
             return redirect(url_for('main.index'))
         else:
             flash('Invalid email or password.', 'danger')
+            return redirect(url_for('main.index'))
     
-    return render_template('auth/login.html')
+    # Redirect GET requests to the main index page which shows the login form for unauthenticated users
+    return redirect(url_for('main.index'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -82,11 +84,11 @@ def register():
         # Validate input
         if not username or not email or not password or not confirm_password:
             flash('All fields are required.', 'danger')
-            return render_template('auth/register.html')
+            return redirect(url_for('main.index'))
         
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
-            return render_template('auth/register.html')
+            return redirect(url_for('main.index'))
         
         # Check if username or email already exists
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
@@ -95,7 +97,7 @@ def register():
                 flash('Username already exists.', 'danger')
             else:
                 flash('Email already registered.', 'danger')
-            return render_template('auth/register.html')
+            return redirect(url_for('main.index'))
         
         # Create new user
         new_user = User(username=username, email=email)
@@ -128,9 +130,10 @@ def register():
             login_user(new_user)
             return redirect(url_for('main.index'))
         else:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('main.index'))
     
-    return render_template('auth/register.html')
+    # Redirect GET requests to the main index page which shows the registration form when clicked
+    return redirect(url_for('main.index'))
 
 @auth_bp.route('/logout')
 @login_required

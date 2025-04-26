@@ -111,12 +111,50 @@
     .blue-gradient-card {
         background: linear-gradient(45deg, #00c6ff, #0072ff);
         color: white;
-        border-radius: 10px;
-        padding: 35px 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 40px 35px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                    0 0 20px rgba(0, 198, 255, 0.3),
+                    0 0 30px rgba(0, 114, 255, 0.2);
         position: relative;
         overflow: hidden;
         animation: borderPulse 4s ease infinite;
+        transform: translateZ(0);
+        transform-style: preserve-3d;
+        transition: all 0.4s ease;
+    }
+    
+    .blue-gradient-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        z-index: -2;
+        background: linear-gradient(45deg, #00c6ff, #0072ff, #00c6ff);
+        background-size: 400% 400%;
+        border-radius: 16px;
+        animation: borderGradient 6s linear infinite;
+    }
+    
+    .blue-gradient-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+        background: linear-gradient(45deg, #00c6ff, #0072ff);
+        border-radius: 15px;
+    }
+    
+    .blue-gradient-card:hover {
+        transform: translateY(-5px) translateZ(0);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4),
+                    0 0 30px rgba(0, 198, 255, 0.4),
+                    0 0 40px rgba(0, 114, 255, 0.3);
     }
     
     .login-heading {

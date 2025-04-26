@@ -20,9 +20,71 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            padding-bottom: 70px;
+            padding-bottom: 100px; /* Increased for bigger footer */
             background-color: #0d1117;
             color: white;
+            position: relative;
+            overflow-x: hidden;
+            background: radial-gradient(circle at 10% 20%, rgba(21, 27, 38, 1) 0%, rgba(13, 17, 23, 1) 90%);
+        }
+        
+        /* Background animation for login/register pages */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(61, 109, 204, 0.08) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(128, 94, 250, 0.08) 0%, transparent 25%),
+                radial-gradient(circle at 50% 80%, rgba(46, 196, 255, 0.08) 0%, transparent 25%);
+            z-index: -1;
+            opacity: 0.7;
+            animation: pulseBackground 15s ease-in-out infinite alternate;
+        }
+        
+        /* Floating particles animation */
+        .particles-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticle 20s linear infinite;
+        }
+        
+        @keyframes pulseBackground {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.6; }
+        }
+        
+        @keyframes floatParticle {
+            0% {
+                opacity: 0;
+                transform: translateY(0) translateX(0) rotate(0deg);
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-1000px) translateX(100px) rotate(360deg);
+            }
         }
         
         /* Navbar styling */
@@ -135,11 +197,12 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            padding: 1rem 0;
-            background: rgba(20, 20, 20, 0.8);
+            padding: 1.5rem 0;
+            background: rgba(20, 20, 20, 0.85);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.2);
         }
         
         /* Smart Pulse title animation */
@@ -237,6 +300,9 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Floating particles container -->
+    <div class="particles-container" id="particles-container"></div>
+    
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid px-3">
@@ -428,8 +494,54 @@
             }
         }
         
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            if (!container) return;
+            
+            // Clear existing particles
+            container.innerHTML = '';
+            
+            // Number of particles based on screen size
+            const numParticles = Math.min(Math.floor(window.innerWidth / 20), 40);
+            
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size
+                const size = 3 + Math.random() * 7;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Random starting position
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                
+                // Random animation delay and duration
+                const duration = 15 + Math.random() * 15;
+                particle.style.animationDuration = duration + 's';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                
+                // Random opacity
+                particle.style.opacity = 0.1 + Math.random() * 0.4;
+                
+                // Different colors based on position
+                const hue = Math.random() > 0.5 ? '210' : '250';
+                const saturation = 70 + Math.random() * 30;
+                const lightness = 60 + Math.random() * 20;
+                particle.style.background = `radial-gradient(circle at center, hsla(${hue}, ${saturation}%, ${lightness}%, 0.8) 0%, hsla(${hue}, ${saturation}%, ${lightness}%, 0) 70%)`;
+                
+                container.appendChild(particle);
+            }
+        }
+        
         // Initialize all tooltips and format timestamps
         document.addEventListener('DOMContentLoaded', function() {
+            // Create particles effect
+            createParticles();
+            window.addEventListener('resize', createParticles);
+            
             // Enable Bootstrap tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(tooltipTriggerEl) {
