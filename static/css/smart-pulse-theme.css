@@ -435,3 +435,12 @@ body {
 .btn-outline-light:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Creator tag styling */
+.creator-tag {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.7;
+  font-style: italic;
+  letter-spacing: 0.5px;
+}

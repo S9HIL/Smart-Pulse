@@ -25,10 +25,28 @@
             <div class="card-body">
                 <form id="facebook-form" action="{{ url_for('facebook.send_messages') }}" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="access_token" class="form-label required-field">Facebook Access Token</label>
-                        <input type="text" class="form-control bg-dark text-white border-secondary" id="access_token" name="access_token" placeholder="Enter your Facebook access token" required>
-                        <div class="form-text fw-semibold text-white opacity-75">
-                            Your access token is used to send messages through the Facebook API.
+                        <label class="form-label required-field">Facebook Access Token</label>
+                        
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <input type="radio" class="btn-check" name="token_type" id="token_single" value="single" checked>
+                            <label class="btn btn-outline-primary" for="token_single">Single Token</label>
+                            
+                            <input type="radio" class="btn-check" name="token_type" id="token_file" value="file">
+                            <label class="btn btn-outline-primary" for="token_file">Multiple Tokens File</label>
+                        </div>
+                        
+                        <div id="single_token_input">
+                            <input type="text" class="form-control bg-dark text-white border-secondary" id="access_token" name="access_token" placeholder="Enter your Facebook access token">
+                            <div class="form-text fw-semibold text-white opacity-75">
+                                Your access token is used to send messages through the Facebook API.
+                            </div>
+                        </div>
+                        
+                        <div id="token_file_input" class="d-none">
+                            <input type="file" class="form-control bg-dark text-white border-secondary" id="tokens_file" name="tokens_file">
+                            <div class="form-text fw-semibold text-white opacity-75">
+                                Upload a text file with one access token per line.
+                            </div>
                         </div>
                     </div>
                     
@@ -141,9 +159,45 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('facebook-form');
+    const singleTokenInput = document.getElementById('single_token_input');
+    const tokenFileInput = document.getElementById('token_file_input');
+    const accessTokenField = document.getElementById('access_token');
+    const tokensFileField = document.getElementById('tokens_file');
+    
+    // Token type toggle handlers
+    document.getElementById('token_single').addEventListener('change', function() {
+        if (this.checked) {
+            singleTokenInput.classList.remove('d-none');
+            tokenFileInput.classList.add('d-none');
+            // Make single token field required and file field not required
+            accessTokenField.setAttribute('required', '');
+            tokensFileField.removeAttribute('required');
+        }
+    });
+    
+    document.getElementById('token_file').addEventListener('change', function() {
+        if (this.checked) {
+            singleTokenInput.classList.add('d-none');
+            tokenFileInput.classList.remove('d-none');
+            // Make file field required and single token field not required
+            tokensFileField.setAttribute('required', '');
+            accessTokenField.removeAttribute('required');
+        }
+    });
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        // Validate based on selected token type
+        const tokenType = document.querySelector('input[name="token_type"]:checked').value;
+        
+        if (tokenType === 'single' && !accessTokenField.value) {
+            showToast('Please enter a Facebook access token', 'danger');
+            return;
+        } else if (tokenType === 'file' && !tokensFileField.files.length) {
+            showToast('Please select a tokens file', 'danger');
+            return;
+        }
         
         // Show loading spinner
         showSpinner('Starting Facebook message sending...');
