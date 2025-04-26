@@ -19,59 +19,85 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """User login page"""
-    # If user is already logged in, redirect to dashboard
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    
-    # For GET requests, redirect to main index with login form
-    if request.method == 'GET':
-        return redirect(url_for('main.index'))
-    
-    # Process POST requests
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        remember = 'remember' in request.form
-        
-        # Validate input
-        if not email or not password:
-            flash('Email and password are required.', 'danger')
+    try:
+        # If user is already logged in, redirect to dashboard
+        if current_user.is_authenticated:
             return redirect(url_for('main.index'))
         
-        # Find user
-        user = User.query.filter_by(email=email).first()
+        # For GET requests, redirect to main index with login form
+        if request.method == 'GET':
+            return redirect(url_for('main.index'))
         
-        # Check if user exists and password is correct
-        if user and user.check_password(password):
+        # Process POST requests
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            remember = 'remember' in request.form
+            
+            # Use either username or email based on what was provided
+            if email and not username:
+                # Find user by email
+                user = User.query.filter_by(email=email).first()
+                if not user:
+                    flash('Invalid email or password.', 'danger')
+                    return redirect(url_for('main.index'))
+            elif username:
+                # Find user by username or email
+                user = User.query.filter(
+                    (User.username == username) | (User.email == username)
+                ).first()
+                if not user:
+                    flash('Invalid username or password.', 'danger')
+                    return redirect(url_for('main.index'))
+            else:
+                flash('Username/email and password are required.', 'danger')
+                return redirect(url_for('main.index'))
+            
+            # Validate password
+            if not password:
+                flash('Password is required.', 'danger')
+                return redirect(url_for('main.index'))
+            
+            # Check if password is correct
+            if not user.check_password(password):
+                flash('Invalid password.', 'danger')
+                return redirect(url_for('main.index'))
+            
             # Check if user is banned
             if user.is_banned:
                 flash('Your account has been banned. Please contact an administrator.', 'danger')
                 return redirect(url_for('main.index'))
             
             # Login user
-            login_user(user, remember=remember)
-            
-            # Update last login time
-            user.last_login = datetime.utcnow()
-            db.session.commit()
-            
-            # Check approval status for non-admin users
-            if not user.is_admin and not user.is_approved:
-                flash('Your account is pending approval by an administrator.', 'warning')
-                # Redirect to pending approval page
-                return redirect(url_for('auth.pending_approval'))
-            
-            # Redirect to requested page or dashboard
-            next_page = request.args.get('next')
-            if next_page and next_page.startswith('/'):
-                return redirect(next_page)
-            return redirect(url_for('main.index'))
-        else:
-            flash('Invalid email or password.', 'danger')
-            return redirect(url_for('main.index'))
-    
-    # Redirect GET requests to the main index page which shows the login form for unauthenticated users
-    return redirect(url_for('main.index'))
+            try:
+                login_user(user, remember=remember)
+                
+                # Update last login time
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+                
+                # Check approval status for non-admin users
+                if not getattr(user, 'is_admin', False) and not getattr(user, 'is_approved', False):
+                    flash('Your account is pending approval by an administrator.', 'warning')
+                    # Redirect to pending approval page
+                    return redirect(url_for('auth.pending_approval'))
+                
+                # Redirect to requested page or dashboard
+                next_page = request.args.get('next')
+                if next_page and next_page.startswith('/'):
+                    return redirect(next_page)
+                return redirect(url_for('main.index'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Login failed: {str(e)}', 'danger')
+                return redirect(url_for('main.index'))
+        
+        # Redirect GET requests to the main index page which shows the login form for unauthenticated users
+        return redirect(url_for('main.index'))
+    except Exception as outer_e:
+        flash(f'System error: {str(outer_e)}. Please try again later.', 'danger')
+        return redirect(url_for('main.index'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
