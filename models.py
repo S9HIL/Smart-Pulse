@@ -15,23 +15,23 @@ class User(UserMixin, db.Model):
     is_banned = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
-    
+
     whatsapp_tasks = db.relationship('WhatsAppTask', backref='user', lazy=True, 
                                      cascade="all, delete-orphan")
     instagram_batches = db.relationship('InstagramBatch', backref='user', lazy=True, 
                                        cascade="all, delete-orphan")
     facebook_batches = db.relationship('FacebookBatch', backref='user', lazy=True, 
                                        cascade="all, delete-orphan")
-    
+
     def __repr__(self):
         return f'<User {self.username}>'
-    
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -53,13 +53,13 @@ class UserApproval(db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     notes = db.Column(db.Text, nullable=True)
-    
+
     user = db.relationship('User', foreign_keys=[user_id], backref='approval_requests')
     admin = db.relationship('User', foreign_keys=[approved_by], backref='approval_actions')
-    
+
     def __repr__(self):
         return f'<UserApproval {self.id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -84,10 +84,10 @@ class WhatsAppTask(db.Model):
     sent_count = db.Column(db.Integer, default=0)
     failed_count = db.Column(db.Integer, default=0)
     delay = db.Column(db.Integer, default=10)  # delay in seconds between messages
-    
+
     def __repr__(self):
         return f'<WhatsAppTask {self.id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -102,7 +102,7 @@ class WhatsAppTask(db.Model):
             'delay': self.delay,
             'progress': self.progress
         }
-    
+
     @property
     def progress(self):
         """Calculate the task's progress as a percentage"""
@@ -119,12 +119,12 @@ class WhatsAppMessage(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, sent, failed
     sent_at = db.Column(db.DateTime, nullable=True)
     error = db.Column(db.Text, nullable=True)
-    
+
     task = db.relationship('WhatsAppTask', backref=db.backref('messages', lazy=True))
-    
+
     def __repr__(self):
         return f'<WhatsAppMessage {self.id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -148,10 +148,10 @@ class InstagramBatch(db.Model):
     status = db.Column(db.String(20), default='running')  # running, stopped, completed, failed 
     message_prefix = db.Column(db.Text, nullable=True)
     delay_time = db.Column(db.Integer, default=5)
-    
+
     def __repr__(self):
         return f'<InstagramBatch {self.id}>'
-    
+
     def to_dict(self):
         return {
             'batch_id': self.id,
@@ -175,12 +175,12 @@ class InstagramMessage(db.Model):
     status_class = db.Column(db.String(30), default='message-pending')  # CSS class
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     error = db.Column(db.Text, nullable=True)
-    
+
     batch = db.relationship('InstagramBatch', backref=db.backref('messages', lazy=True))
-    
+
     def __repr__(self):
         return f'<InstagramMessage {self.id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -204,10 +204,10 @@ class FacebookBatch(db.Model):
     haters_name = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(20), default='running')  # running, stopped, completed, failed
     speed = db.Column(db.Integer, default=5)  # delay in seconds
-    
+
     def __repr__(self):
         return f'<FacebookBatch {self.id}>'
-    
+
     def to_dict(self):
         return {
             'batch_id': self.id,
@@ -230,12 +230,12 @@ class FacebookMessage(db.Model):
     status_class = db.Column(db.String(30), default='text-secondary')  # CSS class
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     error = db.Column(db.Text, nullable=True)
-    
+
     batch = db.relationship('FacebookBatch', backref=db.backref('messages', lazy=True))
-    
+
     def __repr__(self):
         return f'<FacebookMessage {self.id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
