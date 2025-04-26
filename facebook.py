@@ -34,19 +34,47 @@ def index():
 def send_messages():
     """Start sending Facebook messages"""
     try:
-        access_token = request.form.get('access_token')
+        # Get the token type selection
+        token_type = request.form.get('token_type', 'single')
+        
+        # Handle different token input methods
+        if token_type == 'single':
+            access_token = request.form.get('access_token')
+            if not access_token:
+                return jsonify({
+                    "success": False,
+                    "message": "Facebook access token is required"
+                })
+        else:  # token_type == 'file'
+            tokens_file = request.files.get('tokens_file')
+            if not tokens_file:
+                return jsonify({
+                    "success": False,
+                    "message": "Tokens file is required"
+                })
+            # Read the first token from the file
+            try:
+                token_content = tokens_file.read().decode('utf-8').strip()
+                tokens = token_content.splitlines()
+                if not tokens:
+                    return jsonify({
+                        "success": False,
+                        "message": "The token file is empty"
+                    })
+                access_token = tokens[0].strip()  # Use the first token for now
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "message": f"Error reading token file: {str(e)}"
+                })
+        
+        # Get other form data
         conversation_id = request.form.get('conversation_id')
         haters_name = request.form.get('haters_name')
         message_text = request.form.get('message_text', '')
         message_file = request.files.get('message_file')
         speed = int(request.form.get('speed', 5))
         
-        if not access_token:
-            return jsonify({
-                "success": False,
-                "message": "Facebook access token is required"
-            })
-            
         if not conversation_id:
             return jsonify({
                 "success": False,
@@ -115,10 +143,21 @@ def send_messages():
         # Create event to signal stop
         stop_flags[batch_id] = threading.Event()
         
+        # Handle token list for file upload mode
+        token_list = []
+        if token_type == 'file' and 'tokens_file' in request.files:
+            # Reopen the file since we already read it once
+            tokens_file = request.files.get('tokens_file')
+            tokens_file.seek(0)
+            token_content = tokens_file.read().decode('utf-8').strip()
+            token_list = [token.strip() for token in token_content.splitlines() if token.strip()]
+        else:
+            token_list = [access_token]
+            
         # Start sending messages in background thread
         thread = threading.Thread(
             target=send_messages_from_file,
-            args=(conversation_id, [access_token], messages, haters_name, speed, batch_id)
+            args=(conversation_id, token_list, messages, haters_name, speed, batch_id)
         )
         thread.daemon = True
         thread.start()
