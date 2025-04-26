@@ -25,68 +25,68 @@
             <div class="card-body">
                 <form id="instagram-form" action="{{ url_for('instagram.send_message') }}" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="username" class="form-label required-field">Instagram Username</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Your Instagram username" required>
+                        <label for="username" class="form-label required-field text-white fw-bold">Instagram Username</label>
+                        <input type="text" class="form-control text-white" id="username" name="username" placeholder="Your Instagram username" required style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
                     </div>
                     
                     <div class="mb-3">
-                        <label for="password" class="form-label required-field">Instagram Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Your Instagram password" required>
-                        <div class="form-text text-muted">
-                            Your credentials are only used to login to Instagram and are not stored permanently.
+                        <label for="password" class="form-label required-field text-white fw-bold">Instagram Password</label>
+                        <input type="password" class="form-control text-white" id="password" name="password" placeholder="Your Instagram password" required style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
+                        <div class="form-text text-info">
+                            <i class="fas fa-lock me-1"></i> Your credentials are only used to login to Instagram and are not stored permanently.
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="target" class="form-label required-field">Target Username or Group ID</label>
-                        <input type="text" class="form-control" id="target" name="target" placeholder="Enter username or group ID" required>
+                        <label for="target" class="form-label required-field text-white fw-bold">Target Username or Group ID</label>
+                        <input type="text" class="form-control text-white" id="target" name="target" placeholder="Enter username or group ID" required style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label required-field">Target Type</label>
+                        <label class="form-label required-field text-white fw-bold">Target Type</label>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="target_type" id="target_type_user" value="user" checked>
-                            <label class="form-check-label" for="target_type_user">
+                            <label class="form-check-label text-light fw-medium" for="target_type_user">
                                 User (Direct Message)
                             </label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="target_type" id="target_type_group" value="group">
-                            <label class="form-check-label" for="target_type_group">
+                            <label class="form-check-label text-light fw-medium" for="target_type_group">
                                 Group Chat (Thread ID)
                             </label>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="message_prefix" class="form-label">Message Prefix (Optional)</label>
-                        <input type="text" class="form-control" id="message_prefix" name="message_prefix" placeholder="Text to add before each message">
-                        <div class="form-text text-muted">
-                            This text will be added before each message.
+                        <label for="message_prefix" class="form-label text-white fw-bold">Message Prefix (Optional)</label>
+                        <input type="text" class="form-control text-white" id="message_prefix" name="message_prefix" placeholder="Text to add before each message" style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
+                        <div class="form-text text-info">
+                            <i class="fas fa-info-circle me-1"></i> This text will be added before each message.
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="delay_time" class="form-label">Delay Between Messages (seconds)</label>
-                        <input type="number" class="form-control" id="delay_time" name="delay_time" min="5" max="60" value="10">
-                        <div class="form-text text-muted">
-                            Time to wait between sending messages (5-60 seconds recommended).
+                        <label for="delay_time" class="form-label text-white fw-bold">Delay Between Messages (seconds)</label>
+                        <input type="number" class="form-control text-white" id="delay_time" name="delay_time" min="5" max="60" value="10" style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
+                        <div class="form-text text-info">
+                            <i class="fas fa-clock me-1"></i> Time to wait between sending messages (5-60 seconds recommended).
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="messages" class="form-label">Messages</label>
-                        <textarea class="form-control" id="messages" name="messages" rows="5" placeholder="Enter messages (one per line)"></textarea>
-                        <div class="form-text text-muted">
-                            Enter one message per line.
+                        <label for="messages" class="form-label text-white fw-bold">Messages</label>
+                        <textarea class="form-control text-white" id="messages" name="messages" rows="5" placeholder="Enter messages (one per line)" style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;"></textarea>
+                        <div class="form-text text-info">
+                            <i class="fas fa-edit me-1"></i> Enter one message per line.
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="message_file" class="form-label">Or Upload Message File</label>
-                        <input type="file" class="form-control" id="message_file" name="message_file">
-                        <div class="form-text text-muted">
-                            Upload a text file with one message per line.
+                        <label for="message_file" class="form-label text-white fw-bold">Or Upload Message File</label>
+                        <input type="file" class="form-control text-white" id="message_file" name="message_file" style="background-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
+                        <div class="form-text text-info">
+                            <i class="fas fa-file-upload me-1"></i> Upload a text file with one message per line.
                         </div>
                     </div>
                     
