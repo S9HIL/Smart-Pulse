@@ -4,17 +4,14 @@
 
 {% block content %}
 <div class="text-center py-5">
-    <h1 class="display-3 fw-bold mb-4">{{ greeting }}</h1>
-    <p class="lead mb-5">Welcome to the Automation Hub - your multi-platform social messaging automation tool</p>
-    
-    {% if not username %}
-    <div class="mb-5 col-md-6 mx-auto">
-        <form method="post" action="{{ url_for('main.set_username') }}" class="d-flex">
-            <input type="text" name="username" class="form-control me-2 bg-dark text-white border-secondary" placeholder="Enter your name" required>
-            <button type="submit" class="btn set-name-btn">Set Name</button>
-        </form>
-    </div>
-    {% endif %}
+    <h1 class="display-3 fw-bold mb-4">
+        {% if current_user.is_authenticated %}
+            Good {{ time_of_day }}, {{ current_user.username }}!
+        {% else %}
+            Welcome to Smart Pulse
+        {% endif %}
+    </h1>
+    <p class="lead mb-5">Your multi-platform social messaging automation tool</p>
 </div>
 
 <!-- Platform Sections -->

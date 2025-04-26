@@ -28,16 +28,22 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Main dashboard page for the automation hub"""
-    # No longer fetching active WhatsApp tasks as per user request
-    # Users should go to batch manager page for this information
+    # Get current hour to determine time of day
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.datetime.now(ist)
+    hour = now.hour
     
-    # Get personalized greeting from cookie instead of session
-    username = request.cookies.get('username', None)
-    greeting = get_personalized_greeting(username)
+    # Determine time of day
+    if 5 <= hour < 12:
+        time_of_day = "Morning"
+    elif 12 <= hour < 17:
+        time_of_day = "Afternoon"
+    elif 17 <= hour < 21:
+        time_of_day = "Evening"
+    else:
+        time_of_day = "Night"
     
-    return render_template('index.html',
-                          greeting=greeting,
-                          username=username)
+    return render_template('index.html', time_of_day=time_of_day)
 
 @main_bp.route('/set_username', methods=['POST'])
 def set_username():
