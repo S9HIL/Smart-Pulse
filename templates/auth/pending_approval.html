@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Approval - Smart Pulse{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h4 class="mb-0">Account Pending Approval</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="text-center mb-4">
+                        <i class="fa fa-clock fa-4x text-warning"></i>
+                    </div>
+                    
+                    <h5 class="card-title text-center mb-3">Your account is awaiting approval</h5>
+                    
+                    <p class="text-center">Your registration request has been submitted and is pending administrator approval. 
+                       You will receive access once your account has been approved.</p>
+                    
+                    {% if approval %}
+                        <div class="mt-4">
+                            <div class="alert alert-info">
+                                <p><strong>Request Date:</strong> {{ approval.request_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                <p><strong>Status:</strong> {{ approval.status.capitalize() }}</p>
+                                {% if approval.status == 'rejected' %}
+                                    <p class="text-danger">Your approval request has been rejected. Please contact an administrator for more information.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
