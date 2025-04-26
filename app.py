@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask("SMART-PULSE")
 
 # Set a secure secret key - use a string directly to ensure consistency 
 app.config["SECRET_KEY"] = "smart_pulse_secret_key_by_sahil_prajapati_2025_supersecure"
@@ -60,7 +60,7 @@ def load_user(user_id):
 # Register blueprints - will be imported after db is initialized
 with app.app_context():
     from facebook import facebook_bp
-    from instagram_automation import instagram_bp
+    from insta_automation import instagram_bp
     from routes import main_bp
     from whatsapp_bridge import whatsapp_bp
     from auth import auth_bp
