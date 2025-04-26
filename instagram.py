@@ -60,10 +60,14 @@ def dashboard():
 @instagram_bp.route('/api/batches')
 @login_required
 def list_batches():
-    """API endpoint to list all Instagram batches"""
+    """API endpoint to list all Instagram batches for the current user"""
     try:
-        # Get all batches from database
-        batches = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).all()
+        # Get batches for current user from database (admin can see all)
+        if current_user.is_admin:
+            batches = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).all()
+        else:
+            batches = InstagramBatch.query.filter_by(user_id=current_user.id).order_by(InstagramBatch.created_at.desc()).all()
+        
         return jsonify({
             "success": True,
             "batches": [batch.to_dict() for batch in batches]
@@ -118,6 +122,7 @@ def send_message():
         # Create database batch record
         new_batch = InstagramBatch(
             id=batch_id,
+            user_id=current_user.id,  # Add user ownership
             username=username,
             target=target,
             target_type=target_type,
@@ -170,24 +175,33 @@ def send_message():
 def stop_sending(batch_id):
     """Stop sending messages for a batch"""
     try:
-        # Set stop flag
-        stop_flags[batch_id] = True
-        
         # Update batch status in database
         batch = InstagramBatch.query.get(batch_id)
-        if batch:
-            batch.status = 'stopped'
-            db.session.commit()
-            
-            return jsonify({
-                "success": True,
-                "message": f"Stopped message sending for batch {batch_id}"
-            })
-        else:
+        if not batch:
             return jsonify({
                 "success": False,
                 "message": f"Batch {batch_id} not found"
             })
+            
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to stop batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to stop this batch"
+            })
+        
+        # Set stop flag
+        stop_flags[batch_id] = True
+        
+        # Update status
+        batch.status = 'stopped'
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Stopped message sending for batch {batch_id}"
+        })
     except Exception as e:
         logger.error(f"Error stopping batch {batch_id}: {str(e)}")
         return jsonify({
@@ -207,6 +221,11 @@ def messages_page(batch_id):
             logger.warning(f"Batch not found: {batch_id}")
             return render_template('instagram/messages.html', error=f"Batch ID {batch_id} not found")
         
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access batch {batch_id} without permission")
+            return render_template('instagram/messages.html', error="You don't have permission to view this batch")
+        
         logger.info(f"Viewing batch: {batch_id}")
         return render_template('instagram/messages.html', batch=batch)
     except Exception as e:
@@ -218,16 +237,29 @@ def messages_page(batch_id):
 def get_logs(batch_id):
     """Get logs for a specific batch"""
     try:
+        # Get batch info first
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access logs for batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to view these logs"
+            })
+        
         # Get messages from database
         messages = InstagramMessage.query.filter_by(batch_id=batch_id).order_by(InstagramMessage.timestamp.desc()).all()
-        
-        # Get batch info
-        batch = InstagramBatch.query.get(batch_id)
         
         return jsonify({
             "success": True,
             "messages": [msg.to_dict() for msg in messages],
-            "status": batch.status if batch else "unknown"
+            "status": batch.status
         })
     except Exception as e:
         logger.error(f"Error getting logs for batch {batch_id}: {str(e)}")
@@ -241,13 +273,28 @@ def get_logs(batch_id):
 def stop_status(batch_id):
     """Get stop status for a batch"""
     try:
-        is_stopped = stop_flags.get(batch_id, False)
+        # Get batch first
         batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access status for batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to view this batch status"
+            })
+        
+        is_stopped = stop_flags.get(batch_id, False)
         
         return jsonify({
             "success": True,
             "is_stopped": is_stopped,
-            "status": batch.status if batch else "unknown"
+            "status": batch.status
         })
     except Exception as e:
         logger.error(f"Error getting stop status for batch {batch_id}: {str(e)}")
@@ -257,9 +304,25 @@ def stop_status(batch_id):
         })
 
 @instagram_bp.route('/api/batch/<batch_id>', methods=['DELETE'])
+@login_required
 def delete_batch(batch_id):
     """Delete a batch and all its messages"""
     try:
+        # Get the batch
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to delete this batch"
+            })
+        
         # Set stop flag if batch is running
         if batch_id in stop_flags:
             stop_flags[batch_id] = True
@@ -268,20 +331,13 @@ def delete_batch(batch_id):
         InstagramMessage.query.filter_by(batch_id=batch_id).delete()
         
         # Delete batch
-        batch = InstagramBatch.query.get(batch_id)
-        if batch:
-            db.session.delete(batch)
-            db.session.commit()
-            
-            return jsonify({
-                "success": True,
-                "message": f"Batch {batch_id} deleted successfully"
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "message": f"Batch {batch_id} not found"
-            })
+        db.session.delete(batch)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Batch {batch_id} deleted successfully"
+        })
     except Exception as e:
         logger.error(f"Error deleting batch {batch_id}: {str(e)}")
         return jsonify({
