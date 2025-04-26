@@ -60,7 +60,7 @@ def load_user(user_id):
 # Register blueprints - will be imported after db is initialized
 with app.app_context():
     from facebook import facebook_bp
-    from instagram import instagram_bp
+    from instagram_automation import instagram_bp
     from routes import main_bp
     from whatsapp_bridge import whatsapp_bp
     from auth import auth_bp
