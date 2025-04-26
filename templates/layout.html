@@ -54,69 +54,90 @@
             left: 0;
             pointer-events: none;
             z-index: -1;
-            background: linear-gradient(to bottom, #0f1016, #141830);
+            background: linear-gradient(135deg, #0f1016 0%, #141830 100%);
+            overflow: hidden;
         }
         
-        /* Star styling */
-        .star {
+        /* Glowing orbs effect */
+        .orb {
             position: absolute;
             border-radius: 50%;
-            background-color: white;
-            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.2;
+            animation: orbFloat 20s infinite linear;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(120,120,255,0.3) 50%, rgba(70,70,255,0) 70%);
         }
         
-        .twinkle-soft {
-            animation: twinkleSoft 5s infinite ease-in-out;
+        @keyframes orbFloat {
+            0% {
+                transform: translateX(0) translateY(0) scale(1);
+                opacity: 0.1;
+            }
+            25% {
+                transform: translateX(10px) translateY(-30px) scale(1.05);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateX(20px) translateY(0) scale(1);
+                opacity: 0.2;
+            }
+            75% {
+                transform: translateX(10px) translateY(30px) scale(0.95);
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateX(0) translateY(0) scale(1);
+                opacity: 0.1;
+            }
         }
         
-        .twinkle-medium {
-            animation: twinkleMedium 4s infinite ease-in-out;
-        }
-        
-        .twinkle-strong {
-            animation: twinkleStrong 3s infinite ease-in-out;
-        }
-        
-        @keyframes twinkleSoft {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.8; }
-        }
-        
-        @keyframes twinkleMedium {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-        
-        @keyframes twinkleStrong {
-            0%, 100% { opacity: 0.7; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.3); }
-        }
-        
-        /* Shooting star effect */
-        .shooting-star {
+        /* Flowing lines effect */
+        .line {
             position: absolute;
-            width: 100px;
-            height: 2px;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-            transform: rotate(-45deg);
-            animation: shootingStar 20s infinite ease-out;
-            opacity: 0;
+            background: linear-gradient(90deg, rgba(0,114,255,0) 0%, rgba(0,114,255,0.3) 50%, rgba(0,114,255,0) 100%);
+            height: 1px;
+            opacity: 0.2;
+            transform-origin: left center;
+            animation: lineFlow 15s infinite linear;
         }
         
-        @keyframes shootingStar {
-            0% { 
-                transform: translateX(0) translateY(0) rotate(-45deg); 
+        @keyframes lineFlow {
+            0% {
+                transform: translateY(0) rotate(0deg);
                 opacity: 0;
             }
-            2% { 
-                opacity: 1; 
+            10% {
+                opacity: 0.2;
             }
-            5% { 
-                transform: translateX(-300px) translateY(300px) rotate(-45deg);
+            90% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(100vh) rotate(0deg);
                 opacity: 0;
             }
-            100% { 
-                transform: translateX(-300px) translateY(300px) rotate(-45deg);
+        }
+        
+        /* Light pulsing effect */
+        .pulse-light {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, rgba(100,150,255,0.1) 50%, rgba(70,70,255,0) 70%);
+            animation: pulsate 10s infinite ease-in-out;
+        }
+        
+        @keyframes pulsate {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(0.8);
                 opacity: 0;
             }
         }
@@ -403,7 +424,7 @@
                             <a class="nav-link" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt me-1"></i> Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus me-1"></i> Register</a>
+                            <a class="nav-link" href="{{ url_for('main.index', page='register') }}"><i class="fas fa-user-plus me-1"></i> Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -535,81 +556,89 @@
             }
         }
         
-        // Create starry background with glowing stars
-        function createStarryBackground() {
+        // Create modern abstract visual effect with glowing orbs and flowing lines
+        function createDynamicBackground() {
             const container = document.getElementById('particles-container');
             if (!container) return;
             
             // Clear existing particles
             container.innerHTML = '';
             
-            // Set container style for starry background
-            container.style.background = 'linear-gradient(to bottom, #0f1016, #141830)';
+            // Set container style
+            container.style.background = 'linear-gradient(135deg, #0f1016 0%, #141830 100%)';
             
-            // Create stars - more on smaller screens, fewer on larger screens but bigger
-            const numStars = Math.min(Math.floor(window.innerWidth * window.innerHeight / 800), 200);
+            // Create floating orbs
+            const numOrbs = Math.min(Math.floor(window.innerWidth / 200), 8);
             
-            for (let i = 0; i < numStars; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
+            for (let i = 0; i < numOrbs; i++) {
+                const orb = document.createElement('div');
+                orb.className = 'orb';
                 
-                // Random size with mostly small stars and few larger ones
-                const randomVal = Math.random();
-                const size = randomVal > 0.97 ? 3 + Math.random() * 2 : // Few larger stars
-                            randomVal > 0.85 ? 2 + Math.random() * 1 : // Medium stars
-                            0.5 + Math.random() * 1; // Majority small stars
-                            
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
+                // Random size for orbs
+                const size = 100 + Math.random() * 200;
+                orb.style.width = size + 'px';
+                orb.style.height = size + 'px';
                 
                 // Random starting position
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
+                orb.style.left = Math.random() * 90 + '%';
+                orb.style.top = Math.random() * 90 + '%';
                 
-                // Set random twinkle delay and duration
-                const delay = Math.random() * 10;
-                const duration = 3 + Math.random() * 7;
-                star.style.animationDelay = delay + 's';
-                star.style.animationDuration = duration + 's';
+                // Set random animation delay
+                orb.style.animationDelay = (Math.random() * 10) + 's';
+                orb.style.animationDuration = (15 + Math.random() * 15) + 's';
                 
-                // Different brightness for stars
-                const brightness = 70 + Math.random() * 30;
+                // Different colors for orbs
+                const hue = 200 + Math.random() * 40;
+                orb.style.backgroundColor = `hsla(${hue}, 80%, 60%, 0.1)`;
+                orb.style.opacity = 0.1 + Math.random() * 0.2;
                 
-                // Add glow effect for larger stars
-                if (size > 2) {
-                    star.style.boxShadow = `0 0 ${size * 2}px rgba(255, 255, 255, 0.8)`;
-                    star.classList.add('twinkle-strong');
-                } else if (size > 1.5) {
-                    star.style.boxShadow = `0 0 ${size}px rgba(255, 255, 255, 0.5)`;
-                    star.classList.add('twinkle-medium');
-                } else {
-                    star.classList.add('twinkle-soft');
-                }
-                
-                // Some stars with color variation
-                if (Math.random() > 0.8) {
-                    const hue = Math.random() > 0.5 ? 
-                                200 + Math.random() * 40 : // Blue-ish
-                                30 + Math.random() * 30;   // Yellow-ish
-                    star.style.backgroundColor = `hsl(${hue}, 70%, ${brightness}%)`;
-                } else {
-                    star.style.backgroundColor = `rgba(255, 255, 255, ${0.7 + Math.random() * 0.3})`;
-                }
-                
-                container.appendChild(star);
+                container.appendChild(orb);
             }
             
-            // Add a few shooting stars
-            for (let i = 0; i < 3; i++) {
-                const shootingStar = document.createElement('div');
-                shootingStar.className = 'shooting-star';
+            // Create flowing lines
+            const numLines = Math.min(Math.floor(window.innerHeight / 150), 8);
+            
+            for (let i = 0; i < numLines; i++) {
+                const line = document.createElement('div');
+                line.className = 'line';
                 
-                // Random position and timing
-                shootingStar.style.left = Math.random() * 80 + 10 + '%';
-                shootingStar.style.top = Math.random() * 50 + '%';
-                shootingStar.style.animationDelay = (Math.random() * 15 + i * 10) + 's';
+                // Set line properties
+                const width = window.innerWidth * (0.5 + Math.random() * 0.5);
+                line.style.width = width + 'px';
                 
-                container.appendChild(shootingStar);
+                // Random position and angle
+                line.style.left = (Math.random() * 50 - 25) + '%';
+                line.style.top = (Math.random() * 100) + '%';
+                line.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
+                
+                // Animation settings
+                line.style.animationDelay = (Math.random() * 10) + 's';
+                line.style.animationDuration = (10 + Math.random() * 20) + 's';
+                
+                container.appendChild(line);
+            }
+            
+            // Create pulsing lights
+            const numLights = Math.min(Math.floor(window.innerWidth / 250), 4);
+            
+            for (let i = 0; i < numLights; i++) {
+                const light = document.createElement('div');
+                light.className = 'pulse-light';
+                
+                // Set size
+                const size = 200 + Math.random() * 300;
+                light.style.width = size + 'px';
+                light.style.height = size + 'px';
+                
+                // Random position
+                light.style.left = Math.random() * 90 + '%';
+                light.style.top = Math.random() * 90 + '%';
+                
+                // Animation settings
+                light.style.animationDelay = (Math.random() * 5) + 's';
+                light.style.animationDuration = (8 + Math.random() * 7) + 's';
+                
+                container.appendChild(light);
             }
         }
         

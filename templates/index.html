@@ -58,8 +58,8 @@
         </a>
     </div>
 {% else %}
-    <!-- Check request path to determine which form to show -->
-    {% set is_register = request.path == '/register' %}
+    <!-- Check request parameter to determine which form to show -->
+    {% set is_register = request.args.get('page') == 'register' %}
     
     <!-- Full width design with blue gradient form card -->
     <div class="login-container">
@@ -100,7 +100,7 @@
                 </form>
                 
                 <div class="register-link">
-                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+                    <p>Already have an account? <a href="{{ url_for('main.index') }}">Login</a></p>
                 </div>
                 {% else %}
                 <!-- Login form -->
@@ -123,7 +123,7 @@
                 </form>
                 
                 <div class="register-link">
-                    <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
+                    <p>Don't have an account? <a href="{{ url_for('main.index', page='register') }}">Register</a></p>
                 </div>
                 {% endif %}
             </div>
