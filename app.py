@@ -40,8 +40,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Initialize database
+# Initialize database and migrations
 db.init_app(app)
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
 
 # Initialize login manager
 login_manager = LoginManager()
