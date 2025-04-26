@@ -6,3 +6,5 @@ flask_sqlalchemy
 pytz
 psycopg2
 flask_migrate
+instagrapi
+instagram
