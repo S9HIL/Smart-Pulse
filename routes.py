@@ -30,8 +30,8 @@ def index():
     # No longer fetching active WhatsApp tasks as per user request
     # Users should go to batch manager page for this information
     
-    # Get personalized greeting
-    username = session.get('username', None)
+    # Get personalized greeting from cookie instead of session
+    username = request.cookies.get('username', None)
     greeting = get_personalized_greeting(username)
     
     return render_template('index.html',
@@ -43,7 +43,10 @@ def set_username():
     """Set the username in the session"""
     username = request.form.get('username', '').strip()
     if username:
-        session['username'] = username
+        # Store username directly in a cookie instead of using session
+        response = redirect(url_for('main.index'))
+        response.set_cookie('username', username, max_age=86400*30)  # 30 days
+        return response
     return redirect(url_for('main.index'))
 
 @main_bp.route('/batch-manager')

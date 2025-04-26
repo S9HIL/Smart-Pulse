@@ -13,7 +13,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/smart-pulse-theme.css') }}">
     <style>
-        /* Additional styles specific to layout */
+        /* Main body styles */
         body {
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
@@ -21,6 +21,43 @@
             flex-direction: column;
             position: relative;
             padding-bottom: 70px;
+            background-color: #0d1117;
+            color: white;
+        }
+        
+        /* Navbar styling */
+        .navbar {
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        /* Card styling */
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+        }
+        
+        /* Form controls */
+        .form-control, .form-select {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: white;
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Button for Set Name */
+        .set-name-btn {
+            background-color: #7952b3;
+            color: white;
+            border: none;
+        }
+        
+        .set-name-btn:hover {
+            background-color: #6741a8;
+            color: white;
         }
         
         /* Animated Logo Styles */
@@ -201,8 +238,8 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top mb-4">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid px-3">
             <a class="navbar-brand" href="/">
                 <div class="animated-logo">
                     <div class="logo-circle"></div>
@@ -216,7 +253,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-4">
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a>
                     </li>
@@ -227,10 +264,10 @@
                         <a class="nav-link dropdown-toggle" href="#" id="platformsDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-share-alt me-1"></i> Platforms
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('whatsapp.index') }}"><i class="fab fa-whatsapp me-2 whatsapp-color"></i> WhatsApp</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('instagram.index') }}"><i class="fab fa-instagram me-2 instagram-color"></i> Instagram</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('facebook.index') }}"><i class="fab fa-facebook me-2 facebook-color"></i> Facebook</a></li>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('whatsapp.index') }}"><i class="fab fa-whatsapp me-2 text-success"></i> WhatsApp</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('instagram.index') }}"><i class="fab fa-instagram me-2 text-danger"></i> Instagram</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('facebook.index') }}"><i class="fab fa-facebook me-2 text-primary"></i> Facebook</a></li>
                         </ul>
                     </li>
                 </ul>

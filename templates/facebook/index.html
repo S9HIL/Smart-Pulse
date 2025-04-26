@@ -26,7 +26,7 @@
                 <form id="facebook-form" action="{{ url_for('facebook.send_messages') }}" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="access_token" class="form-label required-field">Facebook Access Token</label>
-                        <input type="text" class="form-control" id="access_token" name="access_token" placeholder="Enter your Facebook access token" required>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="access_token" name="access_token" placeholder="Enter your Facebook access token" required>
                         <div class="form-text fw-semibold text-white opacity-75">
                             Your access token is used to send messages through the Facebook API.
                         </div>
@@ -34,40 +34,40 @@
                     
                     <div class="mb-3">
                         <label for="conversation_id" class="form-label required-field">Conversation ID</label>
-                        <input type="text" class="form-control" id="conversation_id" name="conversation_id" placeholder="Enter conversation thread ID" required>
-                        <div class="form-text text-muted">
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="conversation_id" name="conversation_id" placeholder="Enter conversation thread ID" required>
+                        <div class="form-text fw-semibold text-white opacity-75">
                             The ID of the conversation thread where messages will be sent.
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="haters_name" class="form-label">Recipient's Name (Optional)</label>
-                        <input type="text" class="form-control" id="haters_name" name="haters_name" placeholder="Enter recipient's name for personalization">
-                        <div class="form-text text-muted">
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="haters_name" name="haters_name" placeholder="Enter recipient's name for personalization">
+                        <div class="form-text fw-semibold text-white opacity-75">
                             Use %name% in your messages to be replaced with this name.
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="speed" class="form-label">Delay Between Messages (seconds)</label>
-                        <input type="number" class="form-control" id="speed" name="speed" min="1" max="60" value="5">
-                        <div class="form-text text-muted">
+                        <input type="number" class="form-control bg-dark text-white border-secondary" id="speed" name="speed" min="1" max="60" value="5">
+                        <div class="form-text fw-semibold text-white opacity-75">
                             Time to wait between sending messages (1-60 seconds).
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="message_text" class="form-label">Messages</label>
-                        <textarea class="form-control" id="message_text" name="message_text" rows="5" placeholder="Enter messages (one per line)"></textarea>
-                        <div class="form-text text-muted">
+                        <textarea class="form-control bg-dark text-white border-secondary" id="message_text" name="message_text" rows="5" placeholder="Enter messages (one per line)"></textarea>
+                        <div class="form-text fw-semibold text-white opacity-75">
                             Enter one message per line. Use %name% to include the recipient's name.
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="message_file" class="form-label">Or Upload Message File</label>
-                        <input type="file" class="form-control" id="message_file" name="message_file">
-                        <div class="form-text text-muted">
+                        <input type="file" class="form-control bg-dark text-white border-secondary" id="message_file" name="message_file">
+                        <div class="form-text fw-semibold text-white opacity-75">
                             Upload a text file with one message per line.
                         </div>
                     </div>
@@ -118,17 +118,17 @@
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item bg-transparent">
+                    <li class="list-group-item bg-transparent border-secondary">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Use %name% for personalized messages
+                        <span class="text-white">Use %name% for personalized messages</span>
                     </li>
-                    <li class="list-group-item bg-transparent">
+                    <li class="list-group-item bg-transparent border-secondary">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Set longer delays for more natural conversations
+                        <span class="text-white">Set longer delays for more natural conversations</span>
                     </li>
-                    <li class="list-group-item bg-transparent">
+                    <li class="list-group-item bg-transparent border-secondary">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Keep message files organized with clear content
+                        <span class="text-white">Keep message files organized with clear content</span>
                     </li>
                 </ul>
             </div>
