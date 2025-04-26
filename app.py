@@ -19,13 +19,13 @@ db = SQLAlchemy(model_class=Base)
 # Create Flask app
 app = Flask(__name__)
 
-# Set a secure secret key (very important for sessions and CSRF protection)
-app.config["SECRET_KEY"] = os.environ.get("SESSION_SECRET", "smart_pulse_secret_key_by_sahil_prajapati_2025_supersecure_random_string_for_sessions")
+# Set a secure secret key - use a string directly to ensure consistency 
+app.config["SECRET_KEY"] = "smart_pulse_secret_key_by_sahil_prajapati_2025_supersecure"
 app.secret_key = app.config["SECRET_KEY"]  # Also set directly on app for compatibility
 
 # Configure database
 # Debug log for DATABASE_URL
-database_url = os.environ.get("DATABASE_URL", "sqlite:///automation_hub.db")
+database_url = 'postgresql://koyeb-adm:npg_ZCUA5mS8uOFw@ep-orange-lab-a2otm96c.eu-central-1.pg.koyeb.app/koyebdb'
 logger.debug(f"Using database URL: {database_url}")
 
 # Handle special case for postgres:// URLs
@@ -73,8 +73,8 @@ with app.app_context():
     # Import models to ensure they're registered with SQLAlchemy
     import models
     
-    # Create all tables
-    db.create_all()
+    # Don't recreate tables on existing database
+    # db.create_all()
     
     # Add context processor for current time in India
     from routes import get_current_indian_time
