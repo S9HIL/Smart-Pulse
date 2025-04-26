@@ -1,63 +1,338 @@
 {% extends "layout.html" %}
 
-{% block title %}Automation Hub - Multi-Platform Messaging Automation{% endblock %}
+{% block title %}Smart Pulse - Multi-Platform Messaging Automation{% endblock %}
 
 {% block content %}
 <div class="text-center py-5">
     <h1 class="display-3 fw-bold mb-4">
-        {% if current_user.is_authenticated %}
-            Good {{ time_of_day }}, {{ current_user.username }}!
-        {% else %}
-            Welcome to Smart Pulse
-        {% endif %}
+        Welcome to Smart Pulse
     </h1>
     <p class="lead mb-5">Your multi-platform social messaging automation tool</p>
 </div>
 
-<!-- Platform Sections -->
-<div class="mt-5 pt-4">
-    <!-- WhatsApp Section -->
-    <div class="mb-5">
-        <h2 class="h3 mb-3 d-flex align-items-center">
-            <i class="fab fa-whatsapp me-3 text-success"></i> WhatsApp Automation
-        </h2>
-        <p class="text-light opacity-75 mb-3">Automate WhatsApp message sending to multiple recipients.</p>
-        <a href="{{ url_for('whatsapp.index') }}" class="btn btn-outline-light btn-sm px-4">
-            Go to WhatsApp
-        </a>
+{% if current_user.is_authenticated %}
+    <!-- Platform Sections for logged in users -->
+    <div class="mt-5 pt-4">
+        <!-- WhatsApp Section -->
+        <div class="mb-5">
+            <h2 class="h3 mb-3 d-flex align-items-center">
+                <i class="fab fa-whatsapp me-3 text-success"></i> WhatsApp Automation
+            </h2>
+            <p class="text-light opacity-75 mb-3">Automate WhatsApp message sending to multiple recipients.</p>
+            <a href="{{ url_for('whatsapp.index') }}" class="btn btn-outline-light btn-sm px-4">
+                Go to WhatsApp
+            </a>
+        </div>
+        
+        <!-- Facebook Section -->
+        <div class="mb-5">
+            <h2 class="h3 mb-3 d-flex align-items-center">
+                <i class="fab fa-facebook me-3 text-primary"></i> Facebook Automation
+            </h2>
+            <p class="text-light opacity-75 mb-3">Automate Facebook message sending to multiple recipients.</p>
+            <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-light btn-sm px-4">
+                Go to Facebook
+            </a>
+        </div>
+        
+        <!-- Instagram Section -->
+        <div class="mb-5">
+            <h2 class="h3 mb-3 d-flex align-items-center">
+                <i class="fab fa-instagram me-3 text-danger"></i> Instagram Automation
+            </h2>
+            <p class="text-light opacity-75 mb-3">Automate Instagram message sending to followers and users.</p>
+            <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-light btn-sm px-4">
+                Go to Instagram
+            </a>
+        </div>
     </div>
-    
-    <!-- Facebook Section -->
-    <div class="mb-5">
-        <h2 class="h3 mb-3 d-flex align-items-center">
-            <i class="fab fa-facebook me-3 text-primary"></i> Facebook Automation
-        </h2>
-        <p class="text-light opacity-75 mb-3">Automate Facebook message sending to multiple recipients.</p>
-        <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-light btn-sm px-4">
-            Go to Facebook
-        </a>
-    </div>
-    
-    <!-- Instagram Section -->
-    <div class="mb-5">
-        <h2 class="h3 mb-3 d-flex align-items-center">
-            <i class="fab fa-instagram me-3 text-danger"></i> Instagram Automation
-        </h2>
-        <p class="text-light opacity-75 mb-3">Automate Instagram message sending to followers and users.</p>
-        <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-light btn-sm px-4">
-            Go to Instagram
-        </a>
-    </div>
-</div>
 
-<!-- Batch Management Section -->
-<div class="mb-5">
-    <h2 class="h3 mb-3 d-flex align-items-center">
-        <i class="fas fa-tasks me-3 text-info"></i> Batch Management
-    </h2>
-    <p class="text-light opacity-75 mb-3">Manage all your active message batches across platforms from a central dashboard.</p>
-    <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-light btn-sm px-4">
-        <i class="fas fa-tachometer-alt me-2"></i> Go to Batch Manager
-    </a>
-</div>
+    <!-- Batch Management Section -->
+    <div class="mb-5">
+        <h2 class="h3 mb-3 d-flex align-items-center">
+            <i class="fas fa-tasks me-3 text-info"></i> Batch Management
+        </h2>
+        <p class="text-light opacity-75 mb-3">Manage all your active message batches across platforms from a central dashboard.</p>
+        <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-light btn-sm px-4">
+            <i class="fas fa-tachometer-alt me-2"></i> Go to Batch Manager
+        </a>
+    </div>
+{% else %}
+    <!-- Animated Login Form with 3D flowers -->
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="login-container">
+                <div class="flower-container">
+                    <div class="flower flower1"></div>
+                    <div class="flower flower2"></div>
+                    <div class="flower flower3"></div>
+                    <div class="flower flower4"></div>
+                    <div class="flower flower5"></div>
+                </div>
+                
+                <div class="animated-form">
+                    <div class="form-header">
+                        <h4>Login</h4>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <div class="form-group">
+                            <label for="login_username">Username</label>
+                            <input type="text" class="form-control" id="login_username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login_password">Password</label>
+                            <input type="password" class="form-control" id="login_password" name="password" required>
+                        </div>
+                        <div class="form-button">
+                            <button type="submit" class="btn btn-glow">Login</button>
+                        </div>
+                    </form>
+                    
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Animations CSS -->
+    <style>
+    .login-container {
+        position: relative;
+        overflow: hidden;
+        margin-top: 2rem;
+        background: rgba(10, 10, 25, 0.6);
+        backdrop-filter: blur(8px);
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Glowing border animation */
+    .animated-form {
+        position: relative;
+        padding: 2rem;
+        z-index: 2;
+        animation: borderPulse 4s ease infinite;
+    }
+    
+    .animated-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        background: linear-gradient(45deg, #ff3bff, #5c24ff, #00a2ff, #00dfc0, #5c24ff, #ff3bff);
+        background-size: 400% 400%;
+        animation: borderGradient 8s ease infinite;
+        z-index: -1;
+    }
+    
+    /* 3D Falling Flowers Animation */
+    .flower-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+    }
+    
+    .flower {
+        position: absolute;
+        width: 35px;
+        height: 35px;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, rgba(255,192,203,0.4) 60%, rgba(255,105,180,0.1) 100%);
+        border-radius: 50%;
+        transform-style: preserve-3d;
+        box-shadow: inset 0 0 10px rgba(255,255,255,0.8), 0 0 15px rgba(255,105,180,0.5);
+        opacity: 0.8;
+        animation: flowerFall 15s linear infinite;
+    }
+    
+    .flower::before, .flower::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: inherit;
+        transform: rotateX(60deg);
+    }
+    
+    .flower::after {
+        transform: rotateY(60deg);
+    }
+    
+    .flower1 {
+        top: -20px;
+        left: 20%;
+        animation-delay: 0s;
+    }
+    
+    .flower2 {
+        top: -20px;
+        left: 40%;
+        animation-delay: 3s;
+        width: 25px;
+        height: 25px;
+    }
+    
+    .flower3 {
+        top: -20px;
+        left: 70%;
+        animation-delay: 7s;
+        width: 30px;
+        height: 30px;
+    }
+    
+    .flower4 {
+        top: -20px;
+        left: 85%;
+        animation-delay: 5s;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .flower5 {
+        top: -20px;
+        left: 10%;
+        animation-delay: 8s;
+        width: 28px;
+        height: 28px;
+    }
+    
+    .form-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        color: #ddd;
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .form-control {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        color: white;
+        padding: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.5);
+        box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    .form-button {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-glow {
+        background: linear-gradient(45deg, #5c24ff, #00a2ff);
+        border: none;
+        border-radius: 30px;
+        color: white;
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        box-shadow: 0 5px 15px rgba(92, 36, 255, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-glow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(92, 36, 255, 0.6);
+    }
+    
+    .btn-glow::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+        transform: rotate(45deg);
+        animation: btnGlitter 3s linear infinite;
+    }
+    
+    .form-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #ddd;
+    }
+    
+    .form-footer a {
+        color: #00dfc0;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .form-footer a:hover {
+        color: #00fff7;
+        text-shadow: 0 0 8px rgba(0, 223, 192, 0.5);
+    }
+    
+    @keyframes borderGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes borderPulse {
+        0% { box-shadow: 0 0 10px rgba(92, 36, 255, 0.5); }
+        50% { box-shadow: 0 0 20px rgba(0, 162, 255, 0.8); }
+        100% { box-shadow: 0 0 10px rgba(92, 36, 255, 0.5); }
+    }
+    
+    @keyframes flowerFall {
+        0% {
+            transform: translateY(-10px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.8;
+        }
+        100% {
+            transform: translateY(500px) rotateX(360deg) rotateY(180deg) rotateZ(270deg);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes btnGlitter {
+        0% { left: -50%; top: -50%; }
+        100% { left: 150%; top: 150%; }
+    }
+    </style>
+{% endif %}
 {% endblock %}

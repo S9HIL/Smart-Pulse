@@ -26,16 +26,8 @@ logger = logging.getLogger(__name__)
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
-@login_required
 def index():
     """Main dashboard page for the automation hub"""
-    # Redirect to login if not logged in (handled by login_required)
-    
-    # Redirect to pending approval if not approved
-    if not current_user.is_approved:
-        flash('Your account is pending approval.', 'warning')
-        return redirect(url_for('auth.pending_approval'))
-    
     # Get current hour to determine time of day
     ist = pytz.timezone('Asia/Kolkata')
     now = datetime.datetime.now(ist)
@@ -50,6 +42,11 @@ def index():
         time_of_day = "Evening"
     else:
         time_of_day = "Night"
+    
+    # If user is logged in but not approved, redirect to pending approval
+    if current_user.is_authenticated and not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
     
     return render_template('index.html', time_of_day=time_of_day)
 

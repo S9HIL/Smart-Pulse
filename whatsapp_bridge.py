@@ -7,7 +7,8 @@ import time
 import uuid
 from datetime import datetime
 
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
 from app import db
 from models import WhatsAppTask, WhatsAppMessage
 from utils import WhatsAppService
@@ -31,8 +32,14 @@ def on_register(state):
         whatsapp_service.start()
 
 @whatsapp_bp.route('/')
+@login_required
 def index():
     """WhatsApp automation main page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+        
     # Remove this. Don't show any WhatsApp tasks
     tasks = []
     
