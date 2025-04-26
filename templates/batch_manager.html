@@ -608,6 +608,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // No confirmation, delete immediately
         showSpinner('Deleting task...');
         
+        // Check if taskId is defined before making the request
+        if (!taskId) {
+            hideSpinner();
+            showToast('Error: Task ID is undefined', 'danger');
+            return;
+        }
+        
         fetch('{{ url_for("whatsapp.delete_task", task_id="") }}' + taskId, {
             method: 'DELETE'
         })
@@ -657,6 +664,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function deleteInstagramBatch(batchId) {
         // No confirmation, delete immediately
         showSpinner('Deleting batch...');
+        
+        // Check if batchId is defined before making the request
+        if (!batchId) {
+            hideSpinner();
+            showToast('Error: Batch ID is undefined', 'danger');
+            return;
+        }
         
         fetch('{{ url_for("instagram.delete_batch", batch_id="") }}' + batchId, {
             method: 'DELETE'
@@ -708,7 +722,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // No confirmation, delete immediately
         showSpinner('Deleting batch...');
         
-        fetch('{{ url_for("facebook.delete_batch", batch_id="") }}' + batchId, {
+        // Check if batchId is defined before making the request
+        if (!batchId) {
+            hideSpinner();
+            showToast('Error: Batch ID is undefined', 'danger');
+            return;
+        }
+        
+        fetch('{{ url_for("facebook.api.delete_batch", batch_id="") }}' + batchId, {
             method: 'DELETE'
         })
         .then(response => response.json())
