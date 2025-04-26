@@ -729,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        fetch('{{ url_for("facebook.api.delete_batch", batch_id="") }}' + batchId, {
+        fetch('{{ url_for("facebook.delete_batch", batch_id="") }}' + batchId, {
             method: 'DELETE'
         })
         .then(response => response.json())
