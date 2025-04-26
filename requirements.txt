@@ -1,0 +1,6 @@
+Flask
+requests
+flask-wtf
+flask-login
+flask_sqlalchemy
+pytz
