@@ -18,7 +18,7 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "automation_hub_secret_key")
+app.config["SECRET_KEY"] = os.environ.get("SESSION_SECRET", "automation_hub_secret_key")
 
 # Configure database
 # Debug log for DATABASE_URL
