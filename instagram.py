@@ -10,12 +10,13 @@ import time
 import threading
 import json
 from datetime import datetime
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, flash
+from flask_login import login_required, current_user
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired, ClientError, ClientLoginRequired
 
 from app import db
-from models import InstagramBatch, InstagramMessage
+from models import InstagramBatch, InstagramMessage, User
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,16 +36,29 @@ def generate_batch_id():
     return str(uuid.uuid4())
 
 @instagram_bp.route('/')
+@login_required
 def index():
     """Instagram automation main page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+        
     return render_template('instagram/index.html')
 
 @instagram_bp.route('/dashboard')
+@login_required
 def dashboard():
     """Instagram dashboard page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+        
     return render_template('instagram/dashboard.html')
 
 @instagram_bp.route('/api/batches')
+@login_required
 def list_batches():
     """API endpoint to list all Instagram batches"""
     try:
@@ -62,6 +76,7 @@ def list_batches():
         })
 
 @instagram_bp.route('/send-message', methods=['POST'])
+@login_required
 def send_message():
     """Start sending Instagram messages"""
     try:
@@ -151,6 +166,7 @@ def send_message():
         })
 
 @instagram_bp.route('/stop/<batch_id>', methods=['POST'])
+@login_required
 def stop_sending(batch_id):
     """Stop sending messages for a batch"""
     try:
@@ -181,6 +197,7 @@ def stop_sending(batch_id):
 
 @instagram_bp.route('/batch/<batch_id>')
 @instagram_bp.route('/messages/<batch_id>')  # Adding a second route for compatibility
+@login_required
 def messages_page(batch_id):
     """View messages for a specific batch"""
     try:
@@ -197,6 +214,7 @@ def messages_page(batch_id):
         return render_template('instagram/messages.html', error=f"Error loading batch: {str(e)}")
 
 @instagram_bp.route('/api/messages/<batch_id>')
+@login_required
 def get_logs(batch_id):
     """Get logs for a specific batch"""
     try:
@@ -219,6 +237,7 @@ def get_logs(batch_id):
         })
 
 @instagram_bp.route('/api/status/<batch_id>')
+@login_required
 def stop_status(batch_id):
     """Get stop status for a batch"""
     try:
