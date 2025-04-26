@@ -3,186 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Automation Hub{% endblock %}</title>
+    <title>{% block title %}Smart Pulse{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/smart-pulse-theme.css') }}">
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --secondary-color: #f43f5e;
-            --dark-color: #1e293b;
-            --light-color: #f8fafc;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-        }
-        
+        /* Additional styles specific to layout */
         body {
-            background-color: #f1f5f9;
-            color: var(--dark-color);
-            padding-bottom: 80px;
+            font-family: 'Poppins', sans-serif;
             min-height: 100vh;
-        }
-        
-        .navbar {
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-        }
-        
-        .card {
-            transition: transform 0.2s, box-shadow 0.2s;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        
-        .card-header {
-            font-weight: 600;
-            background-color: #fff;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: #4338ca;
-            border-color: #4338ca;
-        }
-        
-        .btn-danger {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-danger:hover {
-            background-color: #e11d48;
-            border-color: #e11d48;
-        }
-        
-        .form-label.required-field::after {
-            content: " *";
-            color: #dc3545;
-        }
-        
-        .platform-card {
-            height: 100%;
-        }
-        
-        .platform-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-        
-        .text-danger {
-            color: var(--secondary-color) !important;
-        }
-        
-        /* Status indicators */
-        .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 50rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .status-running {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-        
-        .status-stopped {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-        }
-        
-        .status-completed {
-            background-color: rgba(79, 70, 229, 0.1);
-            color: #4f46e5;
-        }
-        
-        .status-failed {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-        
-        .message-pending {
-            color: var(--dark-color);
-        }
-        
-        .message-success {
-            color: var(--success-color);
-        }
-        
-        .message-failed {
-            color: var(--danger-color);
-        }
-        
-        .message-container {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        
-        /* For toast notifications */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-        }
-        
-        /* Loading spinner overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+            position: relative;
+            padding-bottom: 70px;
+        }
+        
+        /* Animated Logo Styles */
+        .animated-logo {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        .logo-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: rotate 10s linear infinite;
+        }
+        
+        .logo-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: transparent;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .logo-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 20px;
             color: white;
+            animation: glow 1.5s ease-in-out infinite;
         }
         
-        .loading-spinner {
-            width: 3rem;
-            height: 3rem;
+        .logo-flash {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px dashed rgba(255, 255, 255, 0.5);
+            animation: rotate-reverse 15s linear infinite;
         }
         
-        .loading-text {
-            margin-top: 1rem;
-            font-size: 1.25rem;
+        /* Logo animation keyframes */
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes rotate-reverse {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+            50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 20px rgba(115, 113, 252, 0.8); }
+            100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1rem 0;
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Smart Pulse title animation */
+        @keyframes titlePulse {
+            0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+            50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 30px rgba(115, 113, 252, 0.5); }
+            100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+        }
+        
+        .smart-pulse-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 1.5rem 0;
+            background: linear-gradient(90deg, #fff, #7371fc, #fff);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 5s linear infinite, titlePulse 2s infinite;
+        }
+        
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+        
+        /* Developer credit styling */
+        .developer-credit {
+            font-weight: 500;
+            background: linear-gradient(90deg, #fff, #7371fc, #fff);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 5s linear infinite;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <i class="fas fa-robot me-2 text-primary"></i>
-                Automation Hub
+                <div class="animated-logo">
+                    <div class="logo-circle"></div>
+                    <div class="logo-pulse"></div>
+                    <div class="logo-text">SP</div>
+                    <div class="logo-flash"></div>
+                </div>
+                <span class="brand-text">Smart Pulse</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -200,17 +171,12 @@
                             <i class="fas fa-share-alt me-1"></i> Platforms
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('whatsapp.index') }}"><i class="fab fa-whatsapp me-2 text-success"></i> WhatsApp</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('instagram.index') }}"><i class="fab fa-instagram me-2 text-danger"></i> Instagram</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('facebook.index') }}"><i class="fab fa-facebook me-2 text-primary"></i> Facebook</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('whatsapp.index') }}"><i class="fab fa-whatsapp me-2 whatsapp-color"></i> WhatsApp</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('instagram.index') }}"><i class="fab fa-instagram me-2 instagram-color"></i> Instagram</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('facebook.index') }}"><i class="fab fa-facebook me-2 facebook-color"></i> Facebook</a></li>
                         </ul>
                     </li>
                 </ul>
-                <div class="d-flex">
-                    <a href="https://github.com/sysaxioms" target="_blank" class="btn btn-outline-secondary btn-sm">
-                        <i class="fab fa-github me-1"></i> GitHub
-                    </a>
-                </div>
             </div>
         </div>
     </nav>
@@ -219,6 +185,15 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-0 footer-text">
+                <span class="developer-credit">Developed by Sʌʜɩɭ Pʀʌjʌpʌtɩ</span>
+            </p>
+        </div>
+    </footer>
     
     <!-- Toast Notifications Container -->
     <div class="toast-container"></div>
@@ -241,15 +216,15 @@
             const toastContainer = document.querySelector('.toast-container');
             
             const toast = document.createElement('div');
-            toast.className = `toast show bg-${type === 'success' ? 'success' : type === 'danger' ? 'danger' : 'light'} text-${type === 'success' || type === 'danger' ? 'white' : 'dark'}`;
+            toast.className = `toast show bg-${type === 'success' ? 'success' : type === 'danger' ? 'danger' : 'dark'} text-white`;
             toast.setAttribute('role', 'alert');
             toast.setAttribute('aria-live', 'assertive');
             toast.setAttribute('aria-atomic', 'true');
             
             toast.innerHTML = `
-                <div class="toast-header">
+                <div class="toast-header bg-${type === 'success' ? 'success' : type === 'danger' ? 'danger' : 'dark'} text-white">
                     <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
                 <div class="toast-body">
                     ${message}
@@ -281,7 +256,36 @@
             overlay.classList.add('d-none');
         }
         
-        // Initialize all tooltips
+        // Format timestamp to Indian time
+        function formatIndianTime(timestamp) {
+            if (!timestamp) return 'Invalid Date';
+            
+            const options = {
+                timeZone: 'Asia/Kolkata',
+                hour12: true,
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            
+            try {
+                return new Date(timestamp).toLocaleString('en-IN', options);
+            } catch (e) {
+                console.error('Error formatting date:', e);
+                return 'Invalid Date';
+            }
+        }
+        
+        // Get current Indian time
+        function getCurrentIndianTime() {
+            const now = new Date();
+            return formatIndianTime(now);
+        }
+        
+        // Initialize all tooltips and format timestamps
         document.addEventListener('DOMContentLoaded', function() {
             // Enable Bootstrap tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -289,13 +293,26 @@
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
             
-            // Format all timestamps on the page
+            // Format all timestamps on the page to Indian time
             const timestamps = document.querySelectorAll('.format-timestamp');
             timestamps.forEach(el => {
                 const timestamp = el.getAttribute('data-timestamp');
                 if (timestamp) {
-                    const date = new Date(timestamp);
-                    el.textContent = date.toLocaleString();
+                    el.textContent = formatIndianTime(timestamp);
+                }
+            });
+            
+            // For any element with invalid date, try to format it properly
+            const invalidDates = document.querySelectorAll(':contains("Invalid Date")');
+            invalidDates.forEach(el => {
+                if (el.textContent.trim() === 'Invalid Date') {
+                    const possibleTimestamp = el.getAttribute('data-timestamp') || el.getAttribute('datetime');
+                    if (possibleTimestamp) {
+                        el.textContent = formatIndianTime(possibleTimestamp);
+                    } else {
+                        // If no timestamp attribute, show current time
+                        el.textContent = getCurrentIndianTime();
+                    }
                 }
             });
         });

@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     let html = '<ul class="list-group list-group-flush">';
                     
                     messages.forEach(msg => {
-                        let timestamp = new Date(msg.timestamp).toLocaleString();
+                        let timestamp = formatIndianTime(msg.timestamp);
                         let messageContent = msg.message;
                         let statusClass = msg.status_class || '';
                         let errorHtml = '';

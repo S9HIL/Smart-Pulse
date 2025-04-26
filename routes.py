@@ -4,8 +4,9 @@ Handles dashboard and status endpoints
 """
 import logging
 from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for
-from models import WhatsAppTask, FacebookBatch, InstagramBatch
+from models import WhatsAppTask, FacebookBatch, InstagramBatch, WhatsAppMessage, FacebookMessage, InstagramMessage, db
 from utils import get_personalized_greeting
+import traceback
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -40,6 +41,79 @@ def set_username():
 def batch_manager():
     """Batch Manager page for all platforms"""
     return render_template('batch_manager.html')
+
+@main_bp.route('/delete-batch', methods=['POST'])
+def delete_batch():
+    """Delete a batch from any platform"""
+    try:
+        batch_id = request.json.get('batch_id')
+        platform = request.json.get('platform')
+        
+        if not batch_id or not platform:
+            return jsonify({
+                'success': False,
+                'message': 'Missing batch_id or platform parameter'
+            })
+            
+        logger.debug(f"Deleting {platform} batch: {batch_id}")
+        
+        # Handle deletion based on platform
+        if platform == 'whatsapp':
+            # First delete all messages
+            messages = WhatsAppMessage.query.filter_by(task_id=batch_id).all()
+            for message in messages:
+                db.session.delete(message)
+            
+            # Then delete the task
+            task = WhatsAppTask.query.get(batch_id)
+            if task:
+                db.session.delete(task)
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'WhatsApp task deleted successfully'})
+            else:
+                return jsonify({'success': False, 'message': 'WhatsApp task not found'})
+                
+        elif platform == 'instagram':
+            # First delete all messages
+            messages = InstagramMessage.query.filter_by(batch_id=batch_id).all()
+            for message in messages:
+                db.session.delete(message)
+            
+            # Then delete the batch
+            batch = InstagramBatch.query.get(batch_id)
+            if batch:
+                db.session.delete(batch)
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Instagram batch deleted successfully'})
+            else:
+                return jsonify({'success': False, 'message': 'Instagram batch not found'})
+                
+        elif platform == 'facebook':
+            # First delete all messages
+            messages = FacebookMessage.query.filter_by(batch_id=batch_id).all()
+            for message in messages:
+                db.session.delete(message)
+            
+            # Then delete the batch
+            batch = FacebookBatch.query.get(batch_id)
+            if batch:
+                db.session.delete(batch)
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Facebook batch deleted successfully'})
+            else:
+                return jsonify({'success': False, 'message': 'Facebook batch not found'})
+        
+        else:
+            return jsonify({'success': False, 'message': f'Unknown platform: {platform}'})
+            
+    except Exception as e:
+        logger.error(f"Error deleting batch: {str(e)}")
+        logger.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f"Error deleting batch: {str(e)}"
+        })
 
 @main_bp.route('/status')
 def status():
