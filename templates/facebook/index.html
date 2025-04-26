@@ -43,7 +43,13 @@
                         </div>
                         
                         <div id="token_file_input" class="d-none">
-                            <input type="file" class="form-control bg-dark text-white border-secondary" id="tokens_file" name="tokens_file">
+                            <div class="file-upload-wrapper">
+                                <label for="tokens_file" class="file-upload-btn btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i> Choose Token File
+                                </label>
+                                <input type="file" class="file-upload-input d-none" id="tokens_file" name="tokens_file">
+                                <div id="file-name-display" class="file-name-display text-center mb-2">No file selected</div>
+                            </div>
                             <div class="form-text fw-semibold text-white opacity-75">
                                 Upload a text file with one access token per line.
                             </div>
@@ -84,7 +90,13 @@
                     
                     <div class="mb-3">
                         <label for="message_file" class="form-label">Or Upload Message File</label>
-                        <input type="file" class="form-control bg-dark text-white border-secondary" id="message_file" name="message_file">
+                        <div class="file-upload-wrapper">
+                            <label for="message_file" class="file-upload-btn btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-file-upload me-2"></i> Choose Message File
+                            </label>
+                            <input type="file" class="file-upload-input d-none" id="message_file" name="message_file">
+                            <div id="message-file-display" class="file-name-display text-center mb-2">No file selected</div>
+                        </div>
                         <div class="form-text fw-semibold text-white opacity-75">
                             Upload a text file with one message per line.
                         </div>
@@ -163,6 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const tokenFileInput = document.getElementById('token_file_input');
     const accessTokenField = document.getElementById('access_token');
     const tokensFileField = document.getElementById('tokens_file');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const messageFileField = document.getElementById('message_file');
+    const messageFileDisplay = document.getElementById('message-file-display');
     
     // Token type toggle handlers
     document.getElementById('token_single').addEventListener('change', function() {
@@ -182,6 +197,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Make file field required and single token field not required
             tokensFileField.setAttribute('required', '');
             accessTokenField.removeAttribute('required');
+        }
+    });
+    
+    // Show token file name when selected
+    tokensFileField.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+            fileNameDisplay.classList.add('text-success');
+        } else {
+            fileNameDisplay.textContent = 'No file selected';
+            fileNameDisplay.classList.remove('text-success');
+        }
+    });
+    
+    // Show message file name when selected
+    messageFileField.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            messageFileDisplay.textContent = this.files[0].name;
+            messageFileDisplay.classList.add('text-success');
+        } else {
+            messageFileDisplay.textContent = 'No file selected';
+            messageFileDisplay.classList.remove('text-success');
         }
     });
     
