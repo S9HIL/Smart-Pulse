@@ -27,13 +27,26 @@ stop_flags = {}  # Runtime stop flags
 logs = {}        # Runtime message logs
 
 @facebook_bp.route('/')
+@login_required
 def index():
     """Facebook automation main page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+    
     return render_template('facebook/index.html')
 
 @facebook_bp.route('/send_messages', methods=['POST'])
+@login_required
 def send_messages():
     """Start sending Facebook messages"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         # Get the token type selection
         token_type = request.form.get('token_type', 'single')
@@ -120,6 +133,7 @@ def send_messages():
         # Create batch record in database
         batch = FacebookBatch(
             id=batch_id,
+            user_id=current_user.id,
             access_token=access_token,
             account_name=account_name,
             conversation_id=conversation_id,
@@ -180,6 +194,7 @@ def send_messages():
         })
 
 @facebook_bp.route('/stop/<batch_id>', methods=['POST'])
+@login_required
 def stop_sending(batch_id):
     """Stop sending messages for a batch"""
     if batch_id in stop_flags:
@@ -196,6 +211,7 @@ def stop_sending(batch_id):
     return jsonify({"success": False, "status": "batch ID not found"}), 404
 
 @facebook_bp.route('/messages/<batch_id>')
+@login_required
 def messages_page(batch_id):
     """View messages for a specific batch"""
     # Get batch from database
@@ -206,6 +222,7 @@ def messages_page(batch_id):
     return render_template('facebook/messages.html', batch=batch)
 
 @facebook_bp.route('/logs/<batch_id>')
+@login_required
 def get_logs(batch_id):
     """Get logs for a specific batch"""
     try:
@@ -233,6 +250,7 @@ def get_logs(batch_id):
         })
 
 @facebook_bp.route('/stop-status/<batch_id>')
+@login_required
 def stop_status(batch_id):
     """Get stop status for a batch"""
     is_stopped = False
@@ -256,10 +274,16 @@ def stop_status(batch_id):
     })
 
 @facebook_bp.route('/api/batches')
+@login_required
 def list_batches():
     """API endpoint to list all Facebook batches"""
     try:
-        batches = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).all()
+        # Only show batches owned by the current user (or all batches for admin)
+        if current_user.is_admin:
+            batches = FacebookBatch.query.order_by(FacebookBatch.created_at.desc()).all()
+        else:
+            batches = FacebookBatch.query.filter_by(user_id=current_user.id).order_by(FacebookBatch.created_at.desc()).all()
+        
         return jsonify({
             "success": True,
             "batches": [batch.to_dict() for batch in batches]
@@ -272,6 +296,7 @@ def list_batches():
         })
 
 @facebook_bp.route('/api/batch/<batch_id>', methods=['DELETE'])
+@login_required
 def delete_batch(batch_id):
     """Delete a batch and all its messages"""
     try:
