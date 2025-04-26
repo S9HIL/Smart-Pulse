@@ -18,54 +18,49 @@
 </div>
 
 <!-- Platform Sections -->
-<div class="mb-5">
+<div class="mt-5 pt-4">
     <!-- WhatsApp Section -->
-    <div class="platform-section whatsapp-section mb-4">
-        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
-            <i class="fab fa-whatsapp me-2"></i> WhatsApp Automation
+    <div class="mb-5">
+        <h2 class="h3 mb-3 d-flex align-items-center">
+            <i class="fab fa-whatsapp me-3 text-success"></i> WhatsApp Automation
         </h2>
-        <div class="p-3">
-            <p>Automate WhatsApp message sending to multiple recipients.</p>
-            <a href="{{ url_for('whatsapp.index') }}" class="btn btn-outline-light">
-                Go to WhatsApp
-            </a>
-        </div>
+        <p class="text-light opacity-75 mb-3">Automate WhatsApp message sending to multiple recipients.</p>
+        <a href="{{ url_for('whatsapp.index') }}" class="btn btn-outline-light btn-sm px-4">
+            Go to WhatsApp
+        </a>
     </div>
     
     <!-- Facebook Section -->
-    <div class="platform-section facebook-section mb-4">
-        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
-            <i class="fab fa-facebook me-2"></i> Facebook Automation
+    <div class="mb-5">
+        <h2 class="h3 mb-3 d-flex align-items-center">
+            <i class="fab fa-facebook me-3 text-primary"></i> Facebook Automation
         </h2>
-        <div class="p-3">
-            <p>Automate Facebook message sending to multiple recipients.</p>
-            <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-light">
-                Go to Facebook
-            </a>
-        </div>
+        <p class="text-light opacity-75 mb-3">Automate Facebook message sending to multiple recipients.</p>
+        <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-light btn-sm px-4">
+            Go to Facebook
+        </a>
     </div>
     
     <!-- Instagram Section -->
-    <div class="platform-section instagram-section mb-4">
-        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
-            <i class="fab fa-instagram me-2"></i> Instagram Automation
+    <div class="mb-5">
+        <h2 class="h3 mb-3 d-flex align-items-center">
+            <i class="fab fa-instagram me-3 text-danger"></i> Instagram Automation
         </h2>
-        <div class="p-3">
-            <p>Automate Instagram message sending to followers and users.</p>
-            <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-light">
-                Go to Instagram
-            </a>
-        </div>
+        <p class="text-light opacity-75 mb-3">Automate Instagram message sending to followers and users.</p>
+        <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-light btn-sm px-4">
+            Go to Instagram
+        </a>
     </div>
 </div>
 
-<div class="row mb-5">
-    <div class="col-12 mb-4">
-        <h2 class="h4 mb-4"><i class="fas fa-tasks me-2 text-primary"></i> Batch Management</h2>
-        <p>Manage all your active message batches across platforms from a central dashboard.</p>
-        <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-primary">
-            <i class="fas fa-tachometer-alt me-2"></i> Go to Batch Manager
-        </a>
-    </div>
+<!-- Batch Management Section -->
+<div class="mb-5">
+    <h2 class="h3 mb-3 d-flex align-items-center">
+        <i class="fas fa-tasks me-3 text-info"></i> Batch Management
+    </h2>
+    <p class="text-light opacity-75 mb-3">Manage all your active message batches across platforms from a central dashboard.</p>
+    <a href="{{ url_for('main.batch_manager') }}" class="btn btn-outline-light btn-sm px-4">
+        <i class="fas fa-tachometer-alt me-2"></i> Go to Batch Manager
+    </a>
 </div>
 {% endblock %}

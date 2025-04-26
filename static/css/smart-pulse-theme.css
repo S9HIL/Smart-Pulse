@@ -2,9 +2,9 @@
 
 /* Base theme colors and styles */
 :root {
-  --primary-bg: #0a0a0a;
-  --secondary-bg: #141414;
-  --accent-bg: #222222;
+  --primary-bg: #0d1117;
+  --secondary-bg: #161b22;
+  --accent-bg: #21262d;
   --primary-text: #ffffff;
   --secondary-text: #e0e0e0;
   --accent-color: #7371fc;
@@ -16,6 +16,7 @@
   --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   --transition-normal: all 0.3s ease;
   --transition-slow: all 0.5s ease;
+  --border-color: #30363d;
 }
 
 /* Global styles */
@@ -29,10 +30,8 @@ body {
 
 /* Glossy effect for cards and containers */
 .card, .container-fluid.content, .card-body, .list-group-item {
-  background: var(--glossy-gradient);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
   transition: var(--transition-normal);
 }
@@ -44,10 +43,8 @@ body {
 
 /* Navbar styling */
 .navbar {
-  background: rgba(10, 10, 10, 0.8) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--secondary-bg) !important;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .navbar-brand {
@@ -106,17 +103,28 @@ body {
 
 /* Custom form styling */
 .form-control, .form-select {
-  background-color: rgba(30, 30, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--primary-bg);
+  border: 1px solid var(--border-color);
   color: var(--primary-text);
   transition: var(--transition-normal);
 }
 
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .form-control:focus, .form-select:focus {
-  background-color: rgba(40, 40, 40, 0.8);
+  background-color: var(--primary-bg);
   border-color: var(--accent-color);
   box-shadow: 0 0 0 0.25rem rgba(115, 113, 252, 0.25);
   color: white;
+}
+
+/* Form help text */
+.form-text {
+  color: var(--primary-text);
+  opacity: 0.75;
+  font-weight: 500;
 }
 
 /* Button styling */
@@ -204,14 +212,13 @@ body {
 
 /* Footer */
 .footer {
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 0;
+  background-color: var(--secondary-bg);
+  border-top: 1px solid var(--border-color);
+  padding: 1rem 0;
   text-align: center;
-  position: relative;
-  margin-top: 3rem;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 .footer-text {
@@ -410,4 +417,21 @@ body {
 .form-switch .form-check-input:checked {
   background-color: var(--accent-color);
   border-color: var(--accent-color);
+}
+
+/* Platform section styling - Simplified */
+.platform-icon {
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+/* Platform Button styling */
+.btn-outline-light {
+  border-width: 1px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
