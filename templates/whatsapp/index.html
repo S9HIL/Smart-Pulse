@@ -726,12 +726,33 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Phone number
                             phoneNumberEl.textContent = data.phoneNumber || 'Not connected';
                             
-                            // If status changes to connected, immediately redirect to message form
+                            // If status changes to connected, update UI accordingly without redirect
                             if (data.status === 'connected') {
-                                // Just a small delay to ensure server has registered the connected state
-                                setTimeout(() => {
-                                    window.location.href = '/whatsapp/';
-                                }, 500);
+                                console.log("WhatsApp connected with phone number:", data.phoneNumber);
+                                
+                                // Show connected alert if it exists
+                                const connectedAlertElem = document.querySelector('.alert-success[role="alert"] i.fa-check-circle');
+                                if (connectedAlertElem) {
+                                    const alertDiv = connectedAlertElem.closest('.alert');
+                                    if (alertDiv) {
+                                        alertDiv.classList.remove('d-none');
+                                    }
+                                }
+                                
+                                // Hide disconnected elements
+                                const disconnectElements = document.querySelectorAll('.whatsapp-connect-elements');
+                                disconnectElements.forEach(elem => {
+                                    elem.classList.add('d-none');
+                                });
+                                
+                                // Show connected elements
+                                const connectedElements = document.querySelectorAll('.whatsapp-connected-elements');
+                                connectedElements.forEach(elem => {
+                                    elem.classList.remove('d-none');
+                                });
+                                
+                                // Enable the messaging form
+                                ensureMessagingSectionEnabled();
                             }
                             
                             // Update UI based on status changes
