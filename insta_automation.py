@@ -328,6 +328,17 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
     if not login_result:
         log_message(batch_id, "Failed to log in to Instagram", "failed", "Authentication failed")
         update_batch_status(batch_id, "failed")
+        
+        # Auto-delete failed login batches
+        try:
+            batch = InstagramBatch.query.get(batch_id)
+            if batch:
+                db.session.delete(batch)
+                db.session.commit()
+                logger.info(f"Automatically deleted failed login batch {batch_id}")
+        except Exception as e:
+            logger.error(f"Error auto-deleting failed batch: {str(e)}")
+            
         return False
     
     if isinstance(login_result, dict) and login_result.get("status") == "challenge_required":
@@ -353,6 +364,17 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         if not client.logged_in:
             log_message(batch_id, "Failed to complete security challenge", "failed", "Challenge not completed")
             update_batch_status(batch_id, "failed")
+            
+            # Auto-delete failed challenge batches
+            try:
+                batch = InstagramBatch.query.get(batch_id)
+                if batch:
+                    db.session.delete(batch)
+                    db.session.commit()
+                    logger.info(f"Automatically deleted failed challenge batch {batch_id}")
+            except Exception as e:
+                logger.error(f"Error auto-deleting failed challenge batch: {str(e)}")
+                
             return False
     
     # Successfully logged in
@@ -375,6 +397,17 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         if not user_id:
             log_message(batch_id, f"Could not find user with username {target}", "failed", "User not found")
             update_batch_status(batch_id, "failed")
+            
+            # Auto-delete batches with user not found
+            try:
+                batch = InstagramBatch.query.get(batch_id)
+                if batch:
+                    db.session.delete(batch)
+                    db.session.commit()
+                    logger.info(f"Automatically deleted batch {batch_id} due to user not found")
+            except Exception as e:
+                logger.error(f"Error auto-deleting batch with missing user: {str(e)}")
+                
             return False
     
     # Start sending messages
