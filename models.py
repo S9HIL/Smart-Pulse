@@ -1,10 +1,80 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
+
+class User(UserMixin, db.Model):
+    """User model for authentication and account management"""
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    is_banned = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
+    
+    whatsapp_tasks = db.relationship('WhatsAppTask', backref='user', lazy=True, 
+                                     cascade="all, delete-orphan")
+    instagram_batches = db.relationship('InstagramBatch', backref='user', lazy=True, 
+                                       cascade="all, delete-orphan")
+    facebook_batches = db.relationship('FacebookBatch', backref='user', lazy=True, 
+                                       cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'is_admin': self.is_admin,
+            'is_approved': self.is_approved,
+            'is_banned': self.is_banned,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None
+        }
+
+class UserApproval(db.Model):
+    """Model for tracking user approval requests"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    request_date = db.Column(db.DateTime, default=datetime.utcnow)
+    approval_date = db.Column(db.DateTime, nullable=True)
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    notes = db.Column(db.Text, nullable=True)
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref='approval_requests')
+    admin = db.relationship('User', foreign_keys=[approved_by], backref='approval_actions')
+    
+    def __repr__(self):
+        return f'<UserApproval {self.id}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'request_date': self.request_date.isoformat() if self.request_date else None,
+            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+            'approved_by': self.approved_by,
+            'status': self.status,
+            'notes': self.notes
+        }
 
 class WhatsAppTask(db.Model):
     """Model for WhatsApp message sending tasks"""
     id = db.Column(db.String(64), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     phone_number = db.Column(db.String(20), nullable=True)
@@ -69,6 +139,7 @@ class WhatsAppMessage(db.Model):
 class InstagramBatch(db.Model):
     """Model for Instagram messaging batches"""
     id = db.Column(db.String(64), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     username = db.Column(db.String(100), nullable=False)
@@ -124,6 +195,7 @@ class InstagramMessage(db.Model):
 class FacebookBatch(db.Model):
     """Model for Facebook messaging batches"""
     id = db.Column(db.String(64), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     access_token = db.Column(db.String(255), nullable=True)

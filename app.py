@@ -1,7 +1,8 @@
 import os
 import logging
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, current_user
 from sqlalchemy.orm import DeclarativeBase
 
 # Configure logging
@@ -39,15 +40,29 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize database
 db.init_app(app)
 
+# Initialize login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'warning'
+
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
 # Register blueprints - will be imported after db is initialized
 with app.app_context():
     from facebook import facebook_bp
     from instagram import instagram_bp
     from routes import main_bp
     from whatsapp_bridge import whatsapp_bp
+    from auth import auth_bp
     
     # Register blueprints
     app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(facebook_bp, url_prefix='/facebook')
     app.register_blueprint(instagram_bp, url_prefix='/instagram')
     app.register_blueprint(whatsapp_bp, url_prefix='/whatsapp')
