@@ -1,248 +1,396 @@
 """
-Instagram Automation Module for Sʌʜɩɭ Pʀʌjʌpʌtɩ Hub
-Handles Instagram direct messaging automation using the provided automation class
+Instagram Automation By Sʌʜɩɭ Pʀʌjʌpʌtɩ Smart Pulse
+Handles Instagram direct messaging automation
 """
 
+import os
 import logging
+import uuid
 import time
-import json
 import threading
+import json
 from datetime import datetime
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, flash
+from flask_login import login_required, current_user
 from instagrapi import Client
-from instagrapi.exceptions import LoginRequired, ClientError, ChallengeRequired
-from instagrapi.mixins.challenge import ChallengeChoice
+from instagrapi.exceptions import LoginRequired, ClientError, ClientLoginRequired
+
 from app import db
-from models import InstagramBatch, InstagramMessage
+from models import InstagramBatch, InstagramMessage, User
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global variables to handle challenge verification
-verification_code = {}
-verification_lock = threading.Lock()
+# Create blueprint
+instagram_bp = Blueprint('instagram', __name__, template_folder='templates')
 
-class InstagramAutomation:
-    """Class to handle Instagram automation using Instagrapi."""
-    
-    def __init__(self, username, password):
-        """Initialize Instagram automation client.
+# Global variables
+user_batches = {}  # Store batch information
+stop_flags = {}    # Control message sending
+clients = {}       # Store Instagram client instances
+active_batches = {}  # Track active batches
+
+def generate_batch_id():
+    """Generate a unique batch ID"""
+    return str(uuid.uuid4())
+
+@instagram_bp.route('/')
+@login_required
+def index():
+    """Instagram automation main page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
         
-        Args:
-            username (str): Instagram username
-            password (str): Instagram password
-        """
-        self.username = username
-        self.password = password
-        self.client = Client()
-        self.logged_in = False
-        self.challenge_info = None
+    return render_template('instagram/index.html')
+
+@instagram_bp.route('/dashboard')
+@login_required
+def dashboard():
+    """Instagram dashboard page"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
         
-        # Set custom challenge resolver
-        self.client.challenge_code_handler = self.custom_challenge_code_handler
-    
-    def custom_challenge_code_handler(self, username, choice):
-        """Custom handler for Instagram security challenges.
+    return render_template('instagram/dashboard.html')
+
+@instagram_bp.route('/api/batches')
+@login_required
+def list_batches():
+    """API endpoint to list all Instagram batches for the current user"""
+    try:
+        # Get batches for current user from database (admin can see all)
+        if current_user.is_admin:
+            batches = InstagramBatch.query.order_by(InstagramBatch.created_at.desc()).all()
+        else:
+            batches = InstagramBatch.query.filter_by(user_id=current_user.id).order_by(InstagramBatch.created_at.desc()).all()
         
-        This will store the challenge info and wait for the code to be provided
-        by the user through the web interface.
+        return jsonify({
+            "success": True,
+            "batches": [batch.to_dict() for batch in batches]
+        })
+    except Exception as e:
+        logger.error(f"Error listing batches: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error listing batches: {str(e)}"
+        })
+
+@instagram_bp.route('/send-message', methods=['POST'])
+@login_required
+def send_message():
+    """Start sending Instagram messages"""
+    try:
+        # Extract form data
+        username = request.form.get('username')
+        password = request.form.get('password')
+        target = request.form.get('target')
+        target_type = request.form.get('target_type')  # 'user' or 'group'
+        message_prefix = request.form.get('message_prefix', '')
+        delay_time = int(request.form.get('delay_time', 5))
+        messages_text = request.form.get('messages', '')
         
-        Args:
-            username (str): Instagram username
-            choice (ChallengeChoice): Type of challenge (EMAIL, SMS, etc.)
-            
-        Returns:
-            str: Verification code provided by user
-        """
-        logger.info(f"Challenge required for {username} via {choice}")
+        # Basic validation
+        if not all([username, password, target, target_type]):
+            return jsonify({"success": False, "message": "Missing required fields. Please fill in all required fields."})
         
-        # Store challenge info for the UI
-        self.challenge_info = {
-            "username": username,
-            "choice_type": str(choice),
-            "status": "pending"
-        }
+        # Process messages from text field or file
+        messages = []
         
-        # Wait for verification code from web interface
-        # This will be a blocking operation, but we'll handle it with timeouts
-        max_wait = 300  # 5 minutes
-        wait_interval = 2
-        waited = 0
-        
-        while waited < max_wait:
-            with verification_lock:
-                if username in verification_code:
-                    code = verification_code.pop(username)
-                    logger.info(f"Using verification code for {username}")
-                    self.challenge_info["status"] = "resolved"
-                    return code
-            
-            time.sleep(wait_interval)
-            waited += wait_interval
-        
-        logger.error(f"Timed out waiting for verification code for {username}")
-        self.challenge_info["status"] = "timeout"
-        return "000000"  # Return invalid code to fail gracefully
-    
-    def get_challenge_info(self):
-        """Get current challenge information.
-        
-        Returns:
-            dict: Challenge information or None if no challenge
-        """
-        return self.challenge_info
-        
-    def submit_verification_code(self, code):
-        """Submit verification code received from the user.
-        
-        Args:
-            code (str): Verification code
-            
-        Returns:
-            bool: True if code accepted, False otherwise
-        """
-        if not self.challenge_info:
-            return False
-            
-        with verification_lock:
-            verification_code[self.challenge_info["username"]] = code
-        
-        return True
-    
-    def login(self):
-        """Log in to Instagram.
-        
-        Returns:
-            dict or None: User info if login successful, None otherwise
-        """
-        try:
-            # Reset challenge info
-            self.challenge_info = None
-            
-            # Try to login
-            user_info = self.client.login(self.username, self.password)
-            self.logged_in = True
-            logger.info(f"Successfully logged in as {self.username}")
-            return user_info
-        except ChallengeRequired as e:
-            logger.warning(f"Challenge required during login: {str(e)}")
-            # Challenge will be handled by our custom handler
-            # Return special indicator that challenge is in progress
-            return {"status": "challenge_required", "challenge_info": self.challenge_info}
-        except Exception as e:
-            logger.error(f"Login failed: {str(e)}")
-            return None
-    
-    def _check_login(self):
-        """Check if logged in, try to relogin if not.
-        
-        Returns:
-            bool: True if logged in successfully, False otherwise
-        """
-        if not self.logged_in:
+        # Check for message file first
+        message_file = request.files.get('message_file')
+        if message_file:
             try:
-                self.login()
-                return self.logged_in
+                messages = message_file.read().decode('utf-8').splitlines()
+                messages = [msg.strip() for msg in messages if msg.strip()]
             except Exception as e:
-                logger.error(f"Error during login check: {str(e)}")
-                return False
-        return True
-    
-    def get_user_id(self, username):
-        """Get user ID from username.
+                logger.error(f"Error processing message file: {str(e)}")
+                return jsonify({"success": False, "message": f"Error processing message file: {str(e)}"})
+        # If no file or empty file, try messages text field
+        elif messages_text:
+            messages = [msg.strip() for msg in messages_text.strip().split('\n') if msg.strip()]
         
-        Args:
-            username (str): Instagram username
-        
-        Returns:
-            str or None: User ID if found, None otherwise
-        """
-        if not self._check_login():
-            return None
-        
-        try:
-            user = self.client.user_info_by_username(username)
-            return user.pk
-        except Exception as e:
-            logger.error(f"Error getting user ID for {username}: {str(e)}")
-            return None
-    
-    def send_direct_message(self, username, message):
-        """Send a direct message to a user.
-        
-        Args:
-            username (str): Instagram username
-            message (str): Message to send
-        
-        Returns:
-            bool: True if message sent successfully, False otherwise
-        """
-        if not self._check_login():
-            return False
-        
-        try:
-            # Try to get user ID from username
-            user_id = self.get_user_id(username)
-            if not user_id:
-                logger.error(f"Could not find user ID for {username}")
-                return False
+        if not messages:
+            return jsonify({"success": False, "message": "No messages found. Please provide messages either in the text area or upload a file."})
             
-            # Send the message
-            result = self.client.direct_send(message, [user_id])
-            logger.info(f"Message sent to {username}: {message[:20]}...")
-            return True
-        except Exception as e:
-            logger.error(f"Error sending DM to {username}: {str(e)}")
-            return False
+        # Generate batch ID
+        batch_id = generate_batch_id()
+        
+        # Create database batch record
+        new_batch = InstagramBatch(
+            id=batch_id,
+            user_id=current_user.id,  # Add user ownership
+            username=username,
+            target=target,
+            target_type=target_type,
+            status='running',
+            message_prefix=message_prefix,
+            delay_time=delay_time
+        )
+        
+        # Store batch messages
+        for message_text in messages:
+            message = InstagramMessage(
+                batch_id=batch_id,
+                message=message_text,
+                status='pending',
+                status_class='message-pending'
+            )
+            db.session.add(message)
+        
+        # Save batch and messages to database
+        db.session.add(new_batch)
+        db.session.commit()
+        
+        # Set up control flags
+        stop_flags[batch_id] = False
+        
+        # Start message sending in background
+        thread = threading.Thread(
+            target=start_message_sending,
+            args=(batch_id, username, password, target, target_type, message_prefix, messages, delay_time)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        # Return immediate success response with batch ID
+        return jsonify({
+            "success": True,
+            "message": "Message sending started",
+            "batch_id": batch_id
+        })
     
-    def send_group_message(self, group_id, message):
-        """Send a message to a group chat.
+    except Exception as e:
+        logger.error(f"Error in send_message: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        })
+
+@instagram_bp.route('/stop/<batch_id>', methods=['POST'])
+@login_required
+def stop_sending(batch_id):
+    """Stop sending messages for a batch"""
+    try:
+        # Update batch status in database
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+            
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to stop batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to stop this batch"
+            })
         
-        Args:
-            group_id (str): Instagram group thread ID
-            message (str): Message to send
+        # Set stop flag
+        stop_flags[batch_id] = True
         
-        Returns:
-            bool: True if message sent successfully, False otherwise
-        """
-        if not self._check_login():
-            return False
+        # Update status
+        batch.status = 'stopped'
+        db.session.commit()
         
-        try:
-            # Send message to the thread
-            result = self.client.direct_send(message, thread_ids=[group_id])
-            logger.info(f"Message sent to group {group_id}: {message[:20]}...")
-            return True
-        except Exception as e:
-            logger.error(f"Error sending message to group {group_id}: {str(e)}")
-            return False
+        return jsonify({
+            "success": True,
+            "message": f"Stopped message sending for batch {batch_id}"
+        })
+    except Exception as e:
+        logger.error(f"Error stopping batch {batch_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error stopping batch: {str(e)}"
+        })
+
+@instagram_bp.route('/batch/<batch_id>')
+@instagram_bp.route('/messages/<batch_id>')  # Adding a second route for compatibility
+@login_required
+def messages_page(batch_id):
+    """View messages for a specific batch"""
+    try:
+        # Get batch from database
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            logger.warning(f"Batch not found: {batch_id}")
+            return render_template('instagram/messages.html', error=f"Batch ID {batch_id} not found")
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access batch {batch_id} without permission")
+            return render_template('instagram/messages.html', error="You don't have permission to view this batch")
+        
+        logger.info(f"Viewing batch: {batch_id}")
+        return render_template('instagram/messages.html', batch=batch)
+    except Exception as e:
+        logger.error(f"Error viewing batch {batch_id}: {str(e)}")
+        return render_template('instagram/messages.html', error=f"Error loading batch: {str(e)}")
+
+@instagram_bp.route('/api/messages/<batch_id>')
+@login_required
+def get_logs(batch_id):
+    """Get logs for a specific batch"""
+    try:
+        # Get batch info first
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access logs for batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to view these logs"
+            })
+        
+        # Get messages from database
+        messages = InstagramMessage.query.filter_by(batch_id=batch_id).order_by(InstagramMessage.timestamp.desc()).all()
+        
+        return jsonify({
+            "success": True,
+            "messages": [msg.to_dict() for msg in messages],
+            "status": batch.status
+        })
+    except Exception as e:
+        logger.error(f"Error getting logs for batch {batch_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error getting logs: {str(e)}"
+        })
+
+@instagram_bp.route('/api/status/<batch_id>')
+@login_required
+def stop_status(batch_id):
+    """Get stop status for a batch"""
+    try:
+        # Get batch first
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            logger.warning(f"User {current_user.id} tried to access status for batch {batch_id} without permission")
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to view this batch status"
+            })
+        
+        is_stopped = stop_flags.get(batch_id, False)
+        
+        return jsonify({
+            "success": True,
+            "is_stopped": is_stopped,
+            "status": batch.status
+        })
+    except Exception as e:
+        logger.error(f"Error getting stop status for batch {batch_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error getting stop status: {str(e)}"
+        })
+
+@instagram_bp.route('/api/batch/<batch_id>', methods=['DELETE'])
+@login_required
+def delete_batch(batch_id):
+    """Delete a batch and all its messages"""
+    try:
+        # Get the batch
+        batch = InstagramBatch.query.get(batch_id)
+        if not batch:
+            return jsonify({
+                "success": False,
+                "message": f"Batch {batch_id} not found"
+            })
+        
+        # Check if the user owns this batch or is an admin
+        if batch.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({
+                "success": False,
+                "message": "You don't have permission to delete this batch"
+            })
+        
+        # Set stop flag if batch is running
+        if batch_id in stop_flags:
+            stop_flags[batch_id] = True
+        
+        # Delete messages
+        InstagramMessage.query.filter_by(batch_id=batch_id).delete()
+        
+        # Delete batch
+        db.session.delete(batch)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Batch {batch_id} deleted successfully"
+        })
+    except Exception as e:
+        logger.error(f"Error deleting batch {batch_id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Error deleting batch: {str(e)}"
+        })
+
+def send_instagram_message(client, target, target_type, message):
+    """Send a message to Instagram user or group"""
+    max_retries = 3
+    retry_count = 0
+    error_message = None
     
-    def get_group_info(self, group_id):
-        """Get information about a group chat.
-        
-        Args:
-            group_id (str): Instagram group thread ID
-        
-        Returns:
-            dict or None: Group info if successful, None otherwise
-        """
-        if not self._check_login():
-            return None
-        
+    while retry_count < max_retries:
         try:
-            thread_info = self.client.direct_thread(group_id)
-            return {
-                'id': thread_info.thread_id,
-                'title': thread_info.thread_title,
-                'users': [user.username for user in thread_info.users],
-                'is_group': thread_info.is_group
-            }
+            if target_type == 'user':
+                # Direct message to a user
+                user_id = client.user_id_from_username(target)
+                thread = client.direct_send(message, [user_id])
+                return True, thread
+            elif target_type == 'group':
+                # Send to a group chat
+                thread_id = target
+                client.direct_send(message, thread_ids=[thread_id])
+                return True, thread_id
+            else:
+                logger.error(f"Unknown target type: {target_type}")
+                return False, f"Unknown target type: {target_type}"
+        except LoginRequired as e:
+            # Session expired, need to relogin
+            logger.error(f"Session expired during message send (attempt {retry_count+1}): {str(e)}")
+            error_message = f"Session expired: {str(e)}"
+            # Try to re-login if we have credentials
+            try:
+                if hasattr(client, '_username') and hasattr(client, '_password'):
+                    logger.info("Attempting to relogin automatically...")
+                    client.login(client._username, client._password)
+                    logger.info("Successfully relogged in")
+                else:
+                    logger.error("Can't relogin: credentials not stored")
+                    break
+            except Exception as re_err:
+                logger.error(f"Relogin failed: {str(re_err)}")
+                break
         except Exception as e:
-            logger.error(f"Error getting group info: {str(e)}")
-            return None
-
-
-# Helper functions for integration with the main app
+            logger.error(f"Error sending message (attempt {retry_count+1}): {str(e)}")
+            error_message = str(e)
+        
+        retry_count += 1
+        if retry_count < max_retries:
+            time.sleep(2)  # Wait before retry
+    
+    return False, error_message
 
 def log_message(batch_id, message, status="info", error=None):
     """Log a message to both the database and console.
@@ -253,35 +401,37 @@ def log_message(batch_id, message, status="info", error=None):
         status (str): Status type (info, success, failed, pending)
         error (str, optional): Error message if status is failed
     """
+    # Map status to CSS class
     status_class_map = {
-        "info": "message-info",
-        "success": "message-success",
-        "failed": "message-failed",
-        "pending": "message-pending"
+        'info': 'text-info',
+        'success': 'text-success',
+        'failed': 'text-danger',
+        'pending': 'text-secondary'
     }
     
-    status_class = status_class_map.get(status.lower(), "message-info")
+    status_class = status_class_map.get(status, 'text-secondary')
     
     # Log to console
-    if status.lower() == "failed":
+    if status == 'failed':
         logger.error(f"Batch {batch_id}: {message} - {error}")
-    else:
+    elif status == 'info':
+        logger.info(f"Batch {batch_id}: {message}")
+    elif status == 'success':
         logger.info(f"Batch {batch_id}: {message}")
     
-    # Log to database
+    # Store in database
     try:
-        msg = InstagramMessage(
+        new_message = InstagramMessage(
             batch_id=batch_id,
             message=message,
-            status=status.capitalize(),
+            status=status,
             status_class=status_class,
             error=error
         )
-        db.session.add(msg)
+        db.session.add(new_message)
         db.session.commit()
     except Exception as e:
         logger.error(f"Error logging message to database: {str(e)}")
-
 
 def update_batch_status(batch_id, status):
     """Update the status of a batch in the database.
@@ -294,11 +444,10 @@ def update_batch_status(batch_id, status):
         batch = InstagramBatch.query.get(batch_id)
         if batch:
             batch.status = status
-            batch.updated_at = datetime.now()
+            batch.updated_at = datetime.utcnow()
             db.session.commit()
     except Exception as e:
         logger.error(f"Error updating batch status: {str(e)}")
-
 
 def start_message_sending(batch_id, username, password, target, target_type, message_prefix, messages, delay_time):
     """Start the message sending process in a background thread.
@@ -313,184 +462,114 @@ def start_message_sending(batch_id, username, password, target, target_type, mes
         messages (list): List of messages to send
         delay_time (int): Delay between messages in seconds
     """
-    # Log initial message
-    log_message(batch_id, "Starting Instagram automation...", "info")
+    from app import app
     
-    # Initialize the automation client
-    client = InstagramAutomation(username, password)
-    
-    # Log login attempt
-    log_message(batch_id, "Attempting to log in to Instagram...", "info")
-    
-    # Try to login
-    login_result = client.login()
-    
-    if not login_result:
-        log_message(batch_id, "Failed to log in to Instagram", "failed", "Authentication failed")
-        update_batch_status(batch_id, "failed")
+    try:
+        # Mark as active
+        active_batches[batch_id] = True
         
-        # Auto-delete failed login batches
+        # Log start with application context
+        with app.app_context():
+            log_message(batch_id, f"Starting Instagram message sending to {target}")
+            log_message(batch_id, f"Logging in as {username}...")
+        
+        # Initialize Instagram client
+        client = Client()
+        # Store credentials for potential relogin
+        client._username = username
+        client._password = password
+        
+        # Try to login
         try:
-            batch = InstagramBatch.query.get(batch_id)
-            if batch:
-                db.session.delete(batch)
-                db.session.commit()
-                logger.info(f"Automatically deleted failed login batch {batch_id}")
+            client.login(username, password)
+            with app.app_context():
+                log_message(batch_id, f"Successfully logged in as {username}", "success")
         except Exception as e:
-            logger.error(f"Error auto-deleting failed batch: {str(e)}")
-            
-        return False
-    
-    if isinstance(login_result, dict) and login_result.get("status") == "challenge_required":
-        log_message(batch_id, "Instagram security challenge required!", "info")
-        challenge_info = login_result.get("challenge_info", {})
-        challenge_type = challenge_info.get("choice_type", "unknown")
+            with app.app_context():
+                log_message(batch_id, f"Login failed: {str(e)}", "failed", str(e))
+                update_batch_status(batch_id, "failed")
+            active_batches.pop(batch_id, None)
+            return
         
-        log_message(
-            batch_id, 
-            f"Please check your {challenge_type} for a security code and enter it on the website", 
-            "pending"
-        )
+        # Store client
+        clients[batch_id] = client
         
-        # Note: The challenge handling would be managed via the web interface
-        # The automation class will wait for the code submission
-        
-        # This process would block the thread until the code is provided
-        # We'll continue here assuming the code will be provided or timeout
-        
-        # Wait for a moment to check if the challenge is resolved
-        time.sleep(10)
-        
-        if not client.logged_in:
-            log_message(batch_id, "Failed to complete security challenge", "failed", "Challenge not completed")
-            update_batch_status(batch_id, "failed")
-            
-            # Auto-delete failed challenge batches
+        # Initial verification of target
+        if target_type == 'user':
             try:
-                batch = InstagramBatch.query.get(batch_id)
-                if batch:
-                    db.session.delete(batch)
-                    db.session.commit()
-                    logger.info(f"Automatically deleted failed challenge batch {batch_id}")
+                user_id = client.user_id_from_username(target)
+                with app.app_context():
+                    log_message(batch_id, f"Found user {target} (ID: {user_id})", "success")
             except Exception as e:
-                logger.error(f"Error auto-deleting failed challenge batch: {str(e)}")
-                
-            return False
-    
-    # Successfully logged in
-    log_message(batch_id, f"Successfully logged in as {username}", "success")
-    
-    # Identify the target type and send messages
-    target_name = target
-    is_group = target_type.lower() == "group"
-    
-    # Get information about the target
-    if is_group:
-        log_message(batch_id, f"Targeting group with ID: {target}", "info")
-        group_info = client.get_group_info(target)
-        if group_info:
-            target_name = group_info.get('title', target)
-            log_message(batch_id, f"Resolved group name: {target_name}", "info")
-    else:
-        log_message(batch_id, f"Targeting user: {target}", "info")
-        user_id = client.get_user_id(target)
-        if not user_id:
-            log_message(batch_id, f"Could not find user with username {target}", "failed", "User not found")
-            update_batch_status(batch_id, "failed")
-            
-            # Auto-delete batches with user not found
-            try:
-                batch = InstagramBatch.query.get(batch_id)
-                if batch:
-                    db.session.delete(batch)
-                    db.session.commit()
-                    logger.info(f"Automatically deleted batch {batch_id} due to user not found")
-            except Exception as e:
-                logger.error(f"Error auto-deleting batch with missing user: {str(e)}")
-                
-            return False
-    
-    # Start sending messages
-    log_message(batch_id, f"Starting to send {len(messages)} messages to {target_name} with {delay_time}s delay", "info")
-    
-    # Track the batch status in the database
-    update_batch_status(batch_id, "running")
-    
-    # Send messages with delay
-    sent_count = 0
-    failed_count = 0
-    
-    for i, message in enumerate(messages):
-        try:
-            # Check if the batch has been stopped
-            batch = InstagramBatch.query.get(batch_id)
-            if not batch or batch.status != "running":
-                log_message(batch_id, "Message sending stopped by user", "info")
+                with app.app_context():
+                    log_message(batch_id, f"Target user {target} not found", "failed", str(e))
+                    update_batch_status(batch_id, "failed")
+                active_batches.pop(batch_id, None)
+                return
+        
+        # Send messages one by one
+        total_messages = len(messages)
+        with app.app_context():
+            log_message(batch_id, f"Starting to send {total_messages} messages with {delay_time}s delay")
+        
+        for idx, message_text in enumerate(messages, 1):
+            # Check if stop flag is set
+            if stop_flags.get(batch_id, False):
+                with app.app_context():
+                    log_message(batch_id, "Message sending stopped by user", "info")
+                    update_batch_status(batch_id, "stopped")
                 break
             
-            # Add prefix if provided
-            full_message = message
-            if message_prefix:
-                full_message = f"{message_prefix}{message}"
+            # Prepare full message with prefix if needed
+            full_message = f"{message_prefix}\n{message_text}" if message_prefix else message_text
             
-            # Log as pending
-            log_message(
-                batch_id, 
-                f"Sending message ({i+1}/{len(messages)}): {full_message[:50]}{'...' if len(full_message) > 50 else ''}", 
-                "pending"
-            )
+            # Log the message being sent
+            with app.app_context():
+                log_message(batch_id, f"Sending message {idx}/{total_messages}: {full_message[:50]}...", "pending")
             
-            # Send based on target type
-            success = False
-            if is_group:
-                success = client.send_group_message(target, full_message)
-            else:
-                success = client.send_direct_message(target, full_message)
+            # Send the message
+            success, result = send_instagram_message(client, target, target_type, full_message)
             
-            # Update counters and log result
             if success:
-                sent_count += 1
-                log_message(
-                    batch_id, 
-                    f"Message sent ({i+1}/{len(messages)}): {full_message[:50]}{'...' if len(full_message) > 50 else ''}", 
-                    "success"
-                )
+                with app.app_context():
+                    log_message(batch_id, f"Message {idx}/{total_messages} sent successfully", "success")
             else:
-                failed_count += 1
-                log_message(
-                    batch_id, 
-                    f"Failed to send message ({i+1}/{len(messages)})", 
-                    "failed", 
-                    f"Error sending message: {full_message[:50]}{'...' if len(full_message) > 50 else ''}"
-                )
+                error_msg = result if result else "Unknown error"
+                with app.app_context():
+                    log_message(batch_id, f"Failed to send message {idx}/{total_messages}", "failed", error_msg)
+                    
+                    # If we've had too many failures, break
+                    if idx >= 3 and idx / total_messages < 0.2:
+                        log_message(batch_id, "Too many failures, stopping process", "failed")
+                        update_batch_status(batch_id, "failed")
+                        break
             
-            # Add delay between messages
-            if i < len(messages) - 1:  # No need to wait after the last message
-                log_message(batch_id, f"Waiting {delay_time} seconds before next message...", "info")
+            # Delay before next message
+            if idx < total_messages and not stop_flags.get(batch_id, False):
                 time.sleep(delay_time)
-                
+        
+        # Log completion if not stopped
+        if not stop_flags.get(batch_id, False):
+            with app.app_context():
+                log_message(batch_id, "Message sending completed", "success")
+                update_batch_status(batch_id, "completed")
+        
+        # Always logout when done
+        try:
+            client.logout()
+            with app.app_context():
+                log_message(batch_id, "Logged out of Instagram", "info")
         except Exception as e:
-            failed_count += 1
-            error_msg = str(e)
-            logger.error(f"Error sending message: {error_msg}")
-            log_message(batch_id, f"Error sending message ({i+1}/{len(messages)})", "failed", error_msg)
-            
-            # Wait a bit longer after an error
-            time.sleep(delay_time * 2)
+            with app.app_context():
+                log_message(batch_id, "Error during logout", "failed", str(e))
     
-    # Log completion
-    if sent_count == len(messages):
-        log_message(batch_id, f"All {sent_count} messages sent successfully! ✅", "success")
-        update_batch_status(batch_id, "completed")
-    elif sent_count > 0:
-        log_message(
-            batch_id, 
-            f"Completed with {sent_count} messages sent and {failed_count} failed", 
-            "success" if sent_count > failed_count else "failed"
-        )
-        update_batch_status(batch_id, "completed" if sent_count > failed_count else "failed")
-    else:
-        log_message(batch_id, "Failed to send any messages", "failed", "All messages failed to send")
-        update_batch_status(batch_id, "failed")
+    except Exception as e:
+        logger.error(f"Error in message sending thread: {str(e)}")
+        with app.app_context():
+            log_message(batch_id, "Error in message sending process", "failed", str(e))
+            update_batch_status(batch_id, "failed")
     
-    return True
+    finally:
+        # Clean up
+        clients.pop(batch_id, None)
+        active_batches.pop(batch_id, None)
