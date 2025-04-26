@@ -198,6 +198,8 @@ class WhatsAppService:
             logger.error("No process or stdout to read from")
             return
             
+        reconnect_checker_started = False
+        
         for line in iter(self.process.stdout.readline, ''):
             if not line:
                 break
@@ -219,9 +221,27 @@ class WhatsAppService:
                             self.pairing_code = data.get('code')
                             
                         elif data['type'] == 'connection_update':
+                            old_status = self.status
                             self.status = data.get('status', 'unknown')
                             self.connected_phone = data.get('phoneNumber')
                             self.phone_number = data.get('phoneNumber')
+                            
+                            # If status became "connecting" or "close", set up reconnect checker
+                            if (self.status in ['connecting', 'close']) and not reconnect_checker_started:
+                                def check_connection_status():
+                                    if self.status in ['connecting', 'close', 'disconnected']:
+                                        logger.info(f"WhatsApp connection is in '{self.status}' state, attempting to restart")
+                                        self.restart()
+                                
+                                # Wait 60 seconds before checking connection status
+                                threading.Timer(60.0, check_connection_status).start()
+                                reconnect_checker_started = True
+                                logger.info("WhatsApp connection status checker scheduled")
+                            
+                            # If connected, reset the reconnect checker flag
+                            if self.status == 'open':
+                                reconnect_checker_started = False
+                                logger.info("WhatsApp connection is now open")
                             
                         elif data['type'] == 'message_log':
                             # Store message logs

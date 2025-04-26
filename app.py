@@ -18,7 +18,10 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "smart_pulse_secret_key_by_sahil_prajapati_2025")
+
+# Set a secure secret key (very important for sessions and CSRF protection)
+app.config["SECRET_KEY"] = os.environ.get("SESSION_SECRET", "smart_pulse_secret_key_by_sahil_prajapati_2025_supersecure_random_string_for_sessions")
+app.secret_key = app.config["SECRET_KEY"]  # Also set directly on app for compatibility
 
 # Configure database
 # Debug log for DATABASE_URL
