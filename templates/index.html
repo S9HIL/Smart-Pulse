@@ -379,10 +379,10 @@
             transform: translateY(-30px) translateX(10px) rotate(0deg);
             opacity: 0;
         }
-        20% {
+        15% {
             opacity: 0.7;
         }
-        80% {
+        85% {
             opacity: 0.7;
         }
         100% {
@@ -420,8 +420,8 @@
                 flower.style.height = size + 'px';
                 flower.style.left = Math.random() * 100 + '%';
                 // Faster animation with shorter delays
-                flower.style.animationDelay = Math.random() * 6 + 's';
-                flower.style.animationDuration = (4 + Math.random() * 3) + 's';
+                flower.style.animationDelay = Math.random() * 3 + 's';
+                flower.style.animationDuration = (2 + Math.random() * 2) + 's';
                 
                 flowerContainer.appendChild(flower);
             }
@@ -443,131 +443,16 @@
                 petal.style.left = Math.random() * 100 + '%';
                 petal.style.transform = `rotate(${Math.random() * 360}deg)`;
                 // Faster animation with shorter delays
-                petal.style.animationDelay = Math.random() * 5 + 's';
-                petal.style.animationDuration = (3 + Math.random() * 3) + 's';
+                petal.style.animationDelay = Math.random() * 2 + 's';
+                petal.style.animationDuration = (1.5 + Math.random() * 2) + 's';
                 
                 flowerContainer.appendChild(petal);
             }
         }
         
         function createStarryBackground() {
-            const card = document.querySelector('.blue-gradient-card');
-            if (!card) return;
-            
-            // Add light waves effect container
-            const waveContainer = document.createElement('div');
-            waveContainer.className = 'wave-container';
-            waveContainer.style.position = 'absolute';
-            waveContainer.style.top = '0';
-            waveContainer.style.left = '0';
-            waveContainer.style.width = '100%';
-            waveContainer.style.height = '100%';
-            waveContainer.style.overflow = 'hidden';
-            waveContainer.style.zIndex = '0';
-            waveContainer.style.pointerEvents = 'none';
-            card.appendChild(waveContainer);
-            
-            // Add pulse light effects
-            for (let i = 0; i < 8; i++) {
-                // Create pulsing light elements
-                const pulseLight = document.createElement('div');
-                pulseLight.className = 'pulse-light';
-                pulseLight.style.position = 'absolute';
-                pulseLight.style.width = (30 + Math.random() * 60) + 'px';
-                pulseLight.style.height = pulseLight.style.width;
-                pulseLight.style.borderRadius = '50%';
-                pulseLight.style.background = 'radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
-                pulseLight.style.opacity = '0';
-                pulseLight.style.filter = 'blur(5px)';
-                pulseLight.style.transform = 'scale(0.5)';
-                
-                // Random position
-                pulseLight.style.left = Math.random() * 100 + '%';
-                pulseLight.style.top = Math.random() * 100 + '%';
-                
-                // Animation - faster and more visible
-                const animDuration = 1 + Math.random() * 2; // Faster animation (1-3s)
-                pulseLight.style.animation = `pulseAnim ${animDuration}s ease-in-out infinite`;
-                pulseLight.style.animationDelay = (Math.random() * 1.5) + 's'; // Shorter delay
-                
-                waveContainer.appendChild(pulseLight);
-            }
-            
-            // Create dynamic light waves that move across the form
-            for (let i = 0; i < 4; i++) {
-                const wave = document.createElement('div');
-                wave.className = 'light-wave';
-                wave.style.position = 'absolute';
-                wave.style.width = '200%';
-                wave.style.height = '200%';
-                wave.style.borderRadius = '38%';
-                wave.style.background = 'rgba(255, 255, 255, 0.1)'; 
-                wave.style.top = '-50%';
-                wave.style.left = '-50%';
-                wave.style.transform = 'translate(0,0)';
-                
-                // Different sizes for each wave
-                const scale = 0.8 + (i * 0.1); 
-                wave.style.transform = `scale(${scale})`;
-                
-                // Faster animations
-                const animDuration = 6 + (i * 2);
-                wave.style.animation = `waveAnim ${animDuration}s linear infinite`;
-                wave.style.animationDelay = (i * 0.5) + 's';
-                
-                waveContainer.appendChild(wave);
-            }
-            
-            // Add sparkles that float around
-            for (let i = 0; i < 20; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.className = 'sparkle';
-                sparkle.style.position = 'absolute';
-                sparkle.style.width = (3 + Math.random() * 4) + 'px';
-                sparkle.style.height = sparkle.style.width;
-                sparkle.style.background = 'white';
-                sparkle.style.borderRadius = '50%';
-                sparkle.style.boxShadow = '0 0 10px 2px rgba(255, 255, 255, 0.8)';
-                sparkle.style.opacity = Math.random() * 0.5 + 0.3;
-                
-                // Random starting positions
-                sparkle.style.left = Math.random() * 100 + '%';
-                sparkle.style.top = Math.random() * 100 + '%';
-                
-                // Animation
-                const floatDuration = 3 + Math.random() * 7;
-                sparkle.style.animation = `sparkleFloat ${floatDuration}s ease-in-out infinite`;
-                sparkle.style.animationDelay = (Math.random() * 5) + 's';
-                
-                waveContainer.appendChild(sparkle);
-            }
-            
-            // Add all the animation keyframes
-            if (!document.getElementById('wave-keyframes')) {
-                const style = document.createElement('style');
-                style.id = 'wave-keyframes';
-                style.textContent = `
-                    @keyframes pulseAnim {
-                        0% { opacity: 0; transform: scale(0.4); }
-                        50% { opacity: 0.8; transform: scale(1.2); }
-                        100% { opacity: 0; transform: scale(0.4); }
-                    }
-                    
-                    @keyframes waveAnim {
-                        0% { transform: translate(0, 0) rotate(0deg); }
-                        100% { transform: translate(0, 0) rotate(360deg); }
-                    }
-                    
-                    @keyframes sparkleFloat {
-                        0% { transform: translate(0, 0) scale(1); }
-                        25% { transform: translate(10px, -15px) scale(1.2); }
-                        50% { transform: translate(20px, 0) scale(0.8); }
-                        75% { transform: translate(-10px, 15px) scale(1.1); }
-                        100% { transform: translate(0, 0) scale(1); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
+            // Do nothing - we're keeping only the flower animation inside the login card
+            // and applying background animations only outside the login container
         }
     </script>
 {% endif %}
