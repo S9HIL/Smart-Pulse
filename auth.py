@@ -35,18 +35,14 @@ def login():
             email = request.form.get('email')
             remember = 'remember' in request.form
             
-            # Use either username or email based on what was provided
-            if email and not username:
-                # Find user by email
-                user = User.query.filter_by(email=email).first()
+            # Use username field which could be either username or email
+            if username:
+                # Find user by username or email (simpler query to avoid column issues)
+                user = User.query.filter_by(username=username).first()
                 if not user:
-                    flash('Invalid email or password.', 'danger')
-                    return redirect(url_for('main.index'))
-            elif username:
-                # Find user by username or email
-                user = User.query.filter(
-                    (User.username == username) | (User.email == username)
-                ).first()
+                    # Try with email next
+                    user = User.query.filter_by(email=username).first()
+                
                 if not user:
                     flash('Invalid username or password.', 'danger')
                     return redirect(url_for('main.index'))
