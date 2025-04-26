@@ -50,16 +50,29 @@ def index():
                           phone_number=whatsapp_service.phone_number)
 
 @whatsapp_bp.route('/dashboard')
+@login_required
 def dashboard():
     """WhatsApp task dashboard"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+        
     # Don't show any tasks
     tasks = []
     
     return render_template('whatsapp/dashboard.html', tasks=tasks)
 
 @whatsapp_bp.route('/connect', methods=['POST'])
+@login_required
 def connect():
     """Connect to WhatsApp"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         phone_number = request.form.get('phone_number')
         use_pairing_code = request.form.get('use_pairing_code', 'false').lower() == 'true'
@@ -92,8 +105,15 @@ def connect():
         })
 
 @whatsapp_bp.route('/disconnect', methods=['POST'])
+@login_required
 def disconnect():
     """Disconnect from WhatsApp"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         # Get force parameter if provided
         force = request.json.get('force', False) if request.is_json else False
@@ -117,8 +137,15 @@ def disconnect():
 _last_ping_time = 0
 
 @whatsapp_bp.route('/status')
+@login_required
 def status():
     """Get WhatsApp connection status"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     # Actively request a status update from the WhatsApp service
     try:
         # Track when the last ping was sent to avoid excessive pings
@@ -159,8 +186,15 @@ def status():
 # QR code functionality removed as per requirements
 
 @whatsapp_bp.route('/pairing_code', methods=['POST'])
+@login_required
 def request_pairing_code():
     """Request a pairing code for WhatsApp connection"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         phone_number = request.form.get('phone_number')
         if not phone_number:
