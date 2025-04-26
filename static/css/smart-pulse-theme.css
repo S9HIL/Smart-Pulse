@@ -1,0 +1,413 @@
+/* Smart Pulse - Black Glossy Theme */
+
+/* Base theme colors and styles */
+:root {
+  --primary-bg: #0a0a0a;
+  --secondary-bg: #141414;
+  --accent-bg: #222222;
+  --primary-text: #ffffff;
+  --secondary-text: #e0e0e0;
+  --accent-color: #7371fc;
+  --success-color: #32a852;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --glossy-gradient: linear-gradient(145deg, rgba(25, 25, 25, 0.6), rgba(10, 10, 10, 0.8));
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --transition-normal: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+}
+
+/* Global styles */
+body {
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  transition: var(--transition-normal);
+  overflow-x: hidden;
+}
+
+/* Glossy effect for cards and containers */
+.card, .container-fluid.content, .card-body, .list-group-item {
+  background: var(--glossy-gradient);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-normal);
+}
+
+.card:hover, .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Navbar styling */
+.navbar {
+  background: rgba(10, 10, 10, 0.8) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+  background: linear-gradient(90deg, #fff, #ccc, #fff);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 3s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Smart Pulse animated title */
+.smart-pulse-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+  color: white;
+  text-shadow: 0 0 10px rgba(115, 113, 252, 0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    text-shadow: 0 0 5px rgba(115, 113, 252, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(115, 113, 252, 0.8), 0 0 30px rgba(115, 113, 252, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(115, 113, 252, 0.5);
+  }
+}
+
+/* Animated logo */
+.logo-container {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+  position: relative;
+}
+
+.logo-container img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Custom form styling */
+.form-control, .form-select {
+  background-color: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--primary-text);
+  transition: var(--transition-normal);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: rgba(40, 40, 40, 0.8);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.25rem rgba(115, 113, 252, 0.25);
+  color: white;
+}
+
+/* Button styling */
+.btn {
+  border-radius: 6px;
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(45deg);
+  transition: all 0.5s;
+  opacity: 0;
+}
+
+.btn:hover::after {
+  opacity: 1;
+  left: 100%;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover {
+  background-color: #5957db;
+  border-color: #5957db;
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+  border-radius: 6px;
+}
+
+/* Table styling */
+.table {
+  color: var(--secondary-text);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-dark {
+  background-color: var(--secondary-bg);
+}
+
+/* Side navigation */
+.nav-link {
+  color: var(--secondary-text);
+  transition: var(--transition-normal);
+  border-radius: 6px;
+  margin-bottom: 5px;
+  padding: 0.7rem 1rem;
+}
+
+.nav-link:hover, .nav-link.active {
+  background-color: rgba(115, 113, 252, 0.1);
+  color: var(--accent-color);
+  transform: translateX(5px);
+}
+
+.nav-link i, .nav-link svg {
+  margin-right: 10px;
+}
+
+/* Platform icons */
+.platform-icon {
+  font-size: 1.5rem;
+  margin-right: 10px;
+  transition: var(--transition-normal);
+}
+
+.platform-link:hover .platform-icon {
+  transform: scale(1.2);
+}
+
+/* Footer */
+.footer {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem 0;
+  text-align: center;
+  position: relative;
+  margin-top: 3rem;
+}
+
+.footer-text {
+  color: var(--secondary-text);
+  font-size: 0.9rem;
+}
+
+.developer-credit {
+  font-weight: 500;
+  background: linear-gradient(90deg, #fff, #7371fc, #fff);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 5s linear infinite;
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: var(--transition-normal);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Message status styling */
+.message-pending {
+  color: var(--warning-color);
+}
+
+.message-sent, .message-success {
+  color: var(--success-color);
+}
+
+.message-failed {
+  color: var(--danger-color);
+}
+
+.message-info {
+  color: var(--info-color);
+}
+
+/* Platform-specific colors */
+.whatsapp-color {
+  color: #25D366;
+}
+
+.instagram-color {
+  color: #E1306C;
+}
+
+.facebook-color {
+  color: #4267B2;
+}
+
+/* Animations for elements */
+.fade-in {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Pulsing animation for elements */
+.element-pulse {
+  animation: elementPulse 2s infinite;
+}
+
+@keyframes elementPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(115, 113, 252, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(115, 113, 252, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(115, 113, 252, 0);
+  }
+}
+
+/* Flip card animation */
+.flip-card {
+  perspective: 1000px;
+  transition: var(--transition-normal);
+}
+
+.flip-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* Highlight glow effect for important elements */
+.highlight-glow {
+  box-shadow: 0 0 15px rgba(115, 113, 252, 0.5);
+}
+
+/* Override Bootstrap card and other components */
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.alert {
+  border: none;
+  border-radius: 8px;
+}
+
+/* Modals */
+.modal-content {
+  background: var(--secondary-bg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-header, .modal-footer {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme adjustments for Bootstrap components */
+.dropdown-menu {
+  background-color: var(--secondary-bg);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item {
+  color: var(--secondary-text);
+}
+
+.dropdown-item:hover {
+  background-color: rgba(115, 113, 252, 0.1);
+  color: var(--accent-color);
+}
+
+/* Progress bar styling */
+.progress {
+  background-color: rgba(255, 255, 255, 0.1);
+  height: 8px;
+  border-radius: 4px;
+}
+
+.progress-bar {
+  background-color: var(--accent-color);
+  border-radius: 4px;
+}
+
+/* Custom switch */
+.form-switch .form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}

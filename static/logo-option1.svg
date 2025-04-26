@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Modern gradient background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6157ff" />
+      <stop offset="100%" stop-color="#74ccf4" />
+    </linearGradient>
+    
+    <!-- Animated flashing effect -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background hexagon with animation -->
+  <polygon points="40,5 70,20 70,60 40,75 10,60 10,20" fill="none" stroke="white" stroke-width="2">
+    <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
+  </polygon>
+  
+  <!-- S letter -->
+  <path d="M30,25 C38,25 40,30 40,33 C40,38 30,40 30,45 C30,50 35,55 42,50" stroke="white" fill="none" stroke-width="3" stroke-linecap="round" filter="url(#glow)">
+    <animate attributeName="stroke-width" values="3;4;3" dur="2s" repeatCount="indefinite" />
+  </path>
+  
+  <!-- P letter -->
+  <path d="M45,25 L45,55 M45,25 C55,25 58,30 58,35 C58,40 55,45 45,45" stroke="white" fill="none" stroke-width="3" stroke-linecap="round" filter="url(#glow)">
+    <animate attributeName="stroke-width" values="3;4;3" dur="2s" repeatCount="indefinite" />
+  </path>
+  
+  <!-- Flowing line animation -->
+  <circle cx="40" cy="40" r="36" fill="none" stroke="white" stroke-width="1" stroke-dasharray="2,10" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="8s" repeatCount="indefinite" />
+  </circle>
+</svg>
