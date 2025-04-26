@@ -48,7 +48,11 @@ def index():
         flash('Your account is pending approval.', 'warning')
         return redirect(url_for('auth.pending_approval'))
     
-    return render_template('index.html', time_of_day=time_of_day)
+    # Set username for personalized greeting (protected against anonymous users)
+    username = current_user.username if current_user.is_authenticated else None
+    greeting = get_personalized_greeting(username)
+    
+    return render_template('index.html', time_of_day=time_of_day, greeting=greeting)
 
 @main_bp.route('/set_username', methods=['POST'])
 @login_required

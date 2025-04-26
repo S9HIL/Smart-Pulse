@@ -23,6 +23,11 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
+    # For GET requests, redirect to main index with login form
+    if request.method == 'GET':
+        return redirect(url_for('main.index'))
+    
+    # Process POST requests
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -74,6 +79,10 @@ def register():
     # If user is already logged in, redirect to dashboard
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
+    
+    # For GET requests, redirect to main index with register form
+    if request.method == 'GET':
+        return redirect(url_for('main.index', page='register'))
     
     if request.method == 'POST':
         username = request.form.get('username')

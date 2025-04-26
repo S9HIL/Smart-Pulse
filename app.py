@@ -18,7 +18,7 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask app
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "smart_pulse_secret_key_by_sahil_prajapati_2025"
+app.secret_key = os.environ.get("SESSION_SECRET", "smart_pulse_secret_key_by_sahil_prajapati_2025")
 
 # Configure database
 # Debug log for DATABASE_URL
@@ -79,6 +79,31 @@ with app.app_context():
     @app.context_processor
     def inject_time():
         return {'curr_time': get_current_indian_time()}
+    
+    # Global before_request handler to enforce authentication
+    @app.before_request
+    def check_authentication():
+        from flask import request, redirect, url_for, current_app
+        from flask_login import current_user
+        
+        # List of routes that don't require authentication
+        public_routes = [
+            'static',            # Static files
+            'auth.login',        # Login page
+            'auth.register',     # Register page
+            'auth.pending_approval',  # Pending approval page
+            'main.index',        # Home page (will handle auth in the view)
+        ]
+        
+        # Check if the endpoint is specified and needs protection
+        if request.endpoint and not any(request.endpoint == route or request.endpoint.startswith(route + '.') for route in public_routes):
+            # If user is not authenticated, redirect to login
+            if not current_user.is_authenticated:
+                return redirect(url_for('main.index'))
+                
+            # If user is authenticated but not approved, redirect to pending approval
+            if not current_user.is_approved:
+                return redirect(url_for('auth.pending_approval'))
     
     # Log startup info
     logger.info("Automation Hub started")

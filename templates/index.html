@@ -5,9 +5,19 @@
 {% block content %}
 <div class="text-center py-5">
     <h1 class="display-3 fw-bold mb-4">
-        Welcome to Smart Pulse
+        {% if current_user.is_authenticated %}
+            {{ greeting }} to Smart Pulse
+        {% else %}
+            Welcome to Smart Pulse
+        {% endif %}
     </h1>
-    <p class="lead mb-5">Your multi-platform social messaging automation tool</p>
+    <p class="lead mb-5">
+        {% if current_user.is_authenticated %}
+            Your multi-platform social messaging automation hub
+        {% else %}
+            The complete social messaging automation platform
+        {% endif %}
+    </p>
 </div>
 
 {% if current_user.is_authenticated %}
@@ -382,17 +392,24 @@
     }
     </style>
     
-    <!-- Add the flowers dynamically with JavaScript -->
+    <!-- Add 3D flower animation and starry background effects with JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize both effects
+            createFlowerBackground();
+            createStarryBackground();
+        });
+        
+        function createFlowerBackground() {
             const card = document.querySelector('.blue-gradient-card');
+            if (!card) return;
             
             // Create flower container
             const flowerContainer = document.createElement('div');
             flowerContainer.className = 'flower-container';
             card.appendChild(flowerContainer);
             
-            // Create flowers (increased count)
+            // Create flowers (increased count for better effect)
             for (let i = 0; i < 15; i++) {
                 const flower = document.createElement('div');
                 flower.className = 'flower';
@@ -431,7 +448,58 @@
                 
                 flowerContainer.appendChild(petal);
             }
-        });
+        }
+        
+        function createStarryBackground() {
+            const card = document.querySelector('.blue-gradient-card');
+            if (!card) return;
+            
+            // Create starry background container
+            const starContainer = document.createElement('div');
+            starContainer.className = 'star-container';
+            starContainer.style.position = 'absolute';
+            starContainer.style.top = '0';
+            starContainer.style.left = '0';
+            starContainer.style.width = '100%';
+            starContainer.style.height = '100%';
+            starContainer.style.overflow = 'hidden';
+            starContainer.style.zIndex = '0';
+            starContainer.style.pointerEvents = 'none';
+            card.appendChild(starContainer);
+            
+            // Create stars
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.position = 'absolute';
+                star.style.width = (Math.random() * 2) + 'px';
+                star.style.height = star.style.width;
+                star.style.borderRadius = '50%';
+                star.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                star.style.boxShadow = '0 0 3px rgba(255, 255, 255, 0.8)';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                
+                // Animation
+                star.style.animation = `starTwinkle ${2 + Math.random() * 3}s ease-in-out infinite`;
+                star.style.animationDelay = (Math.random() * 5) + 's';
+                
+                starContainer.appendChild(star);
+            }
+            
+            // Add keyframes for star twinkling
+            if (!document.getElementById('star-keyframes')) {
+                const style = document.createElement('style');
+                style.id = 'star-keyframes';
+                style.textContent = `
+                    @keyframes starTwinkle {
+                        0%, 100% { opacity: 0.2; transform: scale(0.8); }
+                        50% { opacity: 1; transform: scale(1.2); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
     </script>
 {% endif %}
 {% endblock %}
