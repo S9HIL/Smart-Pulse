@@ -169,7 +169,22 @@ class WhatsAppService:
         """Restart the WhatsApp service"""
         self.stop()
         time.sleep(2)  # Wait a bit before restarting
-        self.start()
+        success = self.start()
+        
+        # Set up an automatic reconnect after 15 seconds if status is still connecting
+        if success:
+            def check_and_reconnect():
+                if self.status == "connecting":
+                    logger.info("WhatsApp still in connecting state after timeout, attempting to reconnect")
+                    self.restart()
+                elif self.status == "close":
+                    logger.info("WhatsApp connection closed, attempting to reconnect")
+                    self.restart()
+            
+            # Schedule the check after 15 seconds
+            threading.Timer(15.0, check_and_reconnect).start()
+            
+        return success
         
     def is_running(self):
         """Check if the WhatsApp service is running"""
