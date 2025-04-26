@@ -556,7 +556,7 @@
             }
         }
         
-        // Create modern abstract visual effect with glowing orbs and flowing lines
+        // Create sexy aurora effect with flowing particles and light streaks
         function createDynamicBackground() {
             const container = document.getElementById('particles-container');
             if (!container) return;
@@ -564,82 +564,175 @@
             // Clear existing particles
             container.innerHTML = '';
             
-            // Set container style
-            container.style.background = 'linear-gradient(135deg, #0f1016 0%, #141830 100%)';
+            // Set container style with deep gradient background
+            container.style.background = 'linear-gradient(125deg, #090b15 0%, #141d33 100%)';
             
-            // Create floating orbs
-            const numOrbs = Math.min(Math.floor(window.innerWidth / 200), 8);
-            
-            for (let i = 0; i < numOrbs; i++) {
-                const orb = document.createElement('div');
-                orb.className = 'orb';
+            // Create aurora waves (adds depth)
+            for (let i = 0; i < 3; i++) {
+                const aurora = document.createElement('div');
+                aurora.className = 'aurora-wave';
                 
-                // Random size for orbs
-                const size = 100 + Math.random() * 200;
-                orb.style.width = size + 'px';
-                orb.style.height = size + 'px';
+                // Different colors for each aurora wave
+                if (i === 0) {
+                    aurora.style.background = 'linear-gradient(90deg, rgba(79, 4, 227, 0.6) 0%, rgba(3, 19, 80, 0.1) 100%)';
+                    aurora.style.animationDuration = '18s';
+                    aurora.style.height = '160%';
+                    aurora.style.opacity = '0.15';
+                } else if (i === 1) {
+                    aurora.style.background = 'linear-gradient(90deg, rgba(4, 148, 227, 0.5) 0%, rgba(11, 70, 181, 0.1) 100%)';
+                    aurora.style.animationDuration = '22s';
+                    aurora.style.height = '170%';
+                    aurora.style.opacity = '0.18';
+                    aurora.style.animationDelay = '-2s';
+                } else {
+                    aurora.style.background = 'linear-gradient(90deg, rgba(20, 184, 213, 0.4) 0%, rgba(36, 65, 187, 0.1) 100%)';
+                    aurora.style.animationDuration = '26s';
+                    aurora.style.height = '180%';
+                    aurora.style.opacity = '0.16';
+                    aurora.style.animationDelay = '-4s';
+                }
                 
-                // Random starting position
-                orb.style.left = Math.random() * 90 + '%';
-                orb.style.top = Math.random() * 90 + '%';
-                
-                // Set random animation delay
-                orb.style.animationDelay = (Math.random() * 10) + 's';
-                orb.style.animationDuration = (15 + Math.random() * 15) + 's';
-                
-                // Different colors for orbs
-                const hue = 200 + Math.random() * 40;
-                orb.style.backgroundColor = `hsla(${hue}, 80%, 60%, 0.1)`;
-                orb.style.opacity = 0.1 + Math.random() * 0.2;
-                
-                container.appendChild(orb);
+                container.appendChild(aurora);
             }
             
-            // Create flowing lines
-            const numLines = Math.min(Math.floor(window.innerHeight / 150), 8);
+            // Create neon particles (more dramatic and sexy)
+            const numParticles = Math.min(Math.floor(window.innerWidth / 100), 15);
+            
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'neon-particle';
+                
+                // Random size for particles (bigger for more impact)
+                const size = 5 + Math.random() * 25;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Random starting position
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                
+                // Set random animation delay and duration (faster for more energy)
+                particle.style.animationDelay = (Math.random() * 5) + 's';
+                particle.style.animationDuration = (4 + Math.random() * 6) + 's';
+                
+                // Different colors for particles
+                const hue = 180 + Math.random() * 60; // Blues to purples
+                const lightness = 60 + Math.random() * 20;
+                particle.style.boxShadow = `0 0 ${8 + Math.random() * 15}px ${Math.floor(size/3)}px hsla(${hue}, 100%, ${lightness}%, 0.8)`;
+                
+                container.appendChild(particle);
+            }
+            
+            // Create shining lines (light streaks that add movement and energy)
+            const numLines = Math.min(Math.floor(window.innerWidth / 100), 12);
             
             for (let i = 0; i < numLines; i++) {
                 const line = document.createElement('div');
-                line.className = 'line';
+                line.className = 'shine-line';
                 
-                // Set line properties
-                const width = window.innerWidth * (0.5 + Math.random() * 0.5);
+                // Random width for impact
+                const width = 100 + Math.random() * 350;
                 line.style.width = width + 'px';
                 
-                // Random position and angle
-                line.style.left = (Math.random() * 50 - 25) + '%';
-                line.style.top = (Math.random() * 100) + '%';
-                line.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
+                // Random height/thickness
+                line.style.height = (Math.random() < 0.3 ? 2 : 1) + 'px';
                 
-                // Animation settings
+                // Random position and rotation
+                line.style.left = (Math.random() * 100) + '%';
+                line.style.top = (Math.random() * 100) + '%';
+                line.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                // Animation settings (faster, more dynamic)
                 line.style.animationDelay = (Math.random() * 10) + 's';
-                line.style.animationDuration = (10 + Math.random() * 20) + 's';
+                line.style.animationDuration = (3 + Math.random() * 4) + 's';
+                
+                // Different shine intensity
+                if (Math.random() < 0.3) {
+                    // Create a few extra-bright lines
+                    line.style.opacity = '0.9';
+                    line.style.boxShadow = '0 0 15px 2px rgba(255, 255, 255, 0.8)';
+                    line.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 20%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.3) 80%, transparent 100%)';
+                }
                 
                 container.appendChild(line);
             }
             
-            // Create pulsing lights
-            const numLights = Math.min(Math.floor(window.innerWidth / 250), 4);
-            
-            for (let i = 0; i < numLights; i++) {
-                const light = document.createElement('div');
-                light.className = 'pulse-light';
+            // Add CSS for these elements if not already in the stylesheet
+            const style = document.createElement('style');
+            style.textContent = `
+                /* Aurora waves effect */
+                .aurora-wave {
+                    position: absolute;
+                    width: 200%;
+                    height: 200%;
+                    bottom: -150%;
+                    left: -50%;
+                    border-radius: 45%;
+                    filter: blur(35px);
+                    animation: auroraWaves 30s linear infinite;
+                    opacity: 0.2;
+                }
                 
-                // Set size
-                const size = 200 + Math.random() * 300;
-                light.style.width = size + 'px';
-                light.style.height = size + 'px';
+                @keyframes auroraWaves {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
                 
-                // Random position
-                light.style.left = Math.random() * 90 + '%';
-                light.style.top = Math.random() * 90 + '%';
+                /* Neon particles */
+                .neon-particle {
+                    position: absolute;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(117,219,255,0.6) 40%, rgba(64,124,255,0.2) 70%, transparent 100%);
+                    filter: blur(1px);
+                    opacity: 0;
+                    animation: neonFloat 8s ease-in-out infinite;
+                }
                 
-                // Animation settings
-                light.style.animationDelay = (Math.random() * 5) + 's';
-                light.style.animationDuration = (8 + Math.random() * 7) + 's';
+                @keyframes neonFloat {
+                    0% {
+                        transform: translateY(20px) translateX(0px) scale(0.1);
+                        opacity: 0;
+                    }
+                    10% { opacity: 0.8; }
+                    50% { opacity: 0.6; }
+                    90% { opacity: 0.4; }
+                    100% {
+                        transform: translateY(-100px) translateX(50px) scale(1);
+                        opacity: 0;
+                    }
+                }
                 
-                container.appendChild(light);
-            }
+                /* Shine lines */
+                .shine-line {
+                    position: absolute;
+                    height: 1px;
+                    transform-origin: center;
+                    background: linear-gradient(90deg, transparent 0%, rgba(59,195,255,0.1) 20%, rgba(255,255,255,0.7) 50%, rgba(59,195,255,0.1) 80%, transparent 100%);
+                    opacity: 0;
+                    animation: shineEffect 6s ease-out infinite;
+                    box-shadow: 0 0 8px rgba(59,195,255,0.6);
+                }
+                
+                @keyframes shineEffect {
+                    0% {
+                        width: 0;
+                        opacity: 0;
+                        transform: rotate(45deg);
+                    }
+                    10% { opacity: 0.8; }
+                    50% {
+                        opacity: 0.6;
+                        width: 100%;
+                    }
+                    90% { opacity: 0.2; }
+                    100% {
+                        width: 0;
+                        opacity: 0;
+                        transform: rotate(45deg) translate(300px, 300px);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
         
         // Initialize all tooltips and format timestamps
