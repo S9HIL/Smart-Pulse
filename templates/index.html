@@ -58,11 +58,14 @@
         </a>
     </div>
 {% else %}
+    <!-- Check request path to determine which form to show -->
+    {% set is_register = request.path == '/register' %}
+    
     <!-- Full width design with blue gradient form card -->
     <div class="login-container">
         <div class="login-card-wrapper">
             <div class="blue-gradient-card">
-                <h2 class="login-heading">Login</h2>
+                <h2 class="login-heading">{{ 'Register' if is_register else 'Login' }}</h2>
                 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -72,14 +75,47 @@
                     {% endif %}
                 {% endwith %}
                 
-                <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
+                {% if is_register %}
+                <!-- Register form -->
+                <form method="POST" action="{{ url_for('auth.register') }}" class="login-form">
                     <div class="form-group mb-4">
-                        <label for="login_username">Username</label>
-                        <input type="text" class="form-control login-input" id="login_username" name="username" required>
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control login-input" id="username" name="username" required>
                     </div>
                     <div class="form-group mb-4">
-                        <label for="login_password">Password</label>
-                        <input type="password" class="form-control login-input" id="login_password" name="password" required>
+                        <label for="email">Email Address</label>
+                        <input type="email" class="form-control login-input" id="email" name="email" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control login-input" id="password" name="password" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" class="form-control login-input" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn login-btn">Register</button>
+                    </div>
+                </form>
+                
+                <div class="register-link">
+                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+                </div>
+                {% else %}
+                <!-- Login form -->
+                <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
+                    <div class="form-group mb-4">
+                        <label for="email">Email Address</label>
+                        <input type="email" class="form-control login-input" id="email" name="email" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control login-input" id="password" name="password" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label text-white" for="remember">Remember me</label>
                     </div>
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn login-btn">Login</button>
@@ -89,6 +125,7 @@
                 <div class="register-link">
                     <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -240,6 +277,12 @@
         0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
         50% { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); }
         100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+    }
+    
+    @keyframes borderGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
     
     /* 3D Falling Flowers in background */
