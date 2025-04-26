@@ -25,44 +25,44 @@
     </div>
 </div>
 
-<div class="row mb-5">
-    <div class="col-12 mb-4">
-        <h2 class="h4 mb-4"><i class="fas fa-plug me-2 text-primary"></i> Available Platforms</h2>
-    </div>
-    
-    <!-- WhatsApp Card -->
-    <div class="col-md-4 mb-4">
-        <div class="card border-0 shadow platform-card">
-            <div class="card-body text-center">
-                <i class="fab fa-whatsapp platform-icon text-success"></i>
-                <h3 class="h5 mb-3">WhatsApp Automation</h3>
-                <p class="card-text">Automate WhatsApp messages to multiple contacts with customizable delays.</p>
-                <a href="{{ url_for('whatsapp.index') }}" class="btn btn-success">Go to WhatsApp</a>
-            </div>
+<!-- Platform Sections -->
+<div class="mb-5">
+    <!-- WhatsApp Section -->
+    <div class="platform-section whatsapp-section mb-4">
+        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
+            <i class="fab fa-whatsapp me-2"></i> WhatsApp Automation
+        </h2>
+        <div class="p-3">
+            <p>Automate WhatsApp message sending to multiple recipients.</p>
+            <a href="{{ url_for('whatsapp.index') }}" class="btn btn-outline-light">
+                Go to WhatsApp
+            </a>
         </div>
     </div>
     
-    <!-- Instagram Card -->
-    <div class="col-md-4 mb-4">
-        <div class="card border-0 shadow platform-card">
-            <div class="card-body text-center">
-                <i class="fab fa-instagram platform-icon text-danger"></i>
-                <h3 class="h5 mb-3">Instagram Automation</h3>
-                <p class="card-text">Automate Instagram message sending to followers and users.</p>
-                <a href="{{ url_for('instagram.index') }}" class="btn btn-danger">Go to Instagram</a>
-            </div>
+    <!-- Facebook Section -->
+    <div class="platform-section facebook-section mb-4">
+        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
+            <i class="fab fa-facebook me-2"></i> Facebook Automation
+        </h2>
+        <div class="p-3">
+            <p>Automate Facebook message sending to multiple recipients.</p>
+            <a href="{{ url_for('facebook.index') }}" class="btn btn-outline-light">
+                Go to Facebook
+            </a>
         </div>
     </div>
     
-    <!-- Facebook Card -->
-    <div class="col-md-4 mb-4">
-        <div class="card border-0 shadow platform-card">
-            <div class="card-body text-center">
-                <i class="fab fa-facebook platform-icon text-primary"></i>
-                <h3 class="h5 mb-3">Facebook Automation</h3>
-                <p class="card-text">Automate Facebook message sending to users and conversations.</p>
-                <a href="{{ url_for('facebook.index') }}" class="btn btn-primary">Go to Facebook</a>
-            </div>
+    <!-- Instagram Section -->
+    <div class="platform-section instagram-section mb-4">
+        <h2 class="h4 d-flex align-items-center p-3 rounded mb-0">
+            <i class="fab fa-instagram me-2"></i> Instagram Automation
+        </h2>
+        <div class="p-3">
+            <p>Automate Instagram message sending to followers and users.</p>
+            <a href="{{ url_for('instagram.index') }}" class="btn btn-outline-light">
+                Go to Instagram
+            </a>
         </div>
     </div>
 </div>

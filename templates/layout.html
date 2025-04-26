@@ -302,10 +302,9 @@
                 }
             });
             
-            // For any element with invalid date, try to format it properly
-            const invalidDates = document.querySelectorAll(':contains("Invalid Date")');
-            invalidDates.forEach(el => {
-                if (el.textContent.trim() === 'Invalid Date') {
+            // For any element containing "Invalid Date", try to format it properly
+            document.querySelectorAll('*').forEach(el => {
+                if (el.textContent && el.textContent.trim() === 'Invalid Date') {
                     const possibleTimestamp = el.getAttribute('data-timestamp') || el.getAttribute('datetime');
                     if (possibleTimestamp) {
                         el.textContent = formatIndianTime(possibleTimestamp);
