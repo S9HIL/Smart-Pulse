@@ -58,5 +58,12 @@ with app.app_context():
     # Create all tables
     db.create_all()
     
+    # Add context processor for current time in India
+    from routes import get_current_indian_time
+    
+    @app.context_processor
+    def inject_time():
+        return {'curr_time': get_current_indian_time()}
+    
     # Log startup info
     logger.info("Automation Hub started")

@@ -139,6 +139,63 @@
             background-clip: text;
             animation: shine 5s linear infinite;
         }
+        
+        /* Platform section styling */
+        .platform-section {
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .platform-section h2 {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .platform-section p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1.5rem;
+        }
+        
+        .platform-section .btn-outline-light {
+            border-width: 2px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .platform-section .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* WhatsApp section */
+        .whatsapp-section {
+            background-color: #4caf50;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        }
+        
+        .whatsapp-section h2 {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Facebook section */
+        .facebook-section {
+            background-color: #4267B2;
+            background: linear-gradient(135deg, #4267B2, #2b4886);
+        }
+        
+        .facebook-section h2 {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Instagram section */
+        .instagram-section {
+            background-color: #E1306C;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+        
+        .instagram-section h2 {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -189,8 +246,11 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container text-center">
-            <p class="mb-0 footer-text">
+            <p class="mb-1">
                 <span class="developer-credit">Developed by Sʌʜɩɭ Pʀʌjʌpʌtɩ</span>
+            </p>
+            <p class="mb-0 small text-muted">
+                © 2025 Smart Pulse. All rights reserved. | <span class="ist-time">IST: {{ curr_time }}</span>
             </p>
         </div>
     </footer>
@@ -285,6 +345,23 @@
             return formatIndianTime(now);
         }
         
+        // Update IST time in footer
+        function updateISTTime() {
+            const istTimeElement = document.querySelector('.ist-time');
+            if (istTimeElement) {
+                const timeOptions = {
+                    timeZone: 'Asia/Kolkata',
+                    hour12: true,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                
+                const timeString = new Date().toLocaleString('en-IN', timeOptions);
+                istTimeElement.textContent = `IST: ${timeString}`;
+            }
+        }
+        
         // Initialize all tooltips and format timestamps
         document.addEventListener('DOMContentLoaded', function() {
             // Enable Bootstrap tooltips
@@ -314,6 +391,10 @@
                     }
                 }
             });
+            
+            // Update IST time and set interval to update every second
+            updateISTTime();
+            setInterval(updateISTTime, 1000);
         });
     </script>
     {% block extra_js %}{% endblock %}

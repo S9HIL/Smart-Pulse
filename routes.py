@@ -3,10 +3,19 @@ Main Routes for Automation Hub
 Handles dashboard and status endpoints
 """
 import logging
+import datetime
+import pytz
 from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for
 from models import WhatsAppTask, FacebookBatch, InstagramBatch, WhatsAppMessage, FacebookMessage, InstagramMessage, db
 from utils import get_personalized_greeting
 import traceback
+
+# Get current Indian time
+def get_current_indian_time():
+    """Get current time in India (IST)"""
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.datetime.now(ist)
+    return now.strftime('%H:%M:%S %p')
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
