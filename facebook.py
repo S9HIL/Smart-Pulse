@@ -9,9 +9,10 @@ import time
 import uuid
 import threading
 import requests
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, flash
+from flask_login import login_required, current_user
 from app import db
-from models import FacebookBatch, FacebookMessage
+from models import FacebookBatch, FacebookMessage, User
 from datetime import datetime
 
 # Configure logging

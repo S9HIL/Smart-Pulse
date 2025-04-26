@@ -5,7 +5,8 @@ Handles dashboard and status endpoints
 import logging
 import datetime
 import pytz
-from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for
+from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for, flash
+from flask_login import login_required, current_user
 from models import WhatsAppTask, FacebookBatch, InstagramBatch, WhatsAppMessage, FacebookMessage, InstagramMessage, db
 from utils import get_personalized_greeting
 import traceback
@@ -50,13 +51,26 @@ def set_username():
     return redirect(url_for('main.index'))
 
 @main_bp.route('/batch-manager')
+@login_required
 def batch_manager():
     """Batch Manager page for all platforms"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        flash('Your account is pending approval.', 'warning')
+        return redirect(url_for('auth.pending_approval'))
+    
     return render_template('batch_manager.html')
 
 @main_bp.route('/delete-batch', methods=['POST'])
+@login_required
 def delete_batch():
     """Delete a batch from any platform"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         batch_id = request.json.get('batch_id')
         platform = request.json.get('platform')
@@ -128,8 +142,15 @@ def delete_batch():
         })
 
 @main_bp.route('/status')
+@login_required
 def status():
     """Get status of all services"""
+    # Check if user is approved
+    if not current_user.is_approved:
+        return jsonify({
+            'success': False,
+            'message': 'Your account is pending approval.'
+        })
     try:
         # Count tasks by platform and status
         whatsapp_stats = {
