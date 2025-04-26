@@ -331,11 +331,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Check status on a reasonable interval to avoid excessive refreshing
-    setInterval(checkStatus, 10000);
+    // Check status less frequently to prevent session issues
+    setInterval(checkStatus, 30000);
     
-    // Also check once right away
-    setTimeout(checkStatus, 100);
+    // Also check once right away, but with a small delay
+    setTimeout(checkStatus, 2000);
     
     // Target type radio button handlers
     const targetIndividual = document.getElementById('target-individual');
